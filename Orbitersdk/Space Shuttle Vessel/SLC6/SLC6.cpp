@@ -49,20 +49,13 @@ Date         Developer
 #include <DlgCtrl.h>
 #ifndef _WIN32
 #include <OrbiterResource.h>// not upstream: the Qt dialog functions
-#include <QWidget>
-constexpr UINT WM_COMMAND = 0x0111;// not upstream: winuser.h values of the messages the dialog procedure takes
-constexpr UINT WM_SHOWWINDOW = 0x0018;
 static void SLC6_DlgInit( QWidget* hWnd, void* context );// not upstream: below the dialog procedure
 #endif
 #include "../SSVSound.h"
 #include <UtilsSSV.h>
 
 
-#ifdef _WIN32
 HINSTANCE hModule;
-#else
-void* hModule;// not upstream: the dlopen handle
-#endif
 
 
 static const char* MESHNAME_PADSURFACE = "SSV\\SLC6\\terrain";
@@ -1115,11 +1108,7 @@ void SLC6::DefineAnimations()
 }
 
 //global functions
-#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 	try
 	{
@@ -1138,11 +1127,7 @@ DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlo
 	}
 }
 
-#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 	try
 	{
@@ -1196,121 +1181,121 @@ DLLCLBK void ovcExit(VESSEL* vessel)
 	}
 }
 
-#ifdef _WIN32
+// not upstream: the WM_COMMAND part of SLC6_DlgProc, on both platforms; TRUE if handled
+BOOL SLC6_DlgCommand( HPADDLG hWnd, SLC6* pad, int id )
+{
+	switch(id) {
+		case IDCANCEL:
+			oapiCloseDialog(hWnd);
+			return TRUE;
+		case IDC_OAA_DEPLOY:
+			pad->PadCommand( "OAA EXTEND" );// not upstream: flight recorder, each button a pad command (design ssv-flightrec)
+			return TRUE;
+		case IDC_OAA_HALT:
+			pad->PadCommand( "OAA HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_OAA_RETRACT:
+			pad->PadCommand( "OAA RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_GVA_EXTEND:
+			pad->PadCommand( "GVA EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_GVA_HALT:
+			pad->PadCommand( "GVA HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_GVA_RETRACT:
+			pad->PadCommand( "GVA RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_HOOD_LOWER:
+			pad->PadCommand( "HOOD LOWER" );// not upstream: as above
+			return TRUE;
+		case IDC_HOOD_HALT:
+			pad->PadCommand( "HOOD HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_HOOD_RAISE:
+			pad->PadCommand( "HOOD RAISE" );// not upstream: as above
+			return TRUE;
+		case IDC_GH2_DETACH:
+			pad->PadCommand( "ETVAS DETACH" );// not upstream: as above
+			return TRUE;
+		case IDC_GH2_ATTACH:
+			pad->PadCommand( "ETVAS ATTACH" );// not upstream: as above
+			return TRUE;
+		case IDC_IAA_DEPLOY:
+			pad->PadCommand( "IAA DEPLOY" );// not upstream: as above
+			return TRUE;
+		case IDC_IAA_HALT:
+			pad->PadCommand( "IAA HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_IAA_RETRACT:
+			pad->PadCommand( "IAA RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_PCR_EXTEND:
+			pad->PadCommand( "PCR EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_PCR_HALT:
+			pad->PadCommand( "PCR HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_PCR_RETRACT:
+			pad->PadCommand( "PCR RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_SAB_EXTEND:
+			pad->PadCommand( "SAB EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_SAB_HALT:
+			pad->PadCommand( "SAB HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_SAB_RETRACT:
+			pad->PadCommand( "SAB RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_SAB_DOOR_OPEN:
+			pad->PadCommand( "SABDOOR OPEN" );// not upstream: as above
+			return TRUE;
+		case IDC_SAB_DOOR_HALT:
+			pad->PadCommand( "SABDOOR HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_SAB_DOOR_CLOSE:
+			pad->PadCommand( "SABDOOR CLOSE" );// not upstream: as above
+			return TRUE;
+		case IDC_MST_EXTEND:
+			pad->PadCommand( "MST EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_MST_HALT:
+			pad->PadCommand( "MST HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_MST_RETRACT:
+			pad->PadCommand( "MST RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_EAA_DEPLOY:
+			pad->PadCommand( "EAA DEPLOY" );// not upstream: as above
+			return TRUE;
+		case IDC_EAA_HALT:
+			pad->PadCommand( "EAA HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_EAA_RETRACT:
+			pad->PadCommand( "EAA RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_SDWW_LOWER:
+			pad->PadCommand( "SDWW LOWER" );// not upstream: as above
+			return TRUE;
+		case IDC_SDWW_RAISE:
+			pad->PadCommand( "SDWW RAISE" );// not upstream: as above
+			return TRUE;
+	}
+	return FALSE;
+}
+
+#ifdef _WIN32// not upstream: the Win32 dialog procedure
 BOOL CALLBACK SLC6_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-#else
-BOOL SLC6_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not upstream: as on Windows, messages from SLC6_DlgInit
-#endif
 {
 	try
 	{
 		if(uMsg==WM_COMMAND) {
 			SLC6* pad=static_cast<SLC6*>(oapiGetDialogContext(hWnd));
-			switch(LOWORD(wParam)) {
-				case IDCANCEL:
-					oapiCloseDialog(hWnd);
-					return TRUE;
-				case IDC_OAA_DEPLOY:
-					pad->PadCommand( "OAA EXTEND" );// not upstream: flight recorder, each button a pad command (design ssv-flightrec)
-					return TRUE;
-				case IDC_OAA_HALT:
-					pad->PadCommand( "OAA HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_OAA_RETRACT:
-					pad->PadCommand( "OAA RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_GVA_EXTEND:
-					pad->PadCommand( "GVA EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_GVA_HALT:
-					pad->PadCommand( "GVA HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_GVA_RETRACT:
-					pad->PadCommand( "GVA RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_HOOD_LOWER:
-					pad->PadCommand( "HOOD LOWER" );// not upstream: as above
-					return TRUE;
-				case IDC_HOOD_HALT:
-					pad->PadCommand( "HOOD HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_HOOD_RAISE:
-					pad->PadCommand( "HOOD RAISE" );// not upstream: as above
-					return TRUE;
-				case IDC_GH2_DETACH:
-					pad->PadCommand( "ETVAS DETACH" );// not upstream: as above
-					return TRUE;
-				case IDC_GH2_ATTACH:
-					pad->PadCommand( "ETVAS ATTACH" );// not upstream: as above
-					return TRUE;
-				case IDC_IAA_DEPLOY:
-					pad->PadCommand( "IAA DEPLOY" );// not upstream: as above
-					return TRUE;
-				case IDC_IAA_HALT:
-					pad->PadCommand( "IAA HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_IAA_RETRACT:
-					pad->PadCommand( "IAA RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_PCR_EXTEND:
-					pad->PadCommand( "PCR EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_PCR_HALT:
-					pad->PadCommand( "PCR HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_PCR_RETRACT:
-					pad->PadCommand( "PCR RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_SAB_EXTEND:
-					pad->PadCommand( "SAB EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_SAB_HALT:
-					pad->PadCommand( "SAB HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_SAB_RETRACT:
-					pad->PadCommand( "SAB RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_SAB_DOOR_OPEN:
-					pad->PadCommand( "SABDOOR OPEN" );// not upstream: as above
-					return TRUE;
-				case IDC_SAB_DOOR_HALT:
-					pad->PadCommand( "SABDOOR HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_SAB_DOOR_CLOSE:
-					pad->PadCommand( "SABDOOR CLOSE" );// not upstream: as above
-					return TRUE;
-				case IDC_MST_EXTEND:
-					pad->PadCommand( "MST EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_MST_HALT:
-					pad->PadCommand( "MST HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_MST_RETRACT:
-					pad->PadCommand( "MST RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_EAA_DEPLOY:
-					pad->PadCommand( "EAA DEPLOY" );// not upstream: as above
-					return TRUE;
-				case IDC_EAA_HALT:
-					pad->PadCommand( "EAA HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_EAA_RETRACT:
-					pad->PadCommand( "EAA RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_SDWW_LOWER:
-					pad->PadCommand( "SDWW LOWER" );// not upstream: as above
-					return TRUE;
-				case IDC_SDWW_RAISE:
-					pad->PadCommand( "SDWW RAISE" );// not upstream: as above
-					return TRUE;
-			}
+			if (SLC6_DlgCommand( hWnd, pad, LOWORD(wParam) )) return TRUE;// not upstream: the switch is in SLC6_DlgCommand
 		}
 		//if message has not been handled in this function, perform default action
-#ifdef _WIN32
 		return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
-#else
-		return FALSE;// not upstream: the Qt dialog does the default actions itself
-#endif
 	}
 	catch (std::exception &e)
 	{
@@ -1323,12 +1308,29 @@ BOOL SLC6_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not 
 		abort();
 	}
 }
-
-#ifndef _WIN32
-// not upstream: WM_INITDIALOG on Qt; WM_SHOWWINDOW and the controls' WM_COMMAND go to SLC6_DlgProc
+#else
+// not upstream: Qt dialog init, SLC6_DlgProc's WM_COMMAND part
 static void SLC6_DlgInit( QWidget* hWnd, void* context )
 {
-	oapiConnectDlgCommands( hWnd, [hWnd]( int id, int code, QWidget* hCtrl ) { SLC6_DlgProc( hWnd, WM_COMMAND, MAKEWPARAM( id, 0 ), 0 ); } );
+	SLC6* pad = static_cast<SLC6*>(context);
+	oapiConnectDlgCommands( hWnd, [hWnd, pad]( int id, int, QWidget* )
+	{
+		try
+		{
+			SLC6_DlgCommand( hWnd, pad, id );
+		}
+		catch (std::exception &e)
+		{
+			oapiWriteLogV( "(SSV_SLC6) [FATAL ERROR] Exception in SLC6_DlgCommand: %s", e.what() );
+			abort();
+		}
+		catch (...)
+		{
+			oapiWriteLog( "(SSV_SLC6) [FATAL ERROR] Exception in SLC6_DlgCommand" );
+			abort();
+		}
+	} );
+	return;
 }
 #endif
 

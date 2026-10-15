@@ -1,7 +1,7 @@
 /****************************************************************************
   This file is part of Space Shuttle Vessel
 
-  AOA/ATO Targeting (FSSR 4.5) implementation
+  AOA/ATO Targeting (STS 83-0002 4.5) implementation
 
 
   Space Shuttle Vessel is free software; you can redistribute it and/or
@@ -35,11 +35,12 @@ Date         Developer
 #include <MathSSV.h>
 #include <EngConst.h>
 #include <cassert>
+#include <cfloat>
 
 
 namespace dps
 {
-	// K-loads and constants
+	// K-loads (FSSR values, the vehicle model in ParameterValues differs) and constants
 	constexpr double FT_OMS = 6.087e3;// one OMS engine [lbf]
 	constexpr double VEX_OMS = 1.01368e4;// OMS exhaust velocity [ft/s]
 	constexpr double MDOT_OMS = FT_OMS / VEX_OMS;// one OMS engine [slug/s]
@@ -47,6 +48,8 @@ namespace dps
 	constexpr double ORB_RATE = 1.185e-3;// circular orbit rate [rad/s]
 	constexpr double DT_AOA_PRED = 300.0;// prediction step [s]
 	constexpr int NMAX_DIP = 10;// maximum PEG passes
+	constexpr double THETA_ET_SEP = 22.0;// downrange angle from the launch site at ET separation [deg]
+	constexpr double MASS_OMS_MAX_FRAC = 0.99;// OMS propellant limit as a fraction of the vehicle mass
 
 	static const double NM2FT = 1.0 / NAUTMI_PER_FT;
 
@@ -54,7 +57,7 @@ namespace dps
 	AOA_ATO_TGT::AOA_ATO_TGT( SimpleGPCSystem* _gpc ):SimpleGPCSoftware( _gpc, "AOA_ATO_TGT" ),
 		pAscentDAP( NULL ), pOMSBurnSoftware( NULL ), pStateVector( NULL ), pGNCUtilities( NULL ),
 		scheduled( false ), atoMECO( false ), oms1Index( 0 ), massOrbSet( false ), massOMSInitSet( false ),
-		pegBusy( false ), aoaI( 0 ), aoaIncl( 0.0 ), aoaTheta( 0.0 ), aoaM( 0.0 ), tigOPS3( 0.0 ), massOMSPreOMS2( 0.0 ), RGD( _V( 0, 0, 0 ) ), VGD( _V( 0, 0, 0 ) )
+		pegBusy( false ), aoaI( 0 ), aoaIShallow( 6 ), aoaIncl( 0.0 ), aoaTheta( 0.0 ), aoaM( 0.0 ), tigOPS3( 0.0 ), massOMSPreOMS2( 0.0 ), RGD( _V( 0, 0, 0 ) ), VGD( _V( 0, 0, 0 ) )
 	{
 		// I-load defaults. ATO MECO targets equal the nominal ones (JSC-10559 2.3.1), so V_ATO_SW = 0.
 		V_ATO_SW = 0.0;
@@ -75,7 +78,10 @@ namespace dps
 		DV_RQD = 550.0;
 		DV_TOL = 0.0;
 		SFUELD = 0;
-		THETA_LS_REF = 0.0;// not loaded: no OMS-2 TIG adjustment
+		THETA_LS_REF = 0.0;
+		bThetaLSRef = false;// not loaded: no OMS-2 TIG adjustment
+		massOrbILoad = false;
+		massOMSInitILoad = false;
 
 		// STS-75 direct insertion targets (JSC-10559 table 4.3.4.6.2-I); theta from the launch site
 		HTGT_ATO_OMS1 = 114.0 * NM2FT;
@@ -104,8 +110,7 @@ namespace dps
 			DTIG_AOA_OMS1[i] = aoaOMS1[i][2];
 		}
 
-		// AOA OMS-2 (EI) targets, constant terms: DTIG [s], C1 [ft/s], C2, theta [deg] of the entry interface from the launch site.
-		// The STS-75 table gives theta from TIG; the TIG downrange angle is added for an 88.5 min orbit and 22 deg at ET separation.
+		// AOA OMS-2 (EI) constant terms: DTIG [s], C1 [ft/s], C2, EI theta from TIG [deg] (STS-75); the TIG downrange angle is added
 		const double aoaOMS2[10][4] = {
 			{1782.0, 16012.0, -0.6356, 133.6},// 1 (I_TGT 3) shallow, after OPT-AOA OMS-1
 			{2741.0, 15657.0, -0.6284, 73.1},// 2 (4) steep, after OPT-AOA OMS-1
@@ -119,7 +124,7 @@ namespace dps
 			{1518.0, 15620.0, -0.6269, 159.6}};// 10 (12) steep, after a nominal OMS-1 or none
 		for (int i = 0; i < 10; i++)
 		{
-			double tigLS = 22.0 + (360.0 * aoaOMS2[i][0] / 5310.0);
+			double tigLS = THETA_ET_SEP + (ORB_RATE * aoaOMS2[i][0] * DEG);
 			for (int k = 0; k < 3; k++)
 			{
 				DTIG_AOA_OMS2[(i * 3) + k] = (k == 0) ? aoaOMS2[i][0] : 0.0;
@@ -153,7 +158,7 @@ namespace dps
 
 	void AOA_ATO_TGT::ReadILOADs( const std::map<std::string,std::string>& ILOADs )
 	{
-		if (HasILOAD( "V_ATO_SW", ILOADs )) GetValILOAD( "V_ATO_SW", ILOADs, V_ATO_SW );
+		GetOptILOAD( "V_ATO_SW", ILOADs, V_ATO_SW );
 		if (HasILOAD( "VD_ATO", ILOADs ) && HasILOAD( "RD_ATO", ILOADs ) && HasILOAD( "GAMD_ATO", ILOADs ))
 		{
 			GetValILOAD( "RD_ATO", ILOADs, RD_ATO );
@@ -161,53 +166,59 @@ namespace dps
 			GetValILOAD( "GAMD_ATO", ILOADs, GAMD_ATO );
 			bATOMECOILoad = true;
 		}
-		if (HasILOAD( "S_IY", ILOADs )) GetValILOAD( "S_IY", ILOADs, S_IY );
-		if (HasILOAD( "IY_MIN_EF", ILOADs )) GetValILOAD( "IY_MIN_EF", ILOADs, 3, IY_MIN_EF.data );
-		if (HasILOAD( "V_MSSN_CNTN", ILOADs )) GetValILOAD( "V_MSSN_CNTN", ILOADs, V_MSSN_CNTN );
-		if (HasILOAD( "V_LIN", ILOADs )) GetValILOAD( "V_LIN", ILOADs, V_LIN );
-		if (HasILOAD( "V_ZERO", ILOADs )) GetValILOAD( "V_ZERO", ILOADs, V_ZERO );
-		if (HasILOAD( "EPS_K2", ILOADs )) GetValILOAD( "EPS_K2", ILOADs, EPS_K2 );
-		if (HasILOAD( "MASS_ORB", ILOADs ))
-		{
-			GetValILOAD( "MASS_ORB", ILOADs, MASS_ORB );
-			massOrbSet = true;
-		}
-		if (HasILOAD( "MASS_OMS_INIT", ILOADs ))
-		{
-			GetValILOAD( "MASS_OMS_INIT", ILOADs, MASS_OMS_INIT );
-			massOMSInitSet = true;
-		}
-		if (HasILOAD( "MASS_CG_CNTL", ILOADs )) GetValILOAD( "MASS_CG_CNTL", ILOADs, MASS_CG_CNTL );
-		if (HasILOAD( "DV_RQD", ILOADs )) GetValILOAD( "DV_RQD", ILOADs, DV_RQD );
-		if (HasILOAD( "DV_TOL", ILOADs )) GetValILOAD( "DV_TOL", ILOADs, DV_TOL );
-		if (HasILOAD( "SFUELD", ILOADs )) GetValILOAD( "SFUELD", ILOADs, SFUELD );
-		if (HasILOAD( "THETA_LS_REF", ILOADs )) GetValILOAD( "THETA_LS_REF", ILOADs, THETA_LS_REF );
+		GetOptILOAD( "S_IY", ILOADs, S_IY );
+		GetOptILOAD( "IY_MIN_EF", ILOADs, 3, IY_MIN_EF.data );
+		GetOptILOAD( "V_MSSN_CNTN", ILOADs, V_MSSN_CNTN );
+		GetOptILOAD( "V_LIN", ILOADs, V_LIN );
+		GetOptILOAD( "V_ZERO", ILOADs, V_ZERO );
+		GetOptILOAD( "EPS_K2", ILOADs, EPS_K2 );
+		massOrbILoad = GetOptILOAD( "MASS_ORB", ILOADs, MASS_ORB );
+		massOrbSet = massOrbSet || massOrbILoad;
+		massOMSInitILoad = GetOptILOAD( "MASS_OMS_INIT", ILOADs, MASS_OMS_INIT );
+		massOMSInitSet = massOMSInitSet || massOMSInitILoad;
+		GetOptILOAD( "MASS_CG_CNTL", ILOADs, MASS_CG_CNTL );
+		GetOptILOAD( "DV_RQD", ILOADs, DV_RQD );
+		GetOptILOAD( "DV_TOL", ILOADs, DV_TOL );
+		GetOptILOAD( "SFUELD", ILOADs, SFUELD );
+		bThetaLSRef = GetOptILOAD( "THETA_LS_REF", ILOADs, THETA_LS_REF );
 
-		if (HasILOAD( "HTGT_ATO_OMS1", ILOADs )) GetValILOAD( "HTGT_ATO_OMS1", ILOADs, HTGT_ATO_OMS1 );
-		if (HasILOAD( "THETA_ATO_OMS1", ILOADs )) GetValILOAD( "THETA_ATO_OMS1", ILOADs, THETA_ATO_OMS1 );
-		if (HasILOAD( "C1_ATO_OMS1", ILOADs )) GetValILOAD( "C1_ATO_OMS1", ILOADs, C1_ATO_OMS1 );
-		if (HasILOAD( "C2_ATO_OMS1", ILOADs )) GetValILOAD( "C2_ATO_OMS1", ILOADs, C2_ATO_OMS1 );
-		if (HasILOAD( "DTIG_ATO_OMS1", ILOADs )) GetValILOAD( "DTIG_ATO_OMS1", ILOADs, DTIG_ATO_OMS1 );
-		if (HasILOAD( "HTGT_ATO_OMS2", ILOADs )) GetValILOAD( "HTGT_ATO_OMS2", ILOADs, 2, HTGT_ATO_OMS2 );
-		if (HasILOAD( "THETA_ATO_OMS2", ILOADs )) GetValILOAD( "THETA_ATO_OMS2", ILOADs, 2, THETA_ATO_OMS2 );
-		if (HasILOAD( "C1_ATO_OMS2", ILOADs )) GetValILOAD( "C1_ATO_OMS2", ILOADs, 2, C1_ATO_OMS2 );
-		if (HasILOAD( "C2_ATO_OMS2", ILOADs )) GetValILOAD( "C2_ATO_OMS2", ILOADs, 2, C2_ATO_OMS2 );
-		if (HasILOAD( "DTIG_ATO_OMS2", ILOADs )) GetValILOAD( "DTIG_ATO_OMS2", ILOADs, 2, DTIG_ATO_OMS2 );
-		if (HasILOAD( "HTGT_AOA_OMS1", ILOADs )) GetValILOAD( "HTGT_AOA_OMS1", ILOADs, 3, HTGT_AOA_OMS1 );
-		if (HasILOAD( "THETA_AOA_OMS1", ILOADs )) GetValILOAD( "THETA_AOA_OMS1", ILOADs, 3, THETA_AOA_OMS1 );
-		if (HasILOAD( "C1_AOA_OMS1", ILOADs )) GetValILOAD( "C1_AOA_OMS1", ILOADs, 3, C1_AOA_OMS1 );
-		if (HasILOAD( "C2_AOA_OMS1", ILOADs )) GetValILOAD( "C2_AOA_OMS1", ILOADs, 3, C2_AOA_OMS1 );
-		if (HasILOAD( "DTIG_AOA_OMS1", ILOADs )) GetValILOAD( "DTIG_AOA_OMS1", ILOADs, 3, DTIG_AOA_OMS1 );
-		if (HasILOAD( "THETA_AOA_OMS2", ILOADs )) GetValILOAD( "THETA_AOA_OMS2", ILOADs, 30, THETA_AOA_OMS2 );
-		if (HasILOAD( "C1_AOA_OMS2", ILOADs )) GetValILOAD( "C1_AOA_OMS2", ILOADs, 30, C1_AOA_OMS2 );
-		if (HasILOAD( "C2_AOA_OMS2", ILOADs )) GetValILOAD( "C2_AOA_OMS2", ILOADs, 30, C2_AOA_OMS2 );
-		if (HasILOAD( "DTIG_AOA_OMS2", ILOADs )) GetValILOAD( "DTIG_AOA_OMS2", ILOADs, 30, DTIG_AOA_OMS2 );
+		GetOptILOAD( "HTGT_ATO_OMS1", ILOADs, HTGT_ATO_OMS1 );
+		GetOptILOAD( "THETA_ATO_OMS1", ILOADs, THETA_ATO_OMS1 );
+		GetOptILOAD( "C1_ATO_OMS1", ILOADs, C1_ATO_OMS1 );
+		GetOptILOAD( "C2_ATO_OMS1", ILOADs, C2_ATO_OMS1 );
+		GetOptILOAD( "DTIG_ATO_OMS1", ILOADs, DTIG_ATO_OMS1 );
+		GetOptILOAD( "HTGT_ATO_OMS2", ILOADs, 2, HTGT_ATO_OMS2 );
+		GetOptILOAD( "THETA_ATO_OMS2", ILOADs, 2, THETA_ATO_OMS2 );
+		GetOptILOAD( "C1_ATO_OMS2", ILOADs, 2, C1_ATO_OMS2 );
+		GetOptILOAD( "C2_ATO_OMS2", ILOADs, 2, C2_ATO_OMS2 );
+		GetOptILOAD( "DTIG_ATO_OMS2", ILOADs, 2, DTIG_ATO_OMS2 );
+		GetOptILOAD( "HTGT_AOA_OMS1", ILOADs, 3, HTGT_AOA_OMS1 );
+		GetOptILOAD( "THETA_AOA_OMS1", ILOADs, 3, THETA_AOA_OMS1 );
+		GetOptILOAD( "C1_AOA_OMS1", ILOADs, 3, C1_AOA_OMS1 );
+		GetOptILOAD( "C2_AOA_OMS1", ILOADs, 3, C2_AOA_OMS1 );
+		GetOptILOAD( "DTIG_AOA_OMS1", ILOADs, 3, DTIG_AOA_OMS1 );
+		GetOptILOAD( "THETA_AOA_OMS2", ILOADs, 30, THETA_AOA_OMS2 );
+		GetOptILOAD( "C1_AOA_OMS2", ILOADs, 30, C1_AOA_OMS2 );
+		GetOptILOAD( "C2_AOA_OMS2", ILOADs, 30, C2_AOA_OMS2 );
+		GetOptILOAD( "DTIG_AOA_OMS2", ILOADs, 30, DTIG_AOA_OMS2 );
+		return;
+	}
+
+	void AOA_ATO_TGT::Reset( void )
+	{
+		scheduled = false;
+		atoMECO = false;
+		oms1Index = 0;
+		massOrbSet = massOrbILoad;
+		massOMSInitSet = massOMSInitILoad;
+		pegBusy = false;
 		return;
 	}
 
 	bool AOA_ATO_TGT::OnMajorModeChange( unsigned int newMajorMode )
 	{
-		if ((newMajorMode == 102) && (GetMajorMode() == 101) && !massOMSInitSet)
+		if ((newMajorMode == 101) && (GetMajorMode() != 0)) Reset();
+		else if ((newMajorMode == 102) && (GetMajorMode() == 101) && !massOMSInitSet)
 		{
 			MASS_OMS_INIT = STS()->GetOMSPropellantMass() * KG2LBM / G_2_FPS2;
 			massOMSInitSet = true;
@@ -229,7 +240,13 @@ namespace dps
 			if (peg4.PEG_TSK())
 			{
 				pegBusy = false;
-				AOA_OMS2_Finish( length( peg4.GetDeltaV() ) );
+				if (peg4.Converged()) AOA_OMS2_Finish( length( peg4.GetDeltaV() ) );
+				else
+				{
+					// no projected delta V: shallow EI default
+					oapiWriteLog( "(SSV_OV) [WARNING] AOA OMS-2 delta V projection did not converge, shallow EI default" );
+					AOA_OMS2_Finish( DBL_MAX );
+				}
 			}
 			return;
 		}
@@ -254,17 +271,21 @@ namespace dps
 			ATO_MECO_TGT_SEL();
 			ATO_OMS_PREMECO_BRN_DET();
 		}
-		else if (mm == 104)
+		else if ((mm == 104) || (mm == 105))
 		{
-			// OMS-1 targets only before the OMS-1 execute command
-			if (pOMSBurnSoftware->BurnEnabled()) return;
-			if (aoa) AOA_ONORB_OMS1();
-			else if (ato) ATO_ONORB_OMS1();
-		}
-		else if (mm == 105)
-		{
-			if (pOMSBurnSoftware->BurnEnabled()) return;
-			if (aoa) AOA_ONORB_OMS2();
+			// targets only before the OMS-x execute command; a later crew target entry is dropped
+			if (pOMSBurnSoftware->BurnEnabled())
+			{
+				WriteCOMPOOL_IS( SCP_AOA_TGT_SEL, 0 );
+				WriteCOMPOOL_IS( SCP_ATO_TGT_SEL, 0 );
+				return;
+			}
+			if (mm == 104)
+			{
+				if (aoa) AOA_ONORB_OMS1();
+				else if (ato) ATO_ONORB_OMS1();
+			}
+			else if (aoa) AOA_ONORB_OMS2();
 			else if (ato) ATO_ONORB_OMS2();
 		}
 		return;
@@ -272,7 +293,7 @@ namespace dps
 
 	void AOA_ATO_TGT::CurrentState( VECTOR3& R, VECTOR3& V, double& T )
 	{
-		// the navigated state, M50 [ft, ft/s]; the user parameter state (R_AVGG) runs only from MM 104
+		// the truth state, M50 [ft, ft/s]
 		pStateVector->GetCurrentStateVectorsM50( R, V );
 		R *= MPS2FPS;
 		V *= MPS2FPS;
@@ -303,8 +324,8 @@ namespace dps
 			atoMECO = true;
 			if (bATOMECOILoad)
 			{
-				rd = RD_ATO * FPS2MS;
-				vd = VD_ATO * FPS2MS;
+				rd = RD_ATO / MPS2FPS;
+				vd = VD_ATO / MPS2FPS;
 				gamd = GAMD_ATO;
 			}
 		}
@@ -371,7 +392,7 @@ namespace dps
 	double AOA_ATO_TGT::DV_OMS( double M, double massOMS ) const
 	{
 		if (massOMS <= 0.0) return 0.0;
-		if (massOMS >= M) massOMS = 0.99 * M;
+		if (massOMS >= M) massOMS = MASS_OMS_MAX_FRAC * M;
 		return VEX_OMS * log( M / (M - massOMS) );
 	}
 
@@ -420,7 +441,7 @@ namespace dps
 
 	void AOA_ATO_TGT::ATO_ONORB_OMS1( void )
 	{
-		if (ReadCOMPOOL_IS( SCP_ATO_TGT_SEL ) != 0) WriteCOMPOOL_IS( SCP_ATO_TGT_SEL, 0 );
+		WriteCOMPOOL_IS( SCP_ATO_TGT_SEL, 0 );
 
 		pOMSBurnSoftware->SetAbortTarget( HTGT_ATO_OMS1, THETA_ATO_OMS1, C1_ATO_OMS1, C2_ATO_OMS1, DTIG_ATO_OMS1, 0.0, false );
 		WriteCOMPOOL_IS( SCP_I_TGT, 1 );
@@ -452,7 +473,7 @@ namespace dps
 		// TIG from ET separation, adjusted for the MECO downrange dispersion when the reference angle is loaded
 		double tigAdj = 0.0;
 		double thetaLSS = pOMSBurnSoftware->GetTHETA_LSS();
-		if ((THETA_LS_REF != 0.0) && (thetaLSS != 0.0)) tigAdj = (thetaLSS - THETA_LS_REF) / ORB_RATE;
+		if (bThetaLSRef && (thetaLSS != 0.0)) tigAdj = (thetaLSS - THETA_LS_REF) / ORB_RATE;
 		tigOPS3 = AOAOMS2Param( DTIG_AOA_OMS2, I, incl ) - tigAdj + ReadCOMPOOL_SD( SCP_T_ET_SEP );
 
 		VECTOR3 R, V;
@@ -470,7 +491,8 @@ namespace dps
 		if (THETA <= 0.0) THETA += PI2;
 
 		VECTOR3 IRT = (IR * cos( THETA )) + (IDR * sin( THETA ));
-		RT = IRT * (H_EI - pGNCUtilities->H_ELLIPSOID( IRT ));
+		double rEll = 1.0 - pGNCUtilities->H_ELLIPSOID( IRT );// ellipsoid radius along the unit vector IRT
+		RT = IRT * (rEll + H_EI);
 		return;
 	}
 
@@ -478,7 +500,11 @@ namespace dps
 	{
 		EnsureMasses();
 
-		VECTOR3 IY = pAscentDAP->GetIY();
+		// inclination of the current orbit plane, Earth fixed, as in the ascent UPP
+		VECTOR3 R, V;
+		double T;
+		CurrentState( R, V, T );
+		VECTOR3 IY = tmul( pGNCUtilities->EARTH_FIXED_TO_M50_COORD( T ), unit( crossp( V, R ) ) );
 		double incl = acos( range( -1.0, -IY.z, 1.0 ) );
 		double M = VehicleMass();
 		double dmOMS1 = (MASS_ORB - DM_PREMECO()) - M;
@@ -493,10 +519,17 @@ namespace dps
 		}
 		else
 		{
+			aoaIShallow = 6;
 			if (oms1Index == 3) I = 1;
 			else if (oms1Index == 4)
 			{
 				I = 2;
+				defaultPossible = true;
+			}
+			else if (oms1Index == 1)
+			{
+				I = 4;
+				aoaIShallow = 5;
 				defaultPossible = true;
 			}
 			else if (oms1Index == 5) I = 3;
@@ -538,7 +571,7 @@ namespace dps
 		if (dvexcess < 0.0)
 		{
 			// shallow EI default
-			I = 6;
+			I = aoaIShallow;
 			VECTOR3 RT;
 			PredictTIG( I, aoaIncl, RT, THETA );
 		}

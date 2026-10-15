@@ -46,9 +46,9 @@ Date         Developer
 ********************************************/
 
 #include <stdio.h>
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: tchar.h is Windows only
 #include <tchar.h>
-#endif
+#endif// not upstream: as above
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -56,13 +56,39 @@ Date         Developer
 #include <cctype>
 #include <set>
 #include <iomanip>
+#include <clocale>// not upstream: setlocale
+#include <cstdlib>// not upstream: mbstowcs, wcstombs
+#include <cstring>// not upstream: strlen
 
 
 const std::string SSVMESHC_VERSION = "1.2";
 
+#ifndef _WIN32
+// not upstream: the user's locale (UTF-8) multibyte strings to wide and back, bytes as they are if invalid
+static std::wstring Widen( const char* s )
+{
+	std::vector<wchar_t> w( strlen( s ) + 1 );
+	size_t n = std::mbstowcs( w.data(), s, w.size() );
+	if (n == static_cast<size_t>(-1)) return std::wstring( s, s + strlen( s ) );
+	return std::wstring( w.data(), n );
+}
+
+static std::string Narrow( const std::wstring& ws )
+{
+	std::vector<char> b( ws.size() * MB_CUR_MAX + 1 );
+	size_t n = std::wcstombs( b.data(), ws.c_str(), b.size() );
+	if (n == static_cast<size_t>(-1)) return std::string( ws.begin(), ws.end() );
+	return std::string( b.data(), n );
+}
+#endif
+
 std::wstring input_file_name = L"";
 std::wstring input_file_namepath = L"";
+#ifdef _WIN32
 std::wstring output_file_namepath = L".\\meshres.h";
+#else
+std::wstring output_file_namepath = L"./meshres.h";// not upstream: '/' separator
+#endif
 std::string group_prefix = "GRP_";
 std::string group_suffix = "";
 std::string material_prefix = "MAT_";
@@ -130,7 +156,7 @@ void ParseMesh( bool mat, bool tex )
 #ifdef _WIN32
 	mshfile.open(input_file_namepath.c_str());
 #else
-	mshfile.open(std::string( input_file_namepath.begin(), input_file_namepath.end() ));// not upstream: no wide-path open on Linux (ASCII paths)
+	mshfile.open(Narrow( input_file_namepath ));// not upstream: no wide-path open on Linux
 #endif
 	while (mshfile)
 	{
@@ -205,7 +231,7 @@ void WriteHeaderFile( bool mat, bool tex )
 #ifdef _WIN32
 	hfile.open(output_file_namepath.c_str());
 #else
-	hfile.open(std::string( output_file_namepath.begin(), output_file_namepath.end() ));// not upstream: as for the mesh
+	hfile.open(Narrow( output_file_namepath ));// not upstream: as for the mesh
 #endif
 	
 	// create include guard
@@ -392,11 +418,12 @@ void printhelp()
 int _tmain(int argc, _TCHAR* argv[])
 {
 #else
-int main(int argc, char* argv_[])
+int main(int argc, char* argv_[])// not upstream: no _tmain on Linux
 {
-	// not upstream: the arguments made wide, as the Unicode _tmain gets them
+	// not upstream: the arguments made wide in the user's locale, as the Unicode _tmain gets them
+	setlocale( LC_ALL, "" );
 	std::vector<std::wstring> wargs;
-	for (int i = 0; i < argc; i++) wargs.push_back( std::wstring( argv_[i], argv_[i] + strlen( argv_[i] ) ) );
+	for (int i = 0; i < argc; i++) wargs.push_back( Widen( argv_[i] ) );
 	std::vector<const wchar_t*> wargv;
 	for (const std::wstring& w : wargs) wargv.push_back( w.c_str() );
 	const wchar_t* const* argv = wargv.data();

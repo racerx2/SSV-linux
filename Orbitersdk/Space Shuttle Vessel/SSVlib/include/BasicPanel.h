@@ -143,7 +143,7 @@ public:
 	virtual void Realize();
 	virtual bool OnVCMouseEvent (int id, int _event, VECTOR3 &p);
 	virtual bool OnVCRedrawEvent (int id, int _event, SURFHANDLE surf);
-	// not upstream: a recorded event to the components named component; false if there is none (design ssv-flightrec)
+	// not upstream: a recorded event to a component (design ssv-flightrec)
 	virtual bool OnPlaybackEvent( const string& component, double simt, double event_t, const char* event_type, const char* event );
 	virtual void OnPreStep (double simt, double simdt, double mjd);
 	virtual void OnPostStep (double simt, double simdt, double mjd);

@@ -161,7 +161,8 @@ class Centaur: public VESSEL4
 		void AddPayloadAdapter( void );
 
 		flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the crew's keys (design ssv-flightrec)
-		void ManRate( double& rate, double d );// not upstream: as above, a manual gimbal rate key, nothing while locked
+		void ManRateKey( int k, bool down );// not upstream: as above, a manual gimbal rate key; downs ignored while locked
+		bool manKey[6] = {};// not upstream: as above, the held rate keys NUMPAD2 NUMPAD8 NUMPAD1 NUMPAD3 NUMPAD6 NUMPAD4
 		void RecordManRates( void ) const;// not upstream: as above, SSV_CTRL <manP> <manY> <manR>
 		void CrewCommand( const std::string& cmd );// not upstream: as above, records and applies a command, nothing while locked
 		bool ApplyCrewCommand( const char* cmd );// not upstream: as above

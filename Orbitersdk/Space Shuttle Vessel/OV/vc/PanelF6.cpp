@@ -273,7 +273,8 @@ namespace vc {
 		pLandingGearTB[2]->SetInput( 0, pBundle, 9, TB_UP );
 		pLandingGearTB[2]->SetInput( 1, pBundle, 10, TB_DN );
 
-		pBundle = STS()->BundleManager()->CreateBundle( "ABORT_MODE", 16 );// not upstream
+		// not upstream: ABORT PB -> ABORT MODE rotary -> FF MDMs
+		pBundle = STS()->BundleManager()->CreateBundle( "ABORT_MODE", 16 );
 		pAbort->ConnectPushButton( pBundle, 0 );
 		pAbortMode->ConnectInputSignal( pBundle, 0 );
 		pAbortMode->ConnectOutputSignal( 1, pBundle, 1 );// ATO ABORT REQUEST

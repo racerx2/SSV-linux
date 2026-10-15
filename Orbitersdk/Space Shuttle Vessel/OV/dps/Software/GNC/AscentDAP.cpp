@@ -859,6 +859,8 @@ AscentDAP::AscentDAP(SimpleGPCSystem* _gpc)
 	MEDS_D_INCL = 0.0;
 	INCL_TGT = 0.0;// not upstream
 	RD_TGT = VD_TGT = GAMD_TGT = 0.0;// not upstream
+	IY_TGT = _V( 0.0, 0.0, 0.0 );// not upstream
+	bMECOTgtSet = bIYTgtSet = false;// not upstream
 
 	// I-LOADs init
 	KMAX_NOM = 104;
@@ -910,7 +912,8 @@ void AscentDAP::Realize()
 	pStateVectorSoftware = dynamic_cast<StateVectorSoftware*>(FindSoftware("StateVectorSoftware"));
 	assert((pStateVectorSoftware != NULL) && "OMSBurnSoftware::Realize.pStateVectorSoftware");
 
-	NominalMECOTargets();// not upstream
+	if (bMECOTgtSet) guid.SetTargets( RD_TGT, VD_TGT, GAMD_TGT, bIYTgtSet ? &IY_TGT : NULL );// not upstream: AOA/ATO targets from the scenario
+	else NominalMECOTargets();// not upstream
 }
 
 void AscentDAP::ReadILOADs( const std::map<std::string,std::string>& ILOADs )
@@ -1119,12 +1122,35 @@ bool AscentDAP::OnParseLine(const char* keyword, const char* value)
 		else AutoFCS = true;
 		return true;
 	}
+	// not upstream: AOA/ATO MECO targets and plane
+	else if (!_strnicmp( keyword, "MECO_TGT", 8 ))
+	{
+		bMECOTgtSet = (sscanf_s( value, "%lf %lf %lf", &RD_TGT, &VD_TGT, &GAMD_TGT ) == 3);
+		return true;
+	}
+	else if (!_strnicmp( keyword, "MECO_IY", 7 ))
+	{
+		bIYTgtSet = (sscanf_s( value, "%lf %lf %lf", &IY_TGT.x, &IY_TGT.y, &IY_TGT.z ) == 3);
+		return true;
+	}
 	return false;
 }
 
 void AscentDAP::OnSaveState(FILEHANDLE scn) const
 {
-	oapiWriteScenario_string( scn, "FCS", const_cast<char*>(AutoFCS ? "AUTO" : "CSS") );// not upstream: the SDK takes char*, the literals are const
+	oapiWriteScenario_string( scn, "FCS", AutoFCS ? "AUTO" : "CSS" );
+	// not upstream: AOA/ATO MECO targets and plane
+	if (bMECOTgtSet)
+	{
+		char cbuf[128];
+		sprintf_s( cbuf, 128, "%.3f %.4f %.8f", RD_TGT, VD_TGT, GAMD_TGT );
+		oapiWriteScenario_string( scn, "MECO_TGT", cbuf );
+		if (bIYTgtSet)
+		{
+			sprintf_s( cbuf, 128, "%.10f %.10f %.10f", IY_TGT.x, IY_TGT.y, IY_TGT.z );
+			oapiWriteScenario_string( scn, "MECO_IY", cbuf );
+		}
+	}
 	return;
 }
 
@@ -1256,6 +1282,7 @@ void AscentDAP::InitializeAutopilot()
 	RD_TGT = TgtRad;// not upstream
 	VD_TGT = VDMAG;// not upstream: as above
 	GAMD_TGT = TgtFPA;// not upstream: as above
+	bMECOTgtSet = bIYTgtSet = false;// not upstream: as above
 
 	// sprintf_s(oapiDebugString(), 128, "PRED_GMT_LO %lf TgtInc %lf EF_PLANE_SW %d IYD %lf %lf %lf IY_M50 %lf %lf %lf", PRED_GMT_LO, TgtInc*DEG, EF_PLANE_SW, IYD.x, IYD.y, IYD.z, IY_M50.x, IY_M50.y, IY_M50.z);
 }
@@ -1275,6 +1302,12 @@ void AscentDAP::SetMECOTargets( double r_D, double v_D, double gamma_D, const VE
 	RD_TGT = r_D;
 	VD_TGT = v_D;
 	GAMD_TGT = gamma_D;
+	bMECOTgtSet = true;
+	if (IY_M50 != NULL)
+	{
+		IY_TGT = *IY_M50;
+		bIYTgtSet = true;
+	}
 	guid.SetTargets( r_D, v_D, gamma_D, IY_M50 );
 	if (NSSME > 0) TgtSpd = VD_TGT - (SSMETailoffDV[NSSME - 1] / MPS2FPS);
 	return;
@@ -1702,7 +1735,7 @@ void AscentDAP::MajorCycle()
 	vel = mul(M_J2000_to_M50, vel);
 
 	// Call guidance function
-	guid.Cycle(pos, vel, ReadClock(), ReadCOMPOOL_IS(SCP_K_CMD), NSSME, (ReadCOMPOOL_IS(SCP_ABORT_OMS_IGN_CMD) != 0) ? 2 : 0, STS()->GetMass(), DVS, U_STEER);// not upstream: OMS thrust in a dump
+	guid.Cycle(pos, vel, ReadClock(), ReadCOMPOOL_IS(SCP_K_CMD), NSSME, (ReadCOMPOOL_IS(SCP_ABORT_OMS_IGN_CMD) != 0) ? 2 : 0, STS()->GetMass(), DVS, U_STEER);// not upstream: OMS thrust deliberately in PEG while the OMS burns (assist and dumps)
 
 	// Convert to old steering system
 	MATRIX3 M_EF_M50;

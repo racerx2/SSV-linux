@@ -271,7 +271,15 @@ void Atlantis::RecordCrewControls( void )
 {
 	if (!flightrecorder.Recording()) return;
 	const CrewControls c = GetCrewControls();
-	if (!flightrecorder.JustStarted() && !CrewControlsDiffer( crewctrl_rec, c )) return;
+	const bool start = flightrecorder.JustStarted();
+	if (!start && !CrewControlsDiffer( crewctrl_rec, c )) return;
+	if (start)
+	{
+		// state only crew commands change, so a playback from here starts like the recording
+		if (pRMS) flightrecorder.Record( flightrec::CMD, ControlRMS ? "RMS 1" : "RMS 0" );
+		flightrecorder.Record( flightrec::CMD, RMSCoarseRateIn ? "RMSRATE 1" : "RMSRATE 0" );
+		flightrecorder.Record( flightrec::CMD, PLBCamCommand( 0, bPLBCamPanLeft_Man ) );
+	}
 	crewctrl_rec = c;
 	flightrecorder.Record( flightrec::CTRL, FormatCrewControls( c ) );
 	return;

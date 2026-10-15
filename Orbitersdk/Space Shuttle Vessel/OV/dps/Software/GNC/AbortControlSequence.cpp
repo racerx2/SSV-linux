@@ -1,7 +1,7 @@
 /****************************************************************************
   This file is part of Space Shuttle Vessel
 
-  Abort Control Sequence (FSSR 4.192) implementation
+  Abort Control Sequence (STS 83-0026 4.3.1) implementation
 
 
   Space Shuttle Vessel is free software; you can redistribute it and/or
@@ -29,14 +29,16 @@ Date         Developer
 #include "AbortControlSequence.h"
 #include "../../../Atlantis.h"
 #include "../../../ParameterValues.h"
+#include "OMSBurnSoftware.h"
 #include <algorithm>
+#include <cassert>
 
 
 namespace dps
 {
 	constexpr double ACS_CYCLE = 0.08;// sequence pass [s]
 	constexpr double OMS_CUTOFF_DELAY = 30.0;// minimum OMS off time before a restart [s]
-	// quantity per side left by the default dumps [%]: the STS-88 handbook full ATO dump (89 % loaded, 15 % assist, 40 % dump) and the manual dump timer (about 20 % left)
+	// quantity per side left by the default ATO dump (STS-88 handbook full ATO dump) and manual dump [%]
 	constexpr double ATO_DUMP_LEFT_PCT = 34.0;
 	constexpr double MANUAL_DUMP_LEFT_PCT = 20.0;
 
@@ -50,7 +52,7 @@ namespace dps
 
 
 	AbortControlSequence::AbortControlSequence( SimpleGPCSystem* _gpc ):SimpleGPCSoftware( _gpc, "AbortControlSequence" ),
-		omsCmdOut( false ), tSRBSep( 0.0 ), tCycle( 0.0 )
+		pOMSBurnSoftware( NULL )
 	{
 		// I-loads: the OMS assist keeps the SSV I-load names and timing; the ATO dump is the handbook full ATO dump (JSC-10559 4.3.4.4)
 		OMSASS = 1;
@@ -71,6 +73,12 @@ namespace dps
 		bATOILoad = false;
 		bManualILoad = false;
 
+		Reset();
+		return;
+	}
+
+	void AbortControlSequence::Reset( void )
+	{
 		burnTimeSelCplt = false;
 		preMecoIcnctCplt = false;
 		atoSelected = false;
@@ -87,6 +95,8 @@ namespace dps
 		omsDelayTimer = 0.0;
 		icnctDelayRunning = false;
 		icnctDelayTimer = 0.0;
+		tSRBSep = -1.0;
+		tCycle = 0.0;
 		return;
 	}
 
@@ -97,20 +107,12 @@ namespace dps
 
 	void AbortControlSequence::Realize( void )
 	{
-		DiscreteBundle* pBundle = BundleManager()->CreateBundle( "LOMS", 4 );
-		omsCmd[0].Connect( pBundle, 2 );
-		pBundle = BundleManager()->CreateBundle( "ROMS", 4 );
-		omsCmd[1].Connect( pBundle, 2 );
+		// the OMS engine command lines have one driver, OMSBurnSoftware, which also restores the abort OMS ignition after a load
+		pOMSBurnSoftware = dynamic_cast<OMSBurnSoftware*>(FindSoftware( "OMSBurnSoftware" ));
+		assert( (pOMSBurnSoftware != NULL) && "AbortControlSequence::Realize.pOMSBurnSoftware" );
 
-		pBundle = BundleManager()->CreateBundle( "AFT_RCS_DUMP", 16 );
+		DiscreteBundle* pBundle = BundleManager()->CreateBundle( "AFT_RCS_DUMP", 16 );
 		for (int i = 0; i < 5; i++) dumpCmd[i].Connect( pBundle, i );
-
-		omsCmdOut = (ReadCOMPOOL_IS( SCP_ABORT_OMS_IGN_CMD ) != 0);
-		if (omsCmdOut)
-		{
-			omsCmd[0].SetLine();
-			omsCmd[1].SetLine();
-		}
 		return;
 	}
 
@@ -118,18 +120,19 @@ namespace dps
 	{
 		GetValILOAD( "OMSASS", ILOADs, OMSASS );
 		GetValILOAD( "NOMTM", ILOADs, ASSIST_OMS_DT );
-		if (HasILOAD( "ATO_OMS_DT", ILOADs )) bATOILoad = GetValILOAD( "ATO_OMS_DT", ILOADs, ATO_OMS_DT );
-		if (HasILOAD( "ATO_ICNCT_SEL", ILOADs )) GetValILOAD( "ATO_ICNCT_SEL", ILOADs, ATO_ICNCT_SEL );
-		if (HasILOAD( "TAL_OMS_DT", ILOADs )) GetValILOAD( "TAL_OMS_DT", ILOADs, TAL_OMS_DT );
-		if (HasILOAD( "TAL_ICNCT_SEL", ILOADs )) GetValILOAD( "TAL_ICNCT_SEL", ILOADs, TAL_ICNCT_SEL );
-		if (HasILOAD( "RTLS_OMS_DT", ILOADs )) GetValILOAD( "RTLS_OMS_DT", ILOADs, RTLS_OMS_DT );
-		if (HasILOAD( "RTLS_ICNCT_SEL", ILOADs )) GetValILOAD( "RTLS_ICNCT_SEL", ILOADs, RTLS_ICNCT_SEL );
-		if (HasILOAD( "MANUAL_OMS_DT", ILOADs )) bManualILoad = GetValILOAD( "MANUAL_OMS_DT", ILOADs, MANUAL_OMS_DT );
-		if (HasILOAD( "ICNCT_DELAY", ILOADs )) GetValILOAD( "ICNCT_DELAY", ILOADs, ICNCT_DELAY );
-		if (HasILOAD( "RCS_24_JET_FU_BIAS", ILOADs )) GetValILOAD( "RCS_24_JET_FU_BIAS", ILOADs, RCS_24_JET_FU_BIAS );
-		if (HasILOAD( "RCS_24_JET_FU_SCALE", ILOADs )) GetValILOAD( "RCS_24_JET_FU_SCALE", ILOADs, RCS_24_JET_FU_SCALE );
-		if (HasILOAD( "RCS_10_JET_FU_BIAS", ILOADs )) GetValILOAD( "RCS_10_JET_FU_BIAS", ILOADs, RCS_10_JET_FU_BIAS );
-		if (HasILOAD( "RCS_10_JET_FU_SCALE", ILOADs )) GetValILOAD( "RCS_10_JET_FU_SCALE", ILOADs, RCS_10_JET_FU_SCALE );
+		GetOptILOAD( "T_ASSIST", ILOADs, T_ASSIST );
+		bATOILoad = GetOptILOAD( "ATO_OMS_DT", ILOADs, ATO_OMS_DT );
+		GetOptILOAD( "ATO_ICNCT_SEL", ILOADs, ATO_ICNCT_SEL );
+		GetOptILOAD( "TAL_OMS_DT", ILOADs, TAL_OMS_DT );
+		GetOptILOAD( "TAL_ICNCT_SEL", ILOADs, TAL_ICNCT_SEL );
+		GetOptILOAD( "RTLS_OMS_DT", ILOADs, RTLS_OMS_DT );
+		GetOptILOAD( "RTLS_ICNCT_SEL", ILOADs, RTLS_ICNCT_SEL );
+		bManualILoad = GetOptILOAD( "MANUAL_OMS_DT", ILOADs, MANUAL_OMS_DT );
+		GetOptILOAD( "ICNCT_DELAY", ILOADs, ICNCT_DELAY );
+		GetOptILOAD( "RCS_24_JET_FU_BIAS", ILOADs, RCS_24_JET_FU_BIAS );
+		GetOptILOAD( "RCS_24_JET_FU_SCALE", ILOADs, RCS_24_JET_FU_SCALE );
+		GetOptILOAD( "RCS_10_JET_FU_BIAS", ILOADs, RCS_10_JET_FU_BIAS );
+		GetOptILOAD( "RCS_10_JET_FU_SCALE", ILOADs, RCS_10_JET_FU_SCALE );
 
 		OPS1Init();
 		return;
@@ -154,10 +157,10 @@ namespace dps
 		// timers not in the mission's I-loads follow its OMS load, so a dump leaves the same quantity as on a flight with those I-loads
 		double pct = 100.0 * STS()->GetOMSPropellantMass() / (2.0 * ORBITER_MAX_OMS_PROPELLANT_MASS);
 		double assist = (OMSASS == 1) ? ASSIST_OMS_DT : 0.0;
-		if (!bATOILoad) ATO_OMS_DT = std::max( 0.0, ((pct - ATO_DUMP_LEFT_PCT) / OMS_DUMP_PCT_PER_SEC) - assist );
+		if (!bATOILoad) ATO_OMS_DT = std::max<double>( 0.0, ((pct - ATO_DUMP_LEFT_PCT) / OMS_DUMP_PCT_PER_SEC) - assist );
 		if (!bManualILoad)
 		{
-			MANUAL_OMS_DT = std::max( 0.0, (pct - MANUAL_DUMP_LEFT_PCT) / OMS_DUMP_PCT_PER_SEC );
+			MANUAL_OMS_DT = std::max<double>( 0.0, (pct - MANUAL_DUMP_LEFT_PCT) / OMS_DUMP_PCT_PER_SEC );
 			WriteCOMPOOL_SS( SCP_MANUAL_OMS_DT, static_cast<float>(MANUAL_OMS_DT) );
 			WriteCOMPOOL_SS( SCP_OMS_DT_COMPUTED, static_cast<float>(MANUAL_OMS_DT) );
 		}
@@ -167,7 +170,11 @@ namespace dps
 
 	bool AbortControlSequence::OnMajorModeChange( unsigned int newMajorMode )
 	{
-		if ((newMajorMode == 101) && (GetMajorMode() != 0)) OPS1Init();
+		if ((newMajorMode == 101) && (GetMajorMode() != 0))
+		{
+			Reset();
+			OPS1Init();
+		}
 		else if ((newMajorMode == 102) && (GetMajorMode() == 101)) DumpTimersFromLoad();
 		else if ((newMajorMode == 103) && (GetMajorMode() == 102)) tSRBSep = STS()->GetMET();
 
@@ -186,8 +193,8 @@ namespace dps
 	{
 		unsigned int mm = GetMajorMode();
 
-		// MSC: ascent OMS assist event
-		if ((mm == 103) && (OMSASS == 1) && !assistEvent && (STS()->GetMET() >= (tSRBSep + T_ASSIST))) assistEvent = true;
+		// MSC: ascent OMS assist event; SRB separation time unknown (MM 103 loaded without it): the assist is taken as done, upstream fired it 10 s after the load
+		if ((mm == 103) && (OMSASS == 1) && !assistEvent && (tSRBSep >= 0.0) && (STS()->GetMET() >= (tSRBSep + T_ASSIST))) assistEvent = true;
 
 		tCycle += simdt;
 		if (tCycle < ACS_CYCLE) return;
@@ -232,7 +239,6 @@ namespace dps
 				dumpEnaFirst = false;
 				burnTimeSelCplt = true;
 				WriteCOMPOOL_SS( SCP_OMS_DT_COMPUTED, ReadCOMPOOL_SS( SCP_MANUAL_OMS_DT ) );
-				dumpCutoff = false;
 			}
 		}
 		else
@@ -378,14 +384,16 @@ namespace dps
 		WriteCOMPOOL_IS( SCP_ABORT_RCS_PX_CMD, 1 );
 		WriteCOMPOOL_IS( SCP_ABORT_RCS_NULL_CMD, 1 );
 
-		// step 11: OMS propellant through the RCS jets, 24 or 10 jets
+		// step 11: OMS propellant through the RCS jets, 24 or 10 jets, groups as in Outputs()
 		double k = dt / ACS_CYCLE;
-		if ((ReadCOMPOOL_IS( SCP_AFT_MANF_12_JET_INH ) == 0) && (ReadCOMPOOL_IS( SCP_AFT_MANF_345_JET_INH ) == 0))
+		bool g12 = Group12Available();
+		bool g345 = Group345Available();
+		if (g12 && g345)
 		{
 			WriteCOMPOOL_SS( SCP_OMS_EQUIV_ON_TIME, static_cast<float>(ReadCOMPOOL_SS( SCP_OMS_EQUIV_ON_TIME ) + (RCS_24_JET_FU_BIAS * k)) );
 			WriteCOMPOOL_SS( SCP_OMS_TIME_SCALE_FACTOR, static_cast<float>(RCS_24_JET_FU_SCALE) );
 		}
-		else
+		else if (g12 || g345)
 		{
 			WriteCOMPOOL_SS( SCP_OMS_EQUIV_ON_TIME, static_cast<float>(ReadCOMPOOL_SS( SCP_OMS_EQUIV_ON_TIME ) + (RCS_10_JET_FU_BIAS * k)) );
 			WriteCOMPOOL_SS( SCP_OMS_TIME_SCALE_FACTOR, static_cast<float>(RCS_10_JET_FU_SCALE) );
@@ -428,24 +436,26 @@ namespace dps
 		return;
 	}
 
+	bool AbortControlSequence::Group12Available( void ) const
+	{
+		return (ReadCOMPOOL_IS( SCP_AFT_MANF_12_JET_INH ) == 0) && (ReadCOMPOOL_IS( SCP_RCS_12_ALL_JET_INH ) == 0);
+	}
+
+	bool AbortControlSequence::Group345Available( void ) const
+	{
+		return (ReadCOMPOOL_IS( SCP_AFT_MANF_345_JET_INH ) == 0) && (ReadCOMPOOL_IS( SCP_RCS_345_ALL_JET_INH ) == 0);
+	}
+
 	void AbortControlSequence::Outputs( void )
 	{
-		bool ign = (ReadCOMPOOL_IS( SCP_ABORT_OMS_IGN_CMD ) != 0);
-		if (ign != omsCmdOut)
-		{
-			omsCmdOut = ign;
-			for (int i = 0; i < 2; i++)
-			{
-				if (ign) omsCmd[i].SetLine();
-				else omsCmd[i].ResetLine();
-			}
-		}
+		// ABORT_OMS_IGN_CMD to the OMS engines, MM 102/103 included (OMSBurnSoftware is not active there)
+		pOMSBurnSoftware->AbortOMSIgnCmd();
 
 		// aft RCS dump jets, without the manifold groups that are inhibited (ASC RCS CMD SOP)
 		bool px = (ReadCOMPOOL_IS( SCP_ABORT_RCS_PX_CMD ) != 0);
 		bool nl = (ReadCOMPOOL_IS( SCP_ABORT_RCS_NULL_CMD ) != 0);
-		bool g12 = (ReadCOMPOOL_IS( SCP_AFT_MANF_12_JET_INH ) == 0) && (ReadCOMPOOL_IS( SCP_RCS_12_ALL_JET_INH ) == 0);
-		bool g345 = (ReadCOMPOOL_IS( SCP_AFT_MANF_345_JET_INH ) == 0) && (ReadCOMPOOL_IS( SCP_RCS_345_ALL_JET_INH ) == 0);
+		bool g12 = Group12Available();
+		bool g345 = Group345Available();
 		bool out[5] = {px && g12, px && g345, nl && g12, nl && g345, nl && g12 && g345};
 		for (int i = 0; i < 5; i++)
 		{
@@ -479,7 +489,13 @@ namespace dps
 		}
 		else if (!_strnicmp( keyword, "TIMERS", 6 ))
 		{
-			sscanf_s( value, "%lf %lf %lf %lf %lf", &omsDelayTimer, &icnctDelayTimer, &tSRBSep, &ATO_OMS_DT, &MANUAL_OMS_DT );
+			// the dump timers are in the line only from MM 102, after the capture from the OMS load
+			double ato = 0.0, man = 0.0;
+			if (sscanf_s( value, "%lf %lf %lf %lf %lf", &omsDelayTimer, &icnctDelayTimer, &tSRBSep, &ato, &man ) == 5)
+			{
+				ATO_OMS_DT = ato;
+				MANUAL_OMS_DT = man;
+			}
 			return true;
 		}
 		else if (!_strnicmp( keyword, "DUMP", 4 ))
@@ -517,7 +533,8 @@ namespace dps
 		sprintf_s( cbuf, 256, "%d %d %d %d %d %d %d %d %d %d %d %d %d %d", burnTimeSelCplt, preMecoIcnctCplt, atoSelected, dumpCutoff, dumpEnaFirst, talFirst, assistFirst, assistEvent,
 			serc1AFirst, step12First, step14First, mode2Done, omsDelayRunning, icnctDelayRunning );
 		oapiWriteScenario_string( scn, "SEQ", cbuf );
-		sprintf_s( cbuf, 256, "%.2f %.2f %.3f %.1f %.1f", omsDelayTimer, icnctDelayTimer, tSRBSep, ATO_OMS_DT, MANUAL_OMS_DT );
+		if (GetMajorMode() >= 102) sprintf_s( cbuf, 256, "%.2f %.2f %.3f %.1f %.1f", omsDelayTimer, icnctDelayTimer, tSRBSep, ATO_OMS_DT, MANUAL_OMS_DT );
+		else sprintf_s( cbuf, 256, "%.2f %.2f %.3f", omsDelayTimer, icnctDelayTimer, tSRBSep );
 		oapiWriteScenario_string( scn, "TIMERS", cbuf );
 		sprintf_s( cbuf, 256, "%.3f %.3f %.4f %.3f", ReadCOMPOOL_SS( SCP_OMS_DT_COMPUTED ), ReadCOMPOOL_SS( SCP_OMS_EQUIV_ON_TIME ), ReadCOMPOOL_SS( SCP_OMS_TIME_SCALE_FACTOR ), ReadCOMPOOL_SS( SCP_MANUAL_OMS_DT ) );
 		oapiWriteScenario_string( scn, "DUMP", cbuf );

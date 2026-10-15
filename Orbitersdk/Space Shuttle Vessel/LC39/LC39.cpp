@@ -47,22 +47,15 @@ Date         Developer
 #include <DlgCtrl.h>
 #ifndef _WIN32
 #include <OrbiterResource.h>// not upstream: the Qt dialog functions
-#include <QWidget>
-constexpr UINT WM_COMMAND = 0x0111;// not upstream: winuser.h values of the messages the dialog procedure takes
-constexpr UINT WM_SHOWWINDOW = 0x0018;
-static void LC39_DlgInit( QWidget* hWnd, void* context );// not upstream: below the dialog procedure
 #endif
 #include "../SSVSound.h"
 #include <UtilsSSV.h>
 #include <cJSON.h>
+#include <TextFile.h>// not upstream: OrbiterPath
 
 
 //global dll handle
-#ifdef _WIN32
 HINSTANCE hPad_DLL;
-#else
-void* hPad_DLL;// not upstream: the dlopen handle
-#endif
 
 
 //#define DEBUG_DISPLAY_OWP_STRUT_ANIMATION_VALUES
@@ -180,11 +173,7 @@ const double PCR_LIGHT_PENUMBRA = 100.0 * RAD;
 
 
 //global functions
-#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 	try
 	{
@@ -203,11 +192,7 @@ DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlo
 	}
 }
 
-#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 	try
 	{
@@ -301,138 +286,141 @@ void DisableOWPbuttons( QWidget* hWnd )
 }
 #endif
 
-#ifdef _WIN32
+// not upstream: the WM_COMMAND part of LC39_DlgProc, on both platforms; TRUE if handled
+BOOL LC39_DlgCommand( HPADDLG hWnd, LC39* pad, int id )
+{
+	switch(id) {
+		case IDCANCEL:
+			oapiCloseDialog(hWnd);
+			return TRUE;
+		case IDC_RSS_OPEN:
+			pad->PadCommand( "RSS OPEN" );// not upstream: flight recorder, each button a pad command (design ssv-flightrec)
+			return TRUE;
+		case IDC_RSS_STOP:
+			pad->PadCommand( "RSS STOP" );// not upstream: as above
+			return TRUE;
+		case IDC_RSS_CLOSE:
+			pad->PadCommand( "RSS CLOSE" );// not upstream: as above
+			return TRUE;
+		case IDC_FSSOWP_OPEN:
+			pad->PadCommand( "FSSOWP OPEN" );// not upstream: as above
+			return TRUE;
+		case IDC_FSSOWP_CLOSE:
+			pad->PadCommand( "FSSOWP CLOSE" );// not upstream: as above
+			return TRUE;
+		case IDC_RSSOWP_OPEN:
+			pad->PadCommand( "RSSOWP OPEN" );// not upstream: as above
+			return TRUE;
+		case IDC_RSSOWP_CLOSE:
+			pad->PadCommand( "RSSOWP CLOSE" );// not upstream: as above
+			return TRUE;
+		case IDC_IAA_DEPLOY:
+			pad->PadCommand( "IAA DEPLOY" );// not upstream: as above
+			return TRUE;
+		case IDC_IAA_HALT:
+			pad->PadCommand( "IAA HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_IAA_RETRACT:
+			pad->PadCommand( "IAA RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_CREWARM_EXTEND:
+			pad->PadCommand( "OAA EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_CREWARM_RETRACT:
+			pad->PadCommand( "OAA RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_CREWARM_STOP:
+			pad->PadCommand( "OAA HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_GH2_EXTEND:
+			pad->PadCommand( "ETVAS ATTACH" );// not upstream: as above
+			return TRUE;
+		case IDC_GH2_RETRACT:
+			pad->PadCommand( "ETVAS DETACH" );// not upstream: as above
+			return TRUE;
+		case IDC_VHOOD_DEPLOY:
+			pad->PadCommand( "HOOD LOWER" );// not upstream: as above
+			return TRUE;
+		case IDC_VHOOD_RETRACT:
+			pad->PadCommand( "HOOD RAISE" );// not upstream: as above
+			return TRUE;
+		case IDC_VHOOD_HALT:
+			pad->PadCommand( "HOOD HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_VARM_EXTEND:
+			pad->PadCommand( "GVA EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_VARM_RETRACT:
+			pad->PadCommand( "GVA RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_VARM_HALT:
+			pad->PadCommand( "GVA HALT" );// not upstream: as above
+			return TRUE;
+		case IDC_RBUS_EXTEND:
+			pad->PadCommand( "RBUS EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_RBUS_RETRACT:
+			pad->PadCommand( "RBUS RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_SRBEAST_EXTEND:
+			pad->PadCommand( "SRBSFD EAST EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_SRBEAST_RETRACT:
+			pad->PadCommand( "SRBSFD EAST RETRACT" );// not upstream: as above
+			return TRUE;
+		case IDC_SRBWEST_EXTEND:
+			pad->PadCommand( "SRBSFD WEST EXTEND" );// not upstream: as above
+			return TRUE;
+		case IDC_SRBWEST_RETRACT:
+			pad->PadCommand( "SRBSFD WEST RETRACT" );// not upstream: as above
+			return TRUE;
+	}
+	return FALSE;
+}
+
+// not upstream: the WM_SHOWWINDOW part of LC39_DlgProc, on both platforms
+void LC39_DlgEnable( HPADDLG hWnd, LC39* pad )
+{
+	switch (pad->padtype)
+	{
+		case pad->_1981:
+		case pad->_1982:
+		case pad->_1983:
+			DisableRBUSbuttons( hWnd );
+			DisableOWPbuttons( hWnd );
+			break;
+		case pad->_1985:
+			DisableOWPbuttons( hWnd );
+			break;
+		case pad->_1986:
+			break;
+		case pad->_1988:
+		case pad->_1995:
+		case pad->_2007:
+			DisableRBUSbuttons( hWnd );
+			break;
+	}
+	return;
+}
+
+#ifdef _WIN32// not upstream: the Win32 dialog procedure
 BOOL CALLBACK LC39_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-#else
-BOOL LC39_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not upstream: as on Windows, messages from LC39_DlgInit
-#endif
 {
 	try
 	{
 		if(uMsg==WM_COMMAND) {
 			LC39* pad=static_cast<LC39*>(oapiGetDialogContext(hWnd));
-			switch(LOWORD(wParam)) {
-				case IDCANCEL:
-					oapiCloseDialog(hWnd);
-					return TRUE;
-				case IDC_RSS_OPEN:
-					pad->PadCommand( "RSS OPEN" );// not upstream: flight recorder, each button a pad command (design ssv-flightrec)
-					return TRUE;
-				case IDC_RSS_STOP:
-					pad->PadCommand( "RSS STOP" );// not upstream: as above
-					return TRUE;
-				case IDC_RSS_CLOSE:
-					pad->PadCommand( "RSS CLOSE" );// not upstream: as above
-					return TRUE;
-				case IDC_FSSOWP_OPEN:
-					pad->PadCommand( "FSSOWP OPEN" );// not upstream: as above
-					return TRUE;
-				case IDC_FSSOWP_CLOSE:
-					pad->PadCommand( "FSSOWP CLOSE" );// not upstream: as above
-					return TRUE;
-				case IDC_RSSOWP_OPEN:
-					pad->PadCommand( "RSSOWP OPEN" );// not upstream: as above
-					return TRUE;
-				case IDC_RSSOWP_CLOSE:
-					pad->PadCommand( "RSSOWP CLOSE" );// not upstream: as above
-					return TRUE;
-				case IDC_IAA_DEPLOY:
-					pad->PadCommand( "IAA DEPLOY" );// not upstream: as above
-					return TRUE;
-				case IDC_IAA_HALT:
-					pad->PadCommand( "IAA HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_IAA_RETRACT:
-					pad->PadCommand( "IAA RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_CREWARM_EXTEND:
-					pad->PadCommand( "OAA EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_CREWARM_RETRACT:
-					pad->PadCommand( "OAA RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_CREWARM_STOP:
-					pad->PadCommand( "OAA HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_GH2_EXTEND:
-					pad->PadCommand( "ETVAS ATTACH" );// not upstream: as above
-					return TRUE;
-				case IDC_GH2_RETRACT:
-					pad->PadCommand( "ETVAS DETACH" );// not upstream: as above
-					return TRUE;
-				case IDC_VHOOD_DEPLOY:
-					pad->PadCommand( "HOOD LOWER" );// not upstream: as above
-					return TRUE;
-				case IDC_VHOOD_RETRACT:
-					pad->PadCommand( "HOOD RAISE" );// not upstream: as above
-					return TRUE;
-				case IDC_VHOOD_HALT:
-					pad->PadCommand( "HOOD HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_VARM_EXTEND:
-					pad->PadCommand( "GVA EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_VARM_RETRACT:
-					pad->PadCommand( "GVA RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_VARM_HALT:
-					pad->PadCommand( "GVA HALT" );// not upstream: as above
-					return TRUE;
-				case IDC_RBUS_EXTEND:
-					pad->PadCommand( "RBUS EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_RBUS_RETRACT:
-					pad->PadCommand( "RBUS RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_SRBEAST_EXTEND:
-					pad->PadCommand( "SRBSFD EAST EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_SRBEAST_RETRACT:
-					pad->PadCommand( "SRBSFD EAST RETRACT" );// not upstream: as above
-					return TRUE;
-				case IDC_SRBWEST_EXTEND:
-					pad->PadCommand( "SRBSFD WEST EXTEND" );// not upstream: as above
-					return TRUE;
-				case IDC_SRBWEST_RETRACT:
-					pad->PadCommand( "SRBSFD WEST RETRACT" );// not upstream: as above
-					return TRUE;
-			}
+			if (LC39_DlgCommand( hWnd, pad, LOWORD(wParam) )) return TRUE;// not upstream: the switch is in LC39_DlgCommand
 		}
 		else if(uMsg==WM_SHOWWINDOW) {
 			LC39* pad=static_cast<LC39*>(oapiGetDialogContext(hWnd));
-			switch (pad->padtype)
-			{
-				case pad->_1981:
-				case pad->_1982:
-				case pad->_1983:
-					DisableRBUSbuttons( hWnd );
-					DisableOWPbuttons( hWnd );
-					break;
-				case pad->_1985:
-					DisableOWPbuttons( hWnd );
-					break;
-				case pad->_1986:
-					break;
-				case pad->_1988:
-				case pad->_1995:
-				case pad->_2007:
-					DisableRBUSbuttons( hWnd );
-					break;
-			}
+			LC39_DlgEnable( hWnd, pad );// not upstream: the switch is in LC39_DlgEnable
 			// let Orbiter perform default actions
-#ifdef _WIN32
 			return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
-#else
-			return FALSE;// not upstream: as below
-#endif
 		}
 
 		//if message has not been handled in this function, perform default action
-#ifdef _WIN32
 		return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
-#else
-		return FALSE;// not upstream: the Qt dialog does the default actions itself
-#endif
 	}
 	catch (std::exception &e)
 	{
@@ -445,13 +433,30 @@ BOOL LC39_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not 
 		abort();
 	}
 }
-
-#ifndef _WIN32
-// not upstream: WM_INITDIALOG on Qt; WM_SHOWWINDOW (once, the dialog is shown right after) and the controls' WM_COMMAND go to LC39_DlgProc
+#else
+// not upstream: Qt dialog init, LC39_DlgProc's WM_SHOWWINDOW and WM_COMMAND parts
 static void LC39_DlgInit( QWidget* hWnd, void* context )
 {
-	LC39_DlgProc( hWnd, WM_SHOWWINDOW, TRUE, 0 );
-	oapiConnectDlgCommands( hWnd, [hWnd]( int id, int code, QWidget* hCtrl ) { LC39_DlgProc( hWnd, WM_COMMAND, MAKEWPARAM( id, 0 ), 0 ); } );
+	LC39* pad = static_cast<LC39*>(context);
+	LC39_DlgEnable( hWnd, pad );
+	oapiConnectDlgCommands( hWnd, [hWnd, pad]( int id, int, QWidget* )
+	{
+		try
+		{
+			LC39_DlgCommand( hWnd, pad, id );
+		}
+		catch (std::exception &e)
+		{
+			oapiWriteLogV( "(SSV_LC39) [FATAL ERROR] Exception in LC39_DlgCommand: %s", e.what() );
+			abort();
+		}
+		catch (...)
+		{
+			oapiWriteLog( "(SSV_LC39) [FATAL ERROR] Exception in LC39_DlgCommand" );
+			abort();
+		}
+	} );
+	return;
 }
 #endif
 
@@ -875,10 +880,10 @@ void LC39::CalculateSteamProduction( double simt, double simdt )
 	double fPowerR = CalculateThrustPower( this, R0, R1, R2, R3 );
 
 	double delay = 7.5E8;// factor controls delay
-	if(fPowerM > delay) fSSMESteamLevel = std::min( 1.0, (fPowerM - delay) / (1.79E10 - delay) );// not upstream: windows.h min macro
+	if(fPowerM > delay) fSSMESteamLevel = std::min<double>( 1.0, (fPowerM - delay) / (1.79E10 - delay) );// not upstream: windows.h min macro
 	else fSSMESteamLevel = 0.0;
 
-	if ((fPowerL + fPowerR) > 0.0) fSRBSteamLevel = std::min( 1.0, (fPowerL + fPowerR) / 5.92E10 );// not upstream: windows.h min macro
+	if ((fPowerL + fPowerR) > 0.0) fSRBSteamLevel = std::min<double>( 1.0, (fPowerL + fPowerR) / 5.92E10 );// not upstream: windows.h min macro
 	else fSRBSteamLevel = 0.0;
 	return;
 }
@@ -1655,11 +1660,7 @@ void LC39::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
-#ifdef _WIN32
-	FILE* hF = fopen( filename.c_str(), "r" );
-#else
-	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
-#endif
+	FILE* hF = fopen( OrbiterPath( filename ).c_str(), "r" );// not upstream: '\' path, any letter case
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_LC39) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -1690,6 +1691,13 @@ void LC39::LoadMissionFile( void )
 	}
 
 	cJSON* version = cJSON_GetObjectItemCaseSensitive( root, "Version" );
+	if (!cJSON_IsNumber( version ))// not upstream: no or bad version
+	{// not upstream: as above
+		oapiWriteLog( "(SSV_LC39) [ERROR] Error parsing mission file version" );// not upstream: as above
+		cJSON_Delete( root );// not upstream: as above
+		delete[] missionfilestr;// not upstream: as above
+		return;// not upstream: as above
+	}// not upstream: as above
 	switch (version->valueint)
 	{
 		case 1:

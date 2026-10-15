@@ -31,6 +31,7 @@ Date         Developer
 
 
 #include "../SimpleGPCSoftware.h"
+#include "../../../oms/OMSRCS_Interface.h"
 #include <DiscInPort.h>
 #include <DiscOutPort.h>
 
@@ -42,11 +43,18 @@ namespace dps
 	class AbortOMSRCSInterconnect : public SimpleGPCSoftware
 	{
 		private:
-			// valve groups of a pod, as oms::OMSRCS_VLV
-			enum VLV { TK12, TK345, XFD12, XFD345, OXA, OXB, VLV_COUNT };
+			// valve groups of a pod
+			typedef oms::OMSRCS_VLV VLV;
+			static constexpr VLV TK12 = oms::VLV_TK12;
+			static constexpr VLV TK345 = oms::VLV_TK345;
+			static constexpr VLV XFD12 = oms::VLV_XFD12;
+			static constexpr VLV XFD345 = oms::VLV_XFD345;
+			static constexpr VLV OXA = oms::VLV_OMSXFDA;
+			static constexpr VLV OXB = oms::VLV_OMSXFDB;
+			static constexpr unsigned int VLV_COUNT = oms::VLV_COUNT;
 
 			// sequence steps
-			enum STEP { IDLE, IC_TK_CLOSE, IC_XFD_OPEN, IC_XFD_CHECK, IC_RECONFIG_XFD, IC_RECONFIG_TK, IC_OMS_XFD_A, IC_COMPLETE,
+			enum STEP { IDLE, IC_TK_CLOSE, IC_XFD_OPEN, IC_XFD_CHECK, IC_RECONFIG_XFD, IC_RECONFIG_TK, IC_OMS_XFD_A,
 				RTN_OMS_XFD_CLOSE, RTN_TK_OPEN, RTN_XFD, M2_TK_OPEN, M2_XFD, M2_OMS_XFD_CLOSE };
 
 			DiscOutPort cmdOpen[2][VLV_COUNT];
@@ -60,6 +68,7 @@ namespace dps
 			bool icInProgress;
 			bool rtnInProgress;
 			bool monitor;
+			bool monGrp[2];// monitor: manifold groups (1/2, 3/4/5) on OMS feed that are watched
 			bool xfdIsoFail;
 			bool bOXA;// OMS crossfeed A valves commanded because a B valve did not open
 			int icFail;

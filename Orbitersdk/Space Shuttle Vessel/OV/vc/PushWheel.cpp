@@ -113,10 +113,17 @@ namespace vc
 	void PushWheel::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
 	{
 		const char* s = flightrec::SkipBlanks( event );
+		unsigned short idx = 0;
+		if ((sscanf_s( s, "%hu", &idx ) != 1) || (idx > 9)) return;
 		while ((*s >= '0') && (*s <= '9')) s++;
-		tgtpistonup = (strchr( s, 'U' ) != NULL) ? 1 : 0;
-		tgtpistondn = (strchr( s, 'D' ) != NULL) ? 1 : 0;
+		const unsigned short up = (strchr( s, 'U' ) != NULL) ? 1 : 0;
+		const unsigned short dn = (strchr( s, 'D' ) != NULL) ? 1 : 0;
 		SelectorWheel::OnPlaybackEvent( simt, fEventT, event_t, event );
+		string now;
+		SelectorWheel::GetPlaybackState( now );
+		if (now != std::to_string( idx )) return;// the wheel refused the digit (bounds)
+		tgtpistonup = up;
+		tgtpistondn = dn;
 		return;
 	}
 

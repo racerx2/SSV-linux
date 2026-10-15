@@ -132,13 +132,17 @@
   <ItemGroup>
     <ClCompile Include="LCC.cpp" />
     <ClCompile Include="LCC_MFD.cpp" />
-    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LCC.h" />
     <ClInclude Include="LCC_MFD.h" />
     <ClInclude Include="..\PadLCCInterface.h" />
-    <ClInclude Include="..\SSVlib\include\FlightRecorder.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- not upstream: flight recorder (design ssv-flightrec) -->
+    <ProjectReference Include="..\SSVlib\SSVlib_2017.vcxproj">
+      <Project>{eda1260c-9f5c-478a-b18b-a687101fc234}</Project>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

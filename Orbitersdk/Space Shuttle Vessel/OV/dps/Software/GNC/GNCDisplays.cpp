@@ -514,8 +514,8 @@ namespace dps
 
 	bool GNCDisplays::ItemInput_SPEC51( int item, const char* Data )
 	{
-		unsigned int mm = GetMajorMode();// not upstream: items 5 to 9 are illegal in MM 104 to 106, OPS 3 and 6 dumps are later phases
-		bool ops1Dump = ((mm >= 101) && (mm <= 103));// not upstream: as above
+		unsigned int mm = GetMajorMode();// not upstream: items 5 to 9 are legal only in MM 102 and 103, OPS 3 and 6 dumps are later phases
+		bool ops1Dump = ((mm == 102) || (mm == 103));// not upstream: as above
 		switch (item)
 		{
 			case 1:// not upstream: TAL select, legal in MM 103 and 104 once TAL is implemented (phase 2)
@@ -559,7 +559,7 @@ namespace dps
 					if (!GetIntegerUnsigned( Data, quan )) return false;
 					const AbortControlSequence* pACS = dynamic_cast<const AbortControlSequence*>(FindSoftware( "AbortControlSequence" ));
 					if (pACS == NULL) return false;
-					if (quan > (pACS->GetManualOMSDTILoad() * OMS_DUMP_PCT_PER_SEC)) return false;
+					if (quan > (pACS->GetManualOMSDT() * OMS_DUMP_PCT_PER_SEC)) return false;
 					float dt = static_cast<float>(quan / OMS_DUMP_PCT_PER_SEC);
 					WriteCOMPOOL_SS( SCP_MANUAL_OMS_DT, dt );
 					WriteCOMPOOL_SS( SCP_OMS_DT_COMPUTED, dt );
@@ -2829,8 +2829,8 @@ namespace dps
 			pMDU->mvprint( 13, 16, cbuf );
 		}
 		pMDU->Underline( 13, 15 );// not upstream: item 9 entry field
-		pMDU->Underline( 14, 15 );
-		pMDU->Underline( 15, 15 );
+		pMDU->Underline( 14, 15 );// not upstream: as above
+		pMDU->Underline( 15, 15 );// not upstream: as above
 
 		switch (GetMajorMode())
 		{

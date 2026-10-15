@@ -1,10 +1,24 @@
 #!/usr/bin/env python3
 # not upstream (SSV Linux port): writes Config/GC/SSV_OV.cfg and SSV_SRB.cfg from the meshes' material names, and adds the HUD combiners to VC_external.msh (design ssv-pbr)
-import os, sys
+import os, re, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MESH = os.path.join(ROOT, 'Meshes')
-VC_OFFSET = (0.0, -1.41, -2.42)  # panels' offset against VC_external's (OV/ParameterValues: VC_OFFSET - VC_EXTERNAL_OFFSET)
+PARAMS = os.path.join(ROOT, 'Orbitersdk', 'Space Shuttle Vessel', 'OV', 'ParameterValues.h')
+
+
+def vc_offset():  # panels' offset against VC_external's: VC_OFFSET - VC_EXTERNAL_OFFSET in OV/ParameterValues.h
+    txt = open(PARAMS, encoding='latin-1').read() if os.path.isfile(PARAMS) else ''
+    v = {}
+    for name in ('VC_OFFSET', 'VC_EXTERNAL_OFFSET'):
+        m = re.search(r'\bVECTOR3\s+%s\s*=\s*\{([^}]*)\}' % name, txt)
+        if not m:
+            sys.exit('%s: %s not found' % (PARAMS, name))
+        v[name] = [float(x.strip().rstrip('fF')) for x in m.group(1).split(',')]
+    return tuple(a - b for a, b in zip(v['VC_OFFSET'], v['VC_EXTERNAL_OFFSET']))
+
+
+VC_OFFSET = vc_offset()
 
 MDU = ['REFLECT 0.03 0.03 0.03', 'FRESNEL 5 1024 0.6', 'SMOOTHNESS 0.95 1']
 GLASS = ['DIFFUSE 0.60 0.80 0.65 0.15', 'SPECULAR 0.9 0.9 0.9 60', 'REFLECT 0.06 0.08 0.06', 'FRESNEL 4 1024 0.8', 'SMOOTHNESS 0.95 1']
@@ -60,7 +74,12 @@ def group(lines, label):  # a group's GEOM line, vertices and triangles, by labe
 def material_block(lines, name):
     for i, l in enumerate(lines):
         if l.split() == ['MATERIAL', name]:
-            return lines[i + 1:i + 5]
+            end = next((k for k in range(i + 1, len(lines)) if lines[k].split()[:1] in (['MATERIAL'], ['TEXTURES'])), len(lines))
+            while end > i + 1 and not lines[end - 1].strip():
+                end -= 1  # blank lines before the next block
+            if end != i + 5:
+                sys.exit('material block %s: %d lines, expected 4' % (name, end - i - 1))
+            return lines[i + 1:end]
     sys.exit('no material block ' + name)
 
 

@@ -47,7 +47,7 @@ namespace flightrec
 	inline constexpr char CW[] = "SSV_CW";
 	inline constexpr char MA[] = "SSV_MA";
 
-	// format of the SSV events, written with SSV_NOMINAL
+	// format of the SSV events, written with SSV_NOMINAL and checked on playback
 	inline constexpr int FORMAT = 1;
 
 	// a draw in [0,1), or 0.5 while a vessel of this module plays back nominal
@@ -56,7 +56,6 @@ namespace flightrec
 	// a draw kept from earlier: u, or 0.5 while nominal
 	double Held( double u );
 
-	bool Nominal( void );
 
 	// a name in double quotes, as in the scenario's panel blocks
 	std::string Quote( const std::string& s );
@@ -64,7 +63,7 @@ namespace flightrec
 	// next word or "quoted words" from p; p moves past it; false at the end or on an open quote
 	bool NextToken( const char*& p, std::string& out );
 
-	// p past spaces and tabs
+	// p past white space
 	const char* SkipBlanks( const char* p );
 
 	// text for one .atc line: control characters become spaces
@@ -85,8 +84,10 @@ namespace flightrec
 		public:
 			explicit Recorder( VESSEL* v );
 			~Recorder( void );
+			Recorder( const Recorder& ) = delete;
+			Recorder& operator=( const Recorder& ) = delete;
 
-			// once a frame, first thing in clbkPreStep (or clbkPostStep): the marker on the second recorded step, as Orbiter empties the .atc after the first; the end of a playback
+			// once a frame, first thing in clbkPreStep (or clbkPostStep)
 			void Step( void );
 
 			// SSV_NOMINAL and the notes; true when handled

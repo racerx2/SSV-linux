@@ -17,7 +17,7 @@ Date         Developer
 
 namespace vc
 {
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: Win32 GDI drawing left out; on Linux the MDUs draw with Sketchpad only
 	void MDU::SystemStatusDisplay_CSTMenu( HDC hDC )
 	{
 		char cbuf[8];
@@ -1076,7 +1076,7 @@ namespace vc
 		TextOut( hDC, 286, 276, "IDP4", 4 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::SystemStatusDisplay_CSTMenu( oapi::Sketchpad* skp )
 	{
@@ -2035,7 +2035,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::SystemStatusDisplay_IDPInteractiveCST( HDC hDC )
 	{
 		char cbuf[16];
@@ -3067,7 +3067,7 @@ namespace vc
 		TextOut( hDC, 366, 428, cbuf, strlen( cbuf ) );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::SystemStatusDisplay_IDPInteractiveCST( oapi::Sketchpad* skp )
 	{

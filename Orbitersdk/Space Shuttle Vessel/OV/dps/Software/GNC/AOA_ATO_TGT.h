@@ -1,7 +1,7 @@
 /****************************************************************************
   This file is part of Space Shuttle Vessel
 
-  AOA/ATO Targeting (FSSR 4.5) definition
+  AOA/ATO Targeting (STS 83-0002 4.5) definition
 
 
   Space Shuttle Vessel is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@ Date         Developer
 
 #include "../SimpleGPCSoftware.h"
 #include <PEG4Targeting.h>
+#include <utility>
 
 
 namespace dps
@@ -41,8 +42,7 @@ namespace dps
 	class StateVectorSoftware;
 	class GNCUtilities;
 
-	// AOA/ATO targeting (STS 83-0002 4.5): ATO MECO targets and the pre-MECO OMS burn scale factor in MM 103, AOA and ATO OMS-1 targets in MM 104, OMS-2 targets in MM 105.
-	// Scheduled by AbortModing.
+	// AOA/ATO targeting (STS 83-0002 4.5): MM 103 ATO MECO targets and K2, MM 104/105 OMS-1/OMS-2 targets; scheduled by AbortModing
 	class AOA_ATO_TGT : public SimpleGPCSoftware
 	{
 		private:
@@ -72,6 +72,9 @@ namespace dps
 			double DV_TOL;
 			int SFUELD;
 			double THETA_LS_REF;
+			bool bThetaLSRef;
+			bool massOrbILoad;
+			bool massOMSInitILoad;
 			double HTGT_ATO_OMS1, THETA_ATO_OMS1, C1_ATO_OMS1, C2_ATO_OMS1, DTIG_ATO_OMS1;
 			double HTGT_ATO_OMS2[2], THETA_ATO_OMS2[2], C1_ATO_OMS2[2], C2_ATO_OMS2[2], DTIG_ATO_OMS2[2];
 			double HTGT_AOA_OMS1[3], THETA_AOA_OMS1[3], C1_AOA_OMS1[3], C2_AOA_OMS1[3], DTIG_AOA_OMS1[3];
@@ -87,6 +90,7 @@ namespace dps
 			// AOA OMS-2 selection in progress (PEG-4 for the projected OMS-2 delta V)
 			bool pegBusy;
 			int aoaI;
+			int aoaIShallow;// shallow EI default target set
 			double aoaIncl;
 			double aoaTheta;
 			double aoaM;
@@ -94,7 +98,10 @@ namespace dps
 			double massOMSPreOMS2;
 			VECTOR3 RGD, VGD;
 
+			template<typename... T> static bool GetOptILOAD( const std::string& name, const std::map<std::string,std::string>& ILOADs, T&&... var ) { return HasILOAD( name, ILOADs ) && GetValILOAD( name, ILOADs, std::forward<T>( var )... ); };
+
 			void Sequence( void );
+			void Reset( void );
 			void ATO_MECO_TGT_SEL( void );
 			void ATO_OMS_PREMECO_BRN_DET( void );
 			void AOA_ONORB_OMS1( void );

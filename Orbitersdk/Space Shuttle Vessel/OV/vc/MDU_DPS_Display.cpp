@@ -40,7 +40,7 @@ namespace vc
 		y = 2 + 32 * row;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: Win32 GDI drawing left out; on Linux the MDUs draw with Sketchpad only
 	void MDU::DPS( HDC hDC )
 	{
 		UpdateTextBuffer();
@@ -157,7 +157,7 @@ namespace vc
 		}
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::DPS( oapi::Sketchpad* skp )
 	{

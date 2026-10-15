@@ -56,14 +56,15 @@ class PadLCCInterface;
 
 class XRSound;
 
+#ifdef _WIN32// not upstream: the dialog handle, a Qt widget on Linux
+typedef HWND HPADDLG;
+#else
+typedef QWidget* HPADDLG;// not upstream: as above
+#endif
 
 class SLC6 : public BaseSSVPad, public LCCPadInterface, public T0UmbilicalMLPInterface
 {
-#ifdef _WIN32
-	friend BOOL CALLBACK SLC6_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-#else
-	friend BOOL SLC6_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);// not upstream: fed by SLC6_DlgInit
-#endif
+	friend BOOL SLC6_DlgCommand( HPADDLG hWnd, SLC6* pad, int id );// not upstream: SLC6_DlgProc's WM_COMMAND part, both platforms
 
 	MESHHANDLE hPadSurfaceMesh;
 	MESHHANDLE hLaunchMountMesh;

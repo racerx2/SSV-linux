@@ -88,7 +88,7 @@ namespace mps
 	class SSMEController;
 	class PowerSupplyElectronics;
 	class ComputerInterfaceElectronics;// not upstream: friends used as types, declared for lookup
-	class SSMEControllerSW;
+	class SSMEControllerSW;// not upstream: as above
 
 	class DigitalComputerUnit
 	{

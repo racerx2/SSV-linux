@@ -45,6 +45,7 @@ Date         Developer
 #include "../CommonDefs.h"
 #include <math.h>
 #include <stdio.h>
+#include <TextFile.h>// not upstream: OrbiterPath
 
 
 const static char* MESHNAME_LH_FWD_ASSEMBLY = "SSV\\SRB\\LH_fwd_assembly";
@@ -333,7 +334,20 @@ void SRB::clbkPostCreation ()
 
 bool SRB::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: flight recorder (design ssv-flightrec)
 {
-	return flightrecorder.OnPlaybackEvent( event_type, event );
+	try
+	{
+		return flightrecorder.OnPlaybackEvent( event_type, event );
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(SSV_SRB) [FATAL ERROR] Exception in SRB::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(SSV_SRB) [FATAL ERROR] Exception in SRB::clbkPlaybackEvent" );
+		abort();
+	}
 }
 
 // Simulation time step
@@ -457,7 +471,7 @@ void SRB::GetSRB_State( double met, double &thrust_level, double &prop_level, do
 	double SRB_ThrSCL=(SRB_Thrust[i+1]-SRB_Thrust[i])/(SRB_Seq[i+1]-SRB_Seq[i]);
 	thrust_level = SRB_ThrSCL * (met-SRB_Seq[i]) + SRB_Thrust[i];
 	if (met>0.0) thrust_level += (0.01435 * flightrec::Rand()) - (0.01435 * flightrec::Rand());// not upstream: nominal in a playback (design ssv-flightrec)
-	thrust_level = std::max(0.0, thrust_level);// not upstream: windows.h max macro
+	thrust_level = std::max<double>(0.0, thrust_level);// not upstream: windows.h max macro
 
 	double SRB_PrpSCL=(SRB_Prop[i+1]-SRB_Prop[i])/(SRB_Seq[i+1]-SRB_Seq[i]);
 	prop_level = SRB_PrpSCL * (met-SRB_Seq[i]) + SRB_Prop[i];
@@ -473,11 +487,7 @@ void SRB::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
-#ifdef _WIN32
-	FILE* hF = fopen( filename.c_str(), "r" );
-#else
-	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
-#endif
+	FILE* hF = fopen( OrbiterPath( filename ).c_str(), "r" );// not upstream: '\' path, any letter case
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_SRB) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -508,6 +518,13 @@ void SRB::LoadMissionFile( void )
 	}
 
 	cJSON* version = cJSON_GetObjectItemCaseSensitive( root, "Version" );
+	if (!cJSON_IsNumber( version ))// not upstream: fix, a missing version was dereferenced
+	{// not upstream: as above
+		oapiWriteLog( "(SSV_SRB) [ERROR] Error parsing mission file version" );// not upstream: as above
+		cJSON_Delete( root );// not upstream: as above
+		delete[] missionfilestr;// not upstream: as above
+		return;// not upstream: as above
+	}// not upstream: as above
 	switch (version->valueint)
 	{
 		case 1:

@@ -91,9 +91,26 @@ namespace vc
 		const char* s = flightrec::SkipBlanks( event );
 		if ((*s != '0') && (*s != '1')) return;
 		const bool press = (*s == '1');
+		if (press) bReleasePending = false;
 		if (press == bPressed) return;
-		if (press) OnPress();
+		if (press)
+		{
+			OnPress();
+			fPressT = simt;
+		}
+		else if (simt <= fPressT) bReleasePending = true;
 		else OnRelease();
+		return;
+	}
+
+	void PushButtonIndicatorSingleLight::OnPreStep( double simt, double simdt, double mjd )// not upstream: as above, the pending release
+	{
+		StandardSingleLight::OnPreStep( simt, simdt, mjd );
+		if (bReleasePending && (simt > fPressT))
+		{
+			bReleasePending = false;
+			if (bPressed) OnRelease();
+		}
 		return;
 	}
 
@@ -184,9 +201,26 @@ namespace vc
 		const char* s = flightrec::SkipBlanks( event );
 		if ((*s != '0') && (*s != '1')) return;
 		const bool press = (*s == '1');
+		if (press) bReleasePending = false;
 		if (press == bPressed) return;
-		if (press) OnPress();
+		if (press)
+		{
+			OnPress();
+			fPressT = simt;
+		}
+		else if (simt <= fPressT) bReleasePending = true;
 		else OnRelease();
+		return;
+	}
+
+	void PushButtonIndicatorDoubleLight::OnPreStep( double simt, double simdt, double mjd )// not upstream: as above, the pending release
+	{
+		StandardDoubleLight::OnPreStep( simt, simdt, mjd );
+		if (bReleasePending && (simt > fPressT))
+		{
+			bReleasePending = false;
+			if (bPressed) OnRelease();
+		}
 		return;
 	}
 

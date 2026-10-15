@@ -51,6 +51,7 @@ Date         Developer
 #include <math.h>
 #include <string>
 #include <EngConst.h>
+#include <TextFile.h>// not upstream: OrbiterPath
 
 
 const static char* MESHNAME_SWT = "SSV\\ET\\SWT";
@@ -742,11 +743,7 @@ void ET::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
-#ifdef _WIN32
-	FILE* hF = fopen( filename.c_str(), "r" );
-#else
-	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
-#endif
+	FILE* hF = fopen( OrbiterPath( filename ).c_str(), "r" );// not upstream: '\' path, any letter case
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_ET) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -777,6 +774,13 @@ void ET::LoadMissionFile( void )
 	}
 
 	cJSON* version = cJSON_GetObjectItemCaseSensitive( root, "Version" );
+	if (!cJSON_IsNumber( version ))// not upstream: fix, a missing version was dereferenced
+	{// not upstream: as above
+		oapiWriteLog( "(SSV_ET) [ERROR] Error parsing mission file version" );// not upstream: as above
+		cJSON_Delete( root );// not upstream: as above
+		delete[] missionfilestr;// not upstream: as above
+		return;// not upstream: as above
+	}// not upstream: as above
 	switch (version->valueint)
 	{
 		case 1:

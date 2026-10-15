@@ -39,6 +39,10 @@ def write_lines(p, lines, nl):
 		f.write(nl.join(lines).encode('latin-1'))
 	os.replace(tmp, p)
 
+def norm(l):
+	# a config line without its comment, whitespace runs as one space, any letter case
+	return ' '.join(l.split(';')[0].split()).lower()
+
 def block(lines, begin, end):
 	b = next((i for i, l in enumerate(lines) if l.strip().upper() == begin), None)
 	e = next((i for i, l in enumerate(lines) if b is not None and i > b and l.strip().upper() == end), None)
@@ -52,9 +56,9 @@ def earth_cfg(root):
 	moved = False
 	if b is None or e is None:
 		notes.append('Config/Earth.cfg has no BEGIN_SURFBASE/END_SURFBASE block: add "%s" first in it by hand' % SURFBASE)
-	elif lines[b + 1].split(';')[0].strip().lower() != SURFBASE.lower():
+	elif norm(lines[b + 1]) != norm(SURFBASE):
 		# first in the block: a base name loads once, so SSV's Cape Canaveral, Edwards, Vandenberg... come before the stock ones
-		old = [i for i in range(b + 1, e) if lines[i].split(';')[0].strip().lower() == SURFBASE.lower()]
+		old = [i for i in range(b + 1, e) if norm(lines[i]) == norm(SURFBASE)]
 		for i in reversed(old):
 			del lines[i]
 		lines.insert(b + 1, SURFBASE)
@@ -63,8 +67,8 @@ def earth_cfg(root):
 	if b is None or e is None:
 		notes.append('Config/Earth.cfg has no BEGIN_OBSERVER/END_OBSERVER block: the SSV ground cameras are not added')
 	else:
-		have = {l.split(':')[0].strip() + ':' + l.split(':')[1].strip() for l in lines[b + 1:e] if l.count(':') >= 2}
-		add = [o for o in OBSERVERS if o.split(':')[0] + ':' + o.split(':')[1] not in have]
+		have = {norm(l.split(':')[0]) + ':' + norm(l.split(':')[1]) for l in lines[b + 1:e] if l.count(':') >= 2}
+		add = [o for o in OBSERVERS if norm(o.split(':')[0]) + ':' + norm(o.split(':')[1]) not in have]
 		lines[e:e] = add
 	if len(lines) != n0 or moved:
 		write_lines(p, lines, nl)
@@ -72,11 +76,14 @@ def earth_cfg(root):
 
 def base_cfg(root):
 	p = os.path.join(root, 'Config', 'Base.cfg')
+	if not os.path.isfile(p):
+		notes.append('Config/Base.cfg not found: add "%s" to its BEGIN_TEXTURES/END_TEXTURES block by hand' % BASETEX)
+		return
 	lines, nl = read_lines(p)
 	b, e = block(lines, 'BEGIN_TEXTURES', 'END_TEXTURES')
 	if b is None or e is None:
 		notes.append('Config/Base.cfg has no BEGIN_TEXTURES/END_TEXTURES block: add "%s" by hand' % BASETEX)
-	elif not any(l.split(';')[0].strip().lower() == BASETEX.lower() for l in lines[b:e]):
+	elif not any(norm(l) == norm(BASETEX) for l in lines[b:e]):
 		lines.insert(e, BASETEX)
 		write_lines(p, lines, nl)
 		changes.append('Config/Base.cfg: %s added' % BASETEX)

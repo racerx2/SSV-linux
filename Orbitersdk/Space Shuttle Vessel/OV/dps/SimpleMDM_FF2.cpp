@@ -54,9 +54,9 @@ namespace dps
 		Power2.Connect( pBundle, 1 );
 
 		pBundle = BundleManager()->CreateBundle( "ABORT_MODE", 16 );// not upstream
-		dipIOM12[2][3].Connect( pBundle, 1 );// 3-ATO ABORT REQUEST SIGNAL B
-		dipIOM12[2][4].Connect( pBundle, 2 );// 4-TAL ABORT REQUEST SIGNAL B
-		dipIOM12[2][5].Connect( pBundle, 3 );// 5-RTLS ABORT REQUEST SIGNAL B
+		dipIOM12[2][3].Connect( pBundle, 1 );// not upstream: 3-ATO ABORT REQUEST SIGNAL B
+		dipIOM12[2][4].Connect( pBundle, 2 );// not upstream: 4-TAL ABORT REQUEST SIGNAL B
+		dipIOM12[2][5].Connect( pBundle, 3 );// not upstream: 5-RTLS ABORT REQUEST SIGNAL B
 
 		pBundle = BundleManager()->CreateBundle( "RDRALTM", 16 );
 		dipIOM12[0][13].Connect( pBundle, 1 );// RADAR ALTM RH DISPLAY SEL NO. 1

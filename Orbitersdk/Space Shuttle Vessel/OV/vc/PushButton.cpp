@@ -101,9 +101,26 @@ namespace vc
 		const char* s = flightrec::SkipBlanks( event );
 		if ((*s != '0') && (*s != '1')) return;
 		const bool press = (*s == '1');
+		if (press) bReleasePending = false;
 		if (press == bPressed) return;
-		if (press) OnPress();
+		if (press)
+		{
+			OnPress();
+			fPressT = simt;
+		}
+		else if (simt <= fPressT) bReleasePending = true;
 		else OnDepress();
+		return;
+	}
+
+	void PushButton::OnPreStep( double simt, double simdt, double mjd )// not upstream: as above, the pending release
+	{
+		AtlantisVCComponent::OnPreStep( simt, simdt, mjd );
+		if (bReleasePending && (simt > fPressT))
+		{
+			bReleasePending = false;
+			if (bPressed) OnDepress();
+		}
 		return;
 	}
 

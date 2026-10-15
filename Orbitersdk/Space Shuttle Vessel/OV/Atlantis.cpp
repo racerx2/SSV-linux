@@ -364,8 +364,8 @@ Date         Developer
 #include <OrbiterResource.h>// not upstream: bitmap resources as QImage
 #include <QFontDatabase>
 #include <QStringList>
-static const char* SSV_FONTS[2] = { "Install\\Space Shuttle Vessel\\SSV_Font_A.otf", "Install\\Space Shuttle Vessel\\SSV_Font_B.otf" };// not upstream: the MDU fonts
-static int SSV_FontId[2] = { -1, -1 };
+static const char* const SSV_FONTS[2] = { "Install\\Space Shuttle Vessel\\SSV_Font_A.otf", "Install\\Space Shuttle Vessel\\SSV_Font_B.otf" };// not upstream: the MDU fonts
+static int SSV_FontId[2] = { -1, -1 };// not upstream: as above
 static int SSV_FontUsers = 0;// not upstream: Atlantis instances; the fonts live while one exists, so no Qt call is left for ExitModule at process exit
 
 static void SSV_FontsAdd( void )// not upstream: SSV_Font_A/B for the MDUs, which Sketchpad makes as Qt fonts
@@ -410,6 +410,7 @@ GDIParams g_Param;
 // not upstream: manifold group (0 1/2, 1 3/4/5) and AFT_RCS_DUMP command line of each dump jet; nulls per pod L1U L2D L2U L3D L4U L4D L1L L2L L3L L4L
 static constexpr int DUMP_JET_MANF[24] = {0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1};
 static constexpr int DUMP_JET_LINE[24] = {0, 1, 0, 1, 2, 2, 4, 4, 3, 3, 2, 2, 3, 3, 2, 2, 4, 4, 3, 3, 2, 2, 3, 3};
+static constexpr int DUMP_JET_SIDE[24] = {LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT};// not upstream: pod of each dump jet
 
 #if _DEBUG
 std::ofstream animlog;
@@ -479,11 +480,7 @@ inline void ssuAssert(bool expression, const char* context)
 }
 
 
-#ifdef _WIN32
 DLLCLBK void InitModule( HINSTANCE hModule )
-#else
-DLLCLBK void InitModule( void* hModule )// not upstream: the module handle is the dlopen handle
-#endif
 {
 	try
 	{
@@ -542,11 +539,7 @@ DLLCLBK void InitModule( void* hModule )// not upstream: the module handle is th
 	}
 }
 
-#ifdef _WIN32
 DLLCLBK void ExitModule( HINSTANCE hModule )
-#else
-DLLCLBK void ExitModule( void* hModule )// not upstream: as above
-#endif
 {
 	try
 	{
@@ -1586,7 +1579,7 @@ void Atlantis::clbkPreStep( double simt, double simdt, double mjd )
 		}
 
 		// not upstream: aft RCS abort dump jets
-		if (th_rcs_dump[0] != NULL)
+		if (bRCSDefined)
 		{
 			for (int i = 0; i < 24; i++) SetThrusterLevel( th_rcs_dump[i], AftRCSDump[DUMP_JET_LINE[i]].IsSet() ? 1.0 : 0.0 );
 		}
@@ -1878,13 +1871,29 @@ void Atlantis::UpdateHUDGlow( void )
 {
 	if (!hDevOrbiterVCExternalMesh) return;
 	static constexpr DWORD mat[2] = {MAT_HUD_GLASS_CDR_VCEXT, MAT_HUD_GLASS_PLT_VCEXT};
+	static constexpr double GLOW_LIGHT_GAIN[3] = {0.20, 1.40, 0.45};// emission rgb added at full glow
+	static constexpr double GLOW_ALPHA_GAIN = 0.75;// diffuse alpha added at full glow; the blend scales the glow by it
+	// HUD off: the materials as loaded, read before the first change; Config/GC/SSV_OV.cfg's EMISSIVE and DIFFUSE if the client can't tell
+	static oapi::FVECTOR4 offLight[2] = {oapi::FVECTOR4( 0.02f, 0.04f, 0.03f, 1.0f ), oapi::FVECTOR4( 0.02f, 0.04f, 0.03f, 1.0f )};
+	static oapi::FVECTOR4 offDiffuse[2] = {oapi::FVECTOR4( 0.60f, 0.80f, 0.65f, 0.15f ), oapi::FVECTOR4( 0.60f, 0.80f, 0.65f, 0.15f )};
+	static bool offRead = false;
+	if (!offRead)
+	{
+		for (int i = 0; i < 2; i++)
+		{
+			oapi::FVECTOR4 v;
+			if (oapiMeshMaterialEx( hDevOrbiterVCExternalMesh, mat[i], MatProp::Light, &v ) == 0) offLight[i] = v;
+			if (oapiMeshMaterialEx( hDevOrbiterVCExternalMesh, mat[i], MatProp::Diffuse, &v ) == 0) offDiffuse[i] = v;
+		}
+		offRead = true;
+	}
 	for (int i = 0; i < 2; i++)
 	{
 		double g = pHUD[i]->Glow();
 		if (fabs( g - hudGlow[i] ) < 0.01) continue;
 		hudGlow[i] = g;
-		const oapi::FVECTOR4 light( static_cast<float>(std::min<double>( 0.02 + (0.20 * g), 1.0 )), static_cast<float>(std::min<double>( 0.04 + (1.40 * g), 1.0 )), static_cast<float>(std::min<double>( 0.03 + (0.45 * g), 1.0 )), 1.0f );// HUD off: Config/GC/SSV_OV.cfg's EMISSIVE
-		const oapi::FVECTOR4 diffuse( 0.60f, 0.80f, 0.65f, static_cast<float>(0.15 + (0.75 * g)) );// off: its DIFFUSE; the blend scales the glow by this alpha
+		const oapi::FVECTOR4 light( static_cast<float>(std::min<double>( offLight[i].r + (GLOW_LIGHT_GAIN[0] * g), 1.0 )), static_cast<float>(std::min<double>( offLight[i].g + (GLOW_LIGHT_GAIN[1] * g), 1.0 )), static_cast<float>(std::min<double>( offLight[i].b + (GLOW_LIGHT_GAIN[2] * g), 1.0 )), 1.0f );
+		const oapi::FVECTOR4 diffuse( offDiffuse[i].r, offDiffuse[i].g, offDiffuse[i].b, static_cast<float>(std::min<double>( offDiffuse[i].a + (GLOW_ALPHA_GAIN * g), 1.0 )) );
 		oapiSetMaterialEx( hDevOrbiterVCExternalMesh, mat[i], MatProp::Light, &light );
 		oapiSetMaterialEx( hDevOrbiterVCExternalMesh, mat[i], MatProp::Diffuse, &diffuse );
 	}
@@ -3215,7 +3224,7 @@ void Atlantis::CreateAttControls_RCS(VECTOR3 center)
 	ApplyAftRCSFeed();// not upstream
 }
 
-void Atlantis::CreateRCSDumpJets( const VECTOR3& center )
+void Atlantis::CreateRCSDumpJets( const VECTOR3& center )// not upstream: as declared
 {
 	constexpr double DUMP_JET_THRUST = RCS_DUMP_JET_THRUST;
 	constexpr double DUMP_JET_ISP0 = RCS_DUMP_JET_ISP0;
@@ -3227,7 +3236,7 @@ void Atlantis::CreateRCSDumpJets( const VECTOR3& center )
 		{3.1496, 1.428624, -15.265366}, {3.4798, 1.428624, -15.265366}};
 	static const VECTOR3 pxExh = {0.0, 0.173648, -0.984808};
 
-	// null jets of the left pod, in opposing pairs (thrust cancels): L1U-L2D, L2U-L3D, L4U-L4D, L1L-L2L, L3L-L4L
+	// null jets of the left pod; thrust against the exhaust: U and D jets of a line about cancel in the pod, L jets cancel the other pod's
 	static const VECTOR3 nullPos[10] = {
 		{-3.3528, 1.6176, -14.9278}, {-2.84353, 0.52286, -14.5976},
 		{-3.3528, 1.6176, -14.5976}, {-2.84353, 0.52286, -14.9278},
@@ -3240,24 +3249,21 @@ void Atlantis::CreateRCSDumpJets( const VECTOR3& center )
 		{0.0, 1.0, 0.0}, {-0.2844, -0.9481, -0.1422},
 		{-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},
 		{-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}};
-	// pair reference points and thrust axes, left pod
+	// one thrust reference point per pod, so the nulls make no torque
 	static const VECTOR3 pairRef = {-3.3, 1.07, -14.76};
-	static const VECTOR3 pairDir[5] = {{0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}};
 
-	if (th_rcs_dump[0] == NULL)
+	if (!bRCSDefined)
 	{
 		for (int i = 0; i < 4; i++)
-			th_rcs_dump[i] = CreateThruster( center + pxPos[i], -pxExh, DUMP_JET_THRUST, AftRCSFeed( (i < 2) ? LEFT : RIGHT, DUMP_JET_MANF[i] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
+			th_rcs_dump[i] = CreateThruster( center + pxPos[i], -pxExh, DUMP_JET_THRUST, AftRCSFeed( DUMP_JET_SIDE[i], DUMP_JET_MANF[i] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
 		for (int s = 0; s < 2; s++)
 		{
-			VECTOR3 mirror = _V( (s == 0) ? 1.0 : -1.0, 1.0, 1.0 );
-			VECTOR3 ref = _V( pairRef.x * mirror.x, pairRef.y, pairRef.z );
-			for (int p = 0; p < 5; p++)
+			double mx = (s == 0) ? 1.0 : -1.0;
+			VECTOR3 ref = _V( pairRef.x * mx, pairRef.y, pairRef.z );
+			for (int j = 0; j < 10; j++)
 			{
-				VECTOR3 dir = _V( pairDir[p].x * mirror.x, pairDir[p].y, pairDir[p].z );
-				int k = 4 + (s * 10) + (p * 2);
-				th_rcs_dump[k] = CreateThruster( center + ref, dir, DUMP_JET_THRUST, AftRCSFeed( s, DUMP_JET_MANF[k] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
-				th_rcs_dump[k + 1] = CreateThruster( center + ref, -dir, DUMP_JET_THRUST, AftRCSFeed( s, DUMP_JET_MANF[k + 1] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
+				int k = 4 + (s * 10) + j;
+				th_rcs_dump[k] = CreateThruster( center + ref, _V( -nullExh[j].x * mx, -nullExh[j].y, -nullExh[j].z ), DUMP_JET_THRUST, AftRCSFeed( DUMP_JET_SIDE[k], DUMP_JET_MANF[k] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
 			}
 		}
 	}
@@ -4111,7 +4117,7 @@ void Atlantis::ApplyAftRCSFeed( void )// not upstream: as declared
 	for (int i = 0; i < 14; i++) move( th_att_lin[i] );
 	for (int i = 0; i < 24; i++)
 	{
-		if (th_rcs_dump[i] != NULL) SetThrusterResource( th_rcs_dump[i], AftRCSFeed( ((i < 2) || ((i >= 4) && (i < 14))) ? LEFT : RIGHT, DUMP_JET_MANF[i] ) );
+		if (th_rcs_dump[i] != NULL) SetThrusterResource( th_rcs_dump[i], AftRCSFeed( DUMP_JET_SIDE[i], DUMP_JET_MANF[i] ) );
 	}
 	return;
 }
@@ -5055,7 +5061,7 @@ void Atlantis::RealizeSubsystemConnections( void )
 	RotThrusterCommands[3].Connect(pBundle, 6);// SERC RCS thrusters
 
 	pBundle = bundleManager->CreateBundle( "AFT_RCS_DUMP", 16 );// not upstream
-	for (int i = 0; i < 5; i++) AftRCSDump[i].Connect( pBundle, i );
+	for (int i = 0; i < 5; i++) AftRCSDump[i].Connect( pBundle, i );// not upstream: as above
 
 	pBundle = bundleManager->CreateBundle("RMS_EE", 16);
 	RMSGrapple.Connect(pBundle, 0);

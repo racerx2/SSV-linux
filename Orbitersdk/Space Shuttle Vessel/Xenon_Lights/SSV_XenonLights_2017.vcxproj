@@ -12,12 +12,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XenonLights.cpp" />
-    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="meshres_xenon.h" />
     <ClInclude Include="XenonLights.h" />
-    <ClInclude Include="..\SSVlib\include\FlightRecorder.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{396E345C-7D91-4ECD-B912-6178511A25EA}</ProjectGuid>
@@ -137,6 +135,12 @@
       <ResourceOutputFileName>$(IntDir)$(TargetExt).embed.manifest.res</ResourceOutputFileName>
     </ManifestResourceCompile>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <!-- not upstream: flight recorder (design ssv-flightrec) -->
+    <ProjectReference Include="..\SSVlib\SSVlib_2017.vcxproj">
+      <Project>{eda1260c-9f5c-478a-b18b-a687101fc234}</Project>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

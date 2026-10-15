@@ -10,9 +10,7 @@ Date         Developer
 2026/10/15   racerx2
 ********************************************/
 #include <fstream>
-#ifndef _WIN32
-#include <ssv_textfile.h>// not upstream: text files as in Windows text mode
-#endif
+#include <TextFile.h>// not upstream: text files as in Windows text mode
 #include <string>
 #include <sstream>
 #include <cassert>
@@ -129,11 +127,7 @@ ThreeDLookup::~ThreeDLookup()
 
 void ThreeDLookup::Init(const char* dataFile, bool isHorizontalData)
 {
-#ifdef _WIN32
-	std::ifstream dataIn(dataFile);
-#else
-	TextFileIn dataIn(dataFile);// not upstream: resolved path, CRLF read as LF
-#endif
+	TextFileIn dataIn(dataFile);// not upstream: std::ifstream on Windows; on Linux resolved path, CRLF read as LF
 	oapiWriteLogV( "Loading aerodynamic data from file: %s", (char*)dataFile );
 	if(!dataIn.fail()) { // file was opened; read data
 		Init(dataIn, isHorizontalData);
@@ -291,11 +285,7 @@ FourDLookup::~FourDLookup()
 
 void FourDLookup::Init(const char* dataFile, bool isHorizontalData)
 {
-#ifdef _WIN32
-	std::ifstream data(dataFile);
-#else
-	TextFileIn data(dataFile);// not upstream: resolved path, CRLF read as LF (blank lines end the tables)
-#endif
+	TextFileIn data(dataFile);// not upstream: as above (blank lines end the tables)
 	if(!data.fail()) { // file was opened; read data
 		oapiWriteLogV( "Loading aerodynamic data from file: %s", (char*)dataFile );
 		//Init(dataIn, isHorizontalData);

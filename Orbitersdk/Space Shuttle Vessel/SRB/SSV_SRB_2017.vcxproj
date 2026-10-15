@@ -151,16 +151,18 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="SRB.cpp" />
-    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SRB.h" />
     <ClInclude Include="..\CommonDefs.h" />
-    <ClInclude Include="..\SSVlib\include\FlightRecorder.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cJSON\cJSON.vcxproj">
       <Project>{cd4aa79a-89be-4fce-88d7-ed661e848505}</Project>
+    </ProjectReference>
+    <!-- not upstream: flight recorder (design ssv-flightrec) -->
+    <ProjectReference Include="..\SSVlib\SSVlib_2017.vcxproj">
+      <Project>{eda1260c-9f5c-478a-b18b-a687101fc234}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

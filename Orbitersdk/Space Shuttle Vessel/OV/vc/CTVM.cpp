@@ -6,10 +6,6 @@ Date         Developer
 #include "../Atlantis.h"
 #include "../VideoControlUnit.h"
 #include "../../SSVSound.h"
-#ifndef _WIN32
-constexpr int FW_MEDIUM = 500;// not upstream: wingdi.h font weights, as oapiCreateFontEx takes them
-constexpr int FW_BOLD = 700;
-#endif
 
 
 namespace vc
@@ -382,7 +378,7 @@ namespace vc
 
 	void CTVM::OnSaveState( FILEHANDLE scn ) const
 	{
-		oapiWriteScenario_string( scn, "POWER", const_cast<char*>(powerswitch ? "ON" : "OFF") );// not upstream: the SDK takes char*, the literals are const
+		oapiWriteScenario_string( scn, "POWER", powerswitch ? "ON" : "OFF" );
 		oapiWriteScenario_int( scn, "L-DATA", menuoptions[0] );
 		oapiWriteScenario_int( scn, "C-DATA", menuoptions[1] );
 		oapiWriteScenario_int( scn, "XHAIR", menuoptions[2] );

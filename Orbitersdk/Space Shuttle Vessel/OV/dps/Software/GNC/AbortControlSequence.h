@@ -1,7 +1,7 @@
 /****************************************************************************
   This file is part of Space Shuttle Vessel
 
-  Abort Control Sequence (FSSR 4.192) definition
+  Abort Control Sequence (STS 83-0026 4.3.1) definition
 
 
   Space Shuttle Vessel is free software; you can redistribute it and/or
@@ -32,21 +32,22 @@ Date         Developer
 
 #include "../SimpleGPCSoftware.h"
 #include <DiscOutPort.h>
+#include <utility>
 
 
 namespace dps
 {
-	// percent of an OMS pod per second of a two OMS engine dump (STS 83-0020 4.2.31.2 P)
+	// K-load (STS 83-0020 4.2.31.2 P, the vehicle model differs): percent of an OMS pod per second of a two OMS engine dump
 	constexpr double OMS_DUMP_PCT_PER_SEC = 0.14971;
 
-	// Abort Control Sequence (STS 83-0026 4.3.1), steps 1 to 14: OMS assist, ATO and manual pre-MECO dumps, OMS/RCS interconnect requests, Mode 2 return at MECO.
-	// Owns the OMS engine commands in MM 102 and 103, and the aft RCS dump jet commands.
+	class OMSBurnSoftware;
+
+	// Abort Control Sequence (STS 83-0026 4.3.1) steps 1 to 14; owns the aft RCS dump jet commands, the OMS ignition goes out through OMSBurnSoftware
 	class AbortControlSequence : public SimpleGPCSoftware
 	{
 		private:
-			DiscOutPort omsCmd[2];
 			DiscOutPort dumpCmd[5];// AFT_RCS_DUMP: +X 1/2, +X 3/4/5, null 1/2, null 3/4/5, null pair across the groups
-			bool omsCmdOut;
+			OMSBurnSoftware* pOMSBurnSoftware;// owner of the OMS engine command lines
 
 			// I-loads
 			int OMSASS;// OMS assist enabled
@@ -84,10 +85,15 @@ namespace dps
 			double omsDelayTimer;
 			bool icnctDelayRunning;
 			double icnctDelayTimer;
-			double tSRBSep;// MET of SRB separation [s]
+			double tSRBSep;// MET of SRB separation [s], negative if unknown
 			double tCycle;
 
+			template<typename... T> static bool GetOptILOAD( const std::string& name, const std::map<std::string,std::string>& ILOADs, T&&... var ) { return HasILOAD( name, ILOADs ) && GetValILOAD( name, ILOADs, std::forward<T>( var )... ); };
+
+			void Reset( void );
 			void OPS1Init( void );
+			bool Group12Available( void ) const;
+			bool Group345Available( void ) const;
 			void DumpTimersFromLoad( void );
 			void Cycle( double dt );
 			void Step7( double dt );
@@ -106,8 +112,8 @@ namespace dps
 			bool OnParseLine( const char* keyword, const char* value ) override;
 			void OnSaveState( FILEHANDLE scn ) const override;
 
-			// manual OMS dump I-load (item 9 entry limit) [s]
-			double GetManualOMSDTILoad( void ) const { return MANUAL_OMS_DT; };
+			// manual OMS dump timer, the I-load or computed from the OMS load at liftoff (item 9 entry limit) [s]
+			double GetManualOMSDT( void ) const { return MANUAL_OMS_DT; };
 	};
 }
 

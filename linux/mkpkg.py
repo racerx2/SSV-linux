@@ -2,7 +2,7 @@
 # Space Shuttle Vessel, Linux port: builds the add-on zip from the repo's tracked files and the built modules. Modified by racerx2, 2026.
 # Licensed under the GNU General Public License version 2 or any later version (see SSV-LICENSE.txt).
 # usage: linux/mkpkg.py <build dir> <manual pdf or -> <out dir>
-import os, subprocess, sys, zipfile, zlib
+import os, re, subprocess, sys, zipfile, zlib
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VERSION = '1.16'
@@ -11,9 +11,17 @@ NAME = 'SSV-%s-linux-%s-x64.zip' % (VERSION, PORT)
 INSTALL = 'Install/Space Shuttle Vessel/'
 DOC = 'Doc/Space Shuttle Vessel/'
 
-def tracked():
-	out = subprocess.run(['git', '-C', REPO, 'ls-files', '-z', '--cached', '--others', '--exclude-standard'], capture_output=True, check=True).stdout  # new files not yet committed too
+def git_files(*opts):
+	out = subprocess.run(['git', '-C', REPO, 'ls-files', '-z'] + list(opts), capture_output=True, check=True).stdout
 	return [p for p in out.decode('utf-8').split('\0') if p]
+
+def tracked():
+	return git_files('--cached', '--others', '--exclude-standard')  # the working tree: new files not yet committed too
+
+def modules(build):
+	# the DynamicLibrary projects of the build (projects.cmake, written by linux/vcxproj.py)
+	txt = open(os.path.join(build, 'projects.cmake')).read()
+	return sorted(m + '.so' for m in re.findall(r'^set\(SSV_(\w+)_TYPE DynamicLibrary\)', txt, re.M))
 
 def place(p, manual):
 	# path in the zip, or None: the Orbiter folder's layout, as the Windows release
@@ -40,17 +48,31 @@ def main():
 	head = subprocess.run(['git', '-C', REPO, 'rev-parse', '--short', 'HEAD'], capture_output=True, check=True, text=True).stdout.strip()
 	dirty = subprocess.run(['git', '-C', REPO, 'status', '--porcelain', '--untracked-files=no'], capture_output=True, text=True).stdout.strip()
 	files = {}
+	untracked, missing = [], []
+	others = set(git_files('--others', '--exclude-standard'))
 	for p in tracked():
 		z = place(p, manual)
-		if z:
-			files[z] = os.path.join(REPO, p)
+		if not z:
+			continue
+		if not os.path.isfile(os.path.join(REPO, p)):
+			missing.append(p)  # deleted in the working tree
+			continue
+		if p in others:
+			untracked.append(p)
+		files[z] = os.path.join(REPO, p)
+	for p in untracked:
+		print('untracked, packed:', p)
+	for p in missing:
+		print('missing, skipped:', p)
+	dirty = dirty or untracked
 	files[INSTALL + 'ssv_linux_setup.py'] = os.path.join(REPO, 'linux', 'ssv_linux_setup.py')
 	files[DOC + 'SSV-Linux.txt'] = os.path.join(REPO, 'linux', 'SSV-Linux.txt')
 	if manual:
 		files[DOC + 'Space Shuttle Vessel Manual.pdf'] = manual
-	mods = sorted(f for f in os.listdir(build) if f.startswith('SSV_') and f.endswith('.so'))
-	if len(mods) != 16:
-		sys.exit('expected 16 modules in %s, found %d' % (build, len(mods)))
+	mods = modules(build)
+	absent = [m for m in mods if not os.path.isfile(os.path.join(build, m))]
+	if not mods or absent:
+		sys.exit('modules not built in %s: %s' % (build, ', '.join(absent) or 'no DynamicLibrary project'))
 	stripped = os.path.join(outdir, 'modules')
 	os.makedirs(stripped, exist_ok=True)
 	for m in mods:

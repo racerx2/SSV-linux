@@ -44,7 +44,7 @@ namespace vc
 	constexpr double MaxLD_Mach[MaxLD_count] = {0.95, 1.0, 2.0, 3.0};// [Mach]
 	constexpr double MaxLD_Alpha[MaxLD_count] = {10.5, 12.0, 15.0, 17.0};// [deg]
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: Win32 GDI drawing left out; on Linux the MDUs draw with Sketchpad only
 	void MDU::AEPFD( HDC hDC )
 	{
 		int MM = STS()->GetGPCMajorMode();
@@ -307,7 +307,7 @@ namespace vc
 		}
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD( oapi::Sketchpad* skp )
 	{
@@ -572,7 +572,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::CreateTapes_GDI( void )
 	{
 		if (hDC_Tape_MACHV) return;// already created
@@ -946,7 +946,7 @@ namespace vc
 		RestoreDC( hDC_Tape_Hdot, save );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::CreateTapes_Sketchpad( void )
 	{
@@ -1269,7 +1269,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::DrawAlphaTapeBG_GDI( void )
 	{
 		int offset_top = 108;
@@ -1287,7 +1287,7 @@ namespace vc
 		RestoreDC( hDC_Tape_Alpha, save );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::DrawAlphaTapeBG_Sketchpad( void )
 	{
@@ -1312,7 +1312,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::DrawAlphaTapeFG_GDI( int min, int max )
 	{
 		int offset_top = 108;
@@ -1357,7 +1357,7 @@ namespace vc
 		RestoreDC( hDC_Tape_Alpha, save );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::DrawAlphaTapeFG_Sketchpad( int min, int max )
 	{
@@ -1407,7 +1407,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::DrawAlphaTapeLim_GDI( double min, double max )
 	{
 		int offset_top = 108;
@@ -1420,7 +1420,7 @@ namespace vc
 		RestoreDC( hDC_Tape_Alpha, save );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::DrawAlphaTapeLim_Sketchpad( double min, double max )
 	{
@@ -1442,7 +1442,7 @@ namespace vc
 
 	void MDU::DestroyTapes( void )
 	{
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 		if (hDC_Tape_MACHV)
 		{
 			DeleteObject( SelectObject( hDC_Tape_MACHV, hBM_Tape_MACHV_tmp ) );
@@ -1473,7 +1473,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::CreateADI( void )
 	{
 		hDC_ADI = CreateCompatibleDC( GetDC( NULL ) );
@@ -1565,7 +1565,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::Tape_KEAS_MVR( oapi::Sketchpad* skp, double vel )
 	{
@@ -1604,7 +1604,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::Tape_MV_KEAS( HDC hDC, char label, double vel )
 	{
 		char cbuf[8];
@@ -1635,7 +1635,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::Tape_MV_KEAS( oapi::Sketchpad* skp, char label, double vel )
 	{
@@ -1674,7 +1674,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::Tape_Alpha( HDC hDC, double vel )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -1762,7 +1762,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::Tape_Alpha( oapi::Sketchpad* skp, double vel )
 	{
@@ -1857,7 +1857,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::Tape_H_Hdot( HDC hDC, double Altitude_ft, double Hdot )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -1963,7 +1963,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::Tape_H_Hdot( oapi::Sketchpad* skp, double Altitude_ft, double Hdot )
 	{
@@ -2078,7 +2078,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::Tapes_Invalid( HDC hDC )
 	{
 		SelectObject( hDC, gdiRedPen );
@@ -2111,7 +2111,7 @@ namespace vc
 		TextOut( hDC, 477, 39, "H", 1 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::Tapes_Invalid( oapi::Sketchpad* skp )
 	{
@@ -2146,7 +2146,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_STATIC( HDC hDC )
 	{
 		SelectObject( hDC, gdiSSVBFont_h12w7 );
@@ -2446,7 +2446,7 @@ namespace vc
 		LineTo( hDC, 286, 258 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_STATIC( oapi::Sketchpad* skp )
 	{
@@ -2682,7 +2682,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI( HDC hDC, double pitch, double roll, double yaw )
 	{
 		// center (239,165) r = 117
@@ -2933,7 +2933,7 @@ namespace vc
 		Rectangle( hDC, 211, 164, 267, 166 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI( oapi::Sketchpad* skp, double pitch, double roll, double yaw )
 	{
@@ -2996,7 +2996,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_RATE_A( HDC hDC, double pitch, double roll, double yaw, int adirate )
 	{
 		int pos_roll;
@@ -3125,7 +3125,7 @@ namespace vc
 		Polygon( hDC, tri, 3 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_RATE_A( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adirate )
 	{
@@ -3256,7 +3256,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_RATE_B( HDC hDC, double pitch, double roll, double yaw, int adirate, double Altitude_ft )
 	{
 		int pos_roll;
@@ -3498,7 +3498,7 @@ namespace vc
 		}
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_RATE_B( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adirate, double Altitude_ft )
 	{
@@ -3742,7 +3742,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_ERROR_A( HDC hDC, double pitch, double roll, double yaw, int adierr )
 	{
 		double pos_pitch;
@@ -3817,7 +3817,7 @@ namespace vc
 		Rectangle( hDC, 238 + Round( pos_yaw ), 196, 240 + Round( pos_yaw ), 165 + Round( sqrt( 12100 - (pos_yaw * pos_yaw) ) ) );// yaw
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_ERROR_A( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr )
 	{
@@ -3894,7 +3894,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_ERROR_B( HDC hDC, double pitch, double roll, double yaw, int adierr )
 	{
 		double pos_pitch;
@@ -3960,7 +3960,7 @@ namespace vc
 		Rectangle( hDC, 238 + Round( pos_yaw ), 196, 240 + Round( pos_yaw ), 165 + Round( sqrt( 12100 - (pos_yaw * pos_yaw) ) ) );// yaw
 		return;// 25/25/10 5/2/1 2.5/2.5/2.5
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_ERROR_B( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr )
 	{
@@ -4028,7 +4028,7 @@ namespace vc
 		return;// 25/25/10 5/2/1 2.5/2.5/2.5
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_ERROR_C( HDC hDC, double pitch, double roll, double yaw, int adierr )
 	{
 		double pos_pitch;
@@ -4080,7 +4080,7 @@ namespace vc
 		Rectangle( hDC, 238 + Round( pos_yaw ), 196, 240 + Round( pos_yaw ), 165 + Round( sqrt( 12100 - (pos_yaw * pos_yaw) ) ) );// yaw
 		return;// 25/25/10 1.25/1.25/0.5 2.5/2.5/2.5
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_ERROR_C( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr )
 	{
@@ -4134,7 +4134,7 @@ namespace vc
 		return;// 25/25/10 1.25/1.25/0.5 2.5/2.5/2.5
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_ERROR_D( HDC hDC, double pitch, double roll, double yaw, int adierr )
 	{
 		double pos_pitch;
@@ -4200,7 +4200,7 @@ namespace vc
 		Rectangle( hDC, 238 + Round( pos_yaw ), 196, 240 + Round( pos_yaw ), 165 + Round( sqrt( 12100 - (pos_yaw * pos_yaw) ) ) );// yaw
 		return;// 20/5/1 10/5/1 2.5/2.5/2.5
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_ERROR_D( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr )
 	{
@@ -4268,7 +4268,7 @@ namespace vc
 		return;// 20/5/1 10/5/1 2.5/2.5/2.5
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_A( HDC hDC, double course, double roll, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing )
 	{
 		double sgn = sign( (90 * RAD) - fabs( roll ) );
@@ -4402,7 +4402,7 @@ namespace vc
 		Rectangle( hDC, 117, 456, 361, 512 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_A( oapi::Sketchpad* skp, double course, double roll, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing )
 	{
@@ -4512,7 +4512,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_E( HDC hDC, double course, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing )
 	{
 		// center (239,436) r = 95
@@ -4657,7 +4657,7 @@ namespace vc
 		Rectangle( hDC, 117, 456, 361, 512 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_E( oapi::Sketchpad* skp, double course, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing )
 	{
@@ -4779,7 +4779,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_CourseArrow( HDC hDC )
 	{
 		SelectObject( hDC, gdiMagentaBrush );
@@ -4795,7 +4795,7 @@ namespace vc
 		Rectangle( hDC, 236, 476, 242, 513 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_CourseArrow( oapi::Sketchpad* skp )
 	{
@@ -4812,7 +4812,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_CDI( HDC hDC, bool flag, bool bar, double scale, double deviation )
 	{
 		// HACK (flag == true) assumes (bar == true) && (scale == 0)
@@ -4858,7 +4858,7 @@ namespace vc
 		}
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_CDI( oapi::Sketchpad* skp, bool flag, bool bar, double scale, double deviation )
 	{
@@ -4906,7 +4906,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_Bearing( HDC hDC, char primarytype, double primarybearing, char secondarytype, double secondarybearing )
 	{
 		SetGraphicsMode( hDC, GM_ADVANCED );
@@ -4950,7 +4950,7 @@ namespace vc
 		SetGraphicsMode( hDC, GM_COMPATIBLE );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_Bearing( oapi::Sketchpad* skp, char primarytype, double primarybearing, char secondarytype, double secondarybearing )
 	{
@@ -4994,7 +4994,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_Bearing_E( HDC hDC, double bearing, bool pri )
 	{
 		SelectObject( hDC, gdiRedBrush );
@@ -5040,7 +5040,7 @@ namespace vc
 		ModifyWorldTransform( hDC, &WTroll, MWT_IDENTITY );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_Bearing_E( oapi::Sketchpad* skp, double bearing, bool pri )
 	{
@@ -5084,7 +5084,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_Bearing_I( HDC hDC, double bearing )
 	{
 		SelectObject( hDC, gdiWhiteBrush );
@@ -5115,7 +5115,7 @@ namespace vc
 		ModifyWorldTransform( hDC, &WTroll, MWT_IDENTITY );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_Bearing_I( oapi::Sketchpad* skp, double bearing )
 	{
@@ -5144,7 +5144,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_Bearing_RH( HDC hDC, double bearing, char chr )
 	{
 		SelectObject( hDC, gdiLightGreenBrush );
@@ -5189,7 +5189,7 @@ namespace vc
 		ModifyWorldTransform( hDC, &WTroll, MWT_IDENTITY );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_Bearing_RH( oapi::Sketchpad* skp, double bearing, char chr )
 	{
@@ -5226,7 +5226,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::HSI_Bearing_C( HDC hDC, double bearing )
 	{
 		SelectObject( hDC, gdiWhiteBrush );
@@ -5269,7 +5269,7 @@ namespace vc
 		ModifyWorldTransform( hDC, &WTroll, MWT_IDENTITY );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::HSI_Bearing_C( oapi::Sketchpad* skp, double bearing )
 	{
@@ -5304,7 +5304,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_Header_AscentDAP( HDC hDC, int MM, int adiatt )
 	{
 		char cbuf[8];
@@ -5353,7 +5353,7 @@ namespace vc
 		else TextOut( hDC, 449, 18, "Ref", 3 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_Header_AscentDAP( oapi::Sketchpad* skp, int MM, int adiatt )
 	{
@@ -5404,7 +5404,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_Header_TransDAP( HDC hDC, int MM, int adiatt )
 	{
 		char cbuf[8];
@@ -5433,7 +5433,7 @@ namespace vc
 		else TextOut( hDC, 449, 18, "Ref", 3 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_Header_TransDAP( oapi::Sketchpad* skp, int MM, int adiatt )
 	{
@@ -5464,7 +5464,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_Header_AerojetDAP( HDC hDC, int MM, double vel )
 	{
 		char cbuf[8];
@@ -5521,7 +5521,7 @@ namespace vc
 		}
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_Header_AerojetDAP( oapi::Sketchpad* skp, int MM, double vel )
 	{
@@ -5580,7 +5580,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_BETA( HDC hDC )
 	{
 		SelectObject( hDC, gdiLightGrayPen );
@@ -5605,7 +5605,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_BETA( oapi::Sketchpad* skp )
 	{
@@ -5632,7 +5632,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_GMETER_STATIC( HDC hDC )
 	{
 		SelectObject( hDC, gdiLightGrayPen );
@@ -5667,7 +5667,7 @@ namespace vc
 		TextOut( hDC, 100, 427, "-1", 2 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_GMETER_STATIC( oapi::Sketchpad* skp )
 	{
@@ -5701,7 +5701,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_GMETER_ACCEL( HDC hDC )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -5743,7 +5743,7 @@ namespace vc
 		LineTo( hDC, 69 - Round( 31 * cosdtmp ), 394 - Round( 31 * sindtmp ) );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_GMETER_ACCEL( oapi::Sketchpad* skp )
 	{
@@ -5786,7 +5786,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_GMETER_NZ( HDC hDC )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -5826,7 +5826,7 @@ namespace vc
 		LineTo( hDC, 69 - Round( 31 * cosdtmp ), 394 - Round( 31 * sindtmp ) );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_GMETER_NZ( oapi::Sketchpad* skp )
 	{
@@ -5867,7 +5867,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_HACCEL( HDC hDC )
 	{
 		SelectObject( hDC, gdiLightGrayPen );
@@ -5928,7 +5928,7 @@ namespace vc
 		Polygon( hDC, tri, 3 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_HACCEL( oapi::Sketchpad* skp )
 	{
@@ -5980,7 +5980,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_RANGERW( HDC hDC )
 	{
 		SelectObject( hDC, gdiLightGrayPen );
@@ -6001,7 +6001,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_RANGERW( oapi::Sketchpad* skp )
 	{
@@ -6024,7 +6024,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_RANGEHACC( HDC hDC )
 	{
 		SelectObject( hDC, gdiLightGrayPen );
@@ -6042,7 +6042,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_RANGEHACC( oapi::Sketchpad* skp )
 	{
@@ -6062,7 +6062,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_dAZ_HTA( HDC hDC )
 	{
 		double dtmp;
@@ -6100,7 +6100,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_dAZ_HTA( oapi::Sketchpad* skp )
 	{
@@ -6140,7 +6140,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_dXTRK( HDC hDC )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -6162,7 +6162,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_dXTRK( oapi::Sketchpad* skp )
 	{
@@ -6186,7 +6186,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_XTRK( HDC hDC )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -6209,7 +6209,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_XTRK( oapi::Sketchpad* skp )
 	{
@@ -6234,7 +6234,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_dINC( HDC hDC )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -6259,7 +6259,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_dINC( oapi::Sketchpad* skp )
 	{
@@ -6286,7 +6286,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_TGTINC( HDC hDC )
 	{
 		SelectObject( hDC, gdiSSVAFont_h11w9 );
@@ -6307,7 +6307,7 @@ namespace vc
 		SetTextAlign( hDC, TA_LEFT );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_TGTINC( oapi::Sketchpad* skp )
 	{
@@ -6330,7 +6330,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::AEPFD_GSI( HDC hDC, bool flag, double scale, double deviation )
 	{
 		SelectObject( hDC, gdiLightGrayPen );
@@ -6388,7 +6388,7 @@ namespace vc
 		}
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::AEPFD_GSI( oapi::Sketchpad* skp, bool flag, double scale, double deviation )
 	{

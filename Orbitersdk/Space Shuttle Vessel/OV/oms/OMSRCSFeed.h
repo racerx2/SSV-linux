@@ -31,6 +31,7 @@ Date         Developer
 
 
 #include "../AtlantisSubsystem.h"
+#include "OMSRCS_Interface.h"
 #include <DiscInPort.h>
 #include <DiscOutPort.h>
 
@@ -40,9 +41,6 @@ using namespace discsignals;
 
 namespace oms
 {
-	// valve groups of one pod: RCS tank isolation 1/2 and 3/4/5, RCS aft crossfeed 1/2 and 3/4/5, OMS crossfeed A and B
-	enum OMSRCS_VLV { VLV_TK12, VLV_TK345, VLV_XFD12, VLV_XFD345, VLV_OMSXFDA, VLV_OMSXFDB, VLV_COUNT };
-
 	// travel time of a motor valve [s]
 	constexpr double OMSRCS_VLV_TRAVEL = 1.0;
 
@@ -74,6 +72,9 @@ namespace oms
 
 			// true if a manifold group (0 1/2, 1 3/4/5) of a pod (0 left, 1 right) is fed from the OMS tanks
 			bool GroupFeedFromOMS( unsigned int side, unsigned int group ) const;
+
+			// true if a manifold group has no source: tank isolation closed and no OMS path through its crossfeed
+			bool GroupIsolated( unsigned int side, unsigned int group ) const;
 	};
 }
 

@@ -64,14 +64,16 @@ struct cJSON;
 
 class XRSound;
 
+#ifdef _WIN32// not upstream: the dialog handle, a Qt widget on Linux
+typedef HWND HPADDLG;
+#else
+typedef QWidget* HPADDLG;// not upstream: as above
+#endif
 
 class LC39 : public BaseSSVPad, public LCCPadInterface, public MLPPadInterface
 {
-#ifdef _WIN32
-	friend BOOL CALLBACK LC39_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-#else
-	friend BOOL LC39_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);// not upstream: fed by LC39_DlgInit
-#endif
+	friend BOOL LC39_DlgCommand( HPADDLG hWnd, LC39* pad, int id );// not upstream: LC39_DlgProc's WM_COMMAND part, both platforms
+	friend void LC39_DlgEnable( HPADDLG hWnd, LC39* pad );// not upstream: its WM_SHOWWINDOW part, as above
 public:
 	LC39(OBJHANDLE hVessel, int flightmodel);
 	virtual ~LC39();

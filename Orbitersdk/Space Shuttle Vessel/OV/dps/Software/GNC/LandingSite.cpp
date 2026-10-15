@@ -26,9 +26,7 @@ Date         Developer
 #include <MathSSV.h>
 #include <sstream>
 #include <map>
-#ifndef _WIN32
-#include <ssv_textfile.h>// not upstream: text files as in Windows text mode
-#endif
+#include <TextFile.h>// not upstream: text files as in Windows text mode
 
 
 namespace dps
@@ -113,11 +111,7 @@ namespace dps
 		RunwayData rw1;
 		RunwayData rw2;
 
-#ifdef _WIN32
-		ifstream fs;
-#else
 		TextFileIn fs;// not upstream: resolved path, CRLF read as LF
-#endif
 		fs.open( "Config\\SSV_RunwayDB.csv" );
 		if (fs.is_open())
 		{

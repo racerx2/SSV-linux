@@ -106,6 +106,7 @@ namespace dps
 	class Landing_SOP;
 	class OMSBurnSoftware;
 	class AbortModing;// not upstream
+	enum ABORT_MODE { ABORT_NONE = 0, ABORT_ATO = 1, ABORT_AOA = 2, ABORT_TAL = 3, ABORT_RTLS = 4 };// not upstream: the IDP::GetAbortMode values
 	class Elevon_PFB_SOP;
 	class Rudder_PFB_SOP;
 	class Speedbrake_PFB_SOP;
@@ -252,7 +253,7 @@ namespace dps
 		double GetSelectedRunwayHeading( void ) const;
 		double GetTargetHeading( void ) const;
 		bool GetFCSmode( void ) const;
-		unsigned short GetAbortMode( void ) const;// not upstream: 0 none, 1 ATO, 2 AOA, 3 TAL, 4 RTLS
+		unsigned short GetAbortMode( void ) const;// not upstream: an ABORT_MODE
 		double GetTargetInclination( void ) const;// not upstream: ascent target inclination [rad]
 		double GetAltitude( void ) const;
 		double GetAltitudeRate( void ) const;

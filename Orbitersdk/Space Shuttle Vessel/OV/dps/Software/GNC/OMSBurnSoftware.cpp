@@ -113,7 +113,7 @@ BurnInProg(false), BurnCompleted(false),
 MnvrLoad(false), EXEC_CMD(false), MnvrToBurnAtt(false),
 ST_CRT_TIMER(false), AlternatePass(true), bBurnMode(false),
 bCalculatingPEG4Burn(false),
-lastUpdateSimTime(-100.0),
+lastUpdateSimTime(-100.0), bAbortOMSIgnOut(false),// not upstream
 pOrbitDAP(NULL), pStateVector(NULL)
 {
 	TIG[0]=TIG[1]=TIG[2]=TIG[3]=0.0;
@@ -175,10 +175,11 @@ pOrbitDAP(NULL), pStateVector(NULL)
 	C2_OMS[2] = 0.0f;
 	DTIG_OMS[2] = 0.0f;
 	PROP_DEP_ABORT = 0.0f;// not upstream
-	bAbortTgtOPS3 = false;
-	bDispOPS3Fmt = false;
-	bAutoLoad = false;
-	THETA_LSS = 0.0;
+	PROP_DEP_SAVE = 0.0f;// not upstream: as above
+	bAbortTgtOPS3 = false;// not upstream: as above
+	bDispOPS3Fmt = false;// not upstream: as above
+	bAutoLoad = false;// not upstream: as above
+	THETA_LSS = 0.0;// not upstream: as above
 }
 
 OMSBurnSoftware::~OMSBurnSoftware()
@@ -191,6 +192,7 @@ void OMSBurnSoftware::Realize()
 	omsEngineCommand[LEFT].Connect(pBundle, 2);
 	pBundle = BundleManager()->CreateBundle("ROMS", 4);
 	omsEngineCommand[RIGHT].Connect(pBundle, 2);
+	AbortOMSIgnCmd();// not upstream: restores the abort OMS ignition after a load
 
 	pOrbitDAP = dynamic_cast<OrbitDAP*>(FindSoftware("OrbitDAP"));
 	assert( (pOrbitDAP != NULL) && "OMSBurnSoftware::Realize.pOrbitDAP" );
@@ -221,6 +223,7 @@ void OMSBurnSoftware::ReadILOADs( const std::map<std::string,std::string>& ILOAD
 void OMSBurnSoftware::OnPreStep(double simt, double simdt, double mjd)
 {
 	T_GMT = ReadClock(); //This is used often enough to warrent updating it every timestep
+	AbortOMSIgnCmd();// not upstream
 
 	// not upstream: new AOA/ATO targets (ABORT_INIT from AOA/ATO targeting) reinitialize the display before the burn is enabled
 	if (ReadCOMPOOL_IS( SCP_ABORT_INIT ) != 0)
@@ -310,14 +313,7 @@ bool OMSBurnSoftware::OnMajorModeChange(unsigned int newMajorMode)
 		M = WT_DISP / G_2_FPS2;
 
 		//Set a flag to show if the major mode allows burns
-		if (newMajorMode == 106 || newMajorMode == 301 || newMajorMode == 303)
-		{
-			bBurnMode = false;
-		}
-		else
-		{
-			bBurnMode = true;
-		}
+		bBurnMode = BurnAllowed( newMajorMode );// not upstream: also on scenario load, an AOA OPS 3 target in MM 105
 
 		if (GetMajorMode() != 0)
 		{
@@ -1255,8 +1251,9 @@ bool OMSBurnSoftware::OnParseLine(const char* keyword, const char* value)
 	else if (!_strnicmp(keyword, "PRPLT", 5)) {// not upstream
 		int fmt = 0;
 		int al = 0;
-		sscanf_s(value, "%f %d %d %lf", &PROP_DEP, &fmt, &al, &THETA_LSS);
+		int n = sscanf_s(value, "%f %d %d %lf %f", &PROP_DEP, &fmt, &al, &THETA_LSS, &PROP_DEP_SAVE);
 		bDispOPS3Fmt = (fmt != 0);
+		if (n < 5) PROP_DEP_SAVE = bDispOPS3Fmt ? 0.0f : PROP_DEP;
 		bAutoLoad = (al != 0);
 		return true;
 	}
@@ -1303,7 +1300,7 @@ void OMSBurnSoftware::OnSaveState(FILEHANDLE scn) const
 	}
 	sprintf_s(cbuf, 255, "%.1f %.6f %.2f %.6f %.2f %.1f %d", HTGT_OMS[2], THETA_OMS[2], C1_OMS[2], C2_OMS[2], DTIG_OMS[2], PROP_DEP_ABORT, bAbortTgtOPS3);// not upstream
 	oapiWriteScenario_string(scn, "ABORT_TGT", cbuf);
-	sprintf_s(cbuf, 255, "%.1f %d %d %.6f", PROP_DEP, bDispOPS3Fmt, bAutoLoad, THETA_LSS);
+	sprintf_s(cbuf, 255, "%.1f %d %d %.6f %.1f", PROP_DEP, bDispOPS3Fmt, bAutoLoad, THETA_LSS, PROP_DEP_SAVE);
 	oapiWriteScenario_string(scn, "PRPLT", cbuf);
 }
 
@@ -1345,10 +1342,26 @@ void OMSBurnSoftware::StartBurn()
 	}
 }
 
+void OMSBurnSoftware::AbortOMSIgnCmd( void )// not upstream: as declared, edge triggered, no change while ABORT_OMS_IGN_CMD stays 0
+{
+	bool ign = (ReadCOMPOOL_IS( SCP_ABORT_OMS_IGN_CMD ) != 0);
+	if (ign == bAbortOMSIgnOut) return;
+	bAbortOMSIgnOut = ign;
+	for (int i = 0; i < 2; i++)
+	{
+		if (ign || (BurnInProg && ((OMS == 0) || (OMS == (i + 1))))) omsEngineCommand[i].SetLine();
+		else omsEngineCommand[i].ResetLine();
+	}
+	return;
+}
+
 void OMSBurnSoftware::TerminateBurn()
 {
-	omsEngineCommand[0].ResetLine();
-	omsEngineCommand[1].ResetLine();
+	if (ReadCOMPOOL_IS( SCP_ABORT_OMS_IGN_CMD ) == 0)// not upstream: the abort OMS ignition holds the lines (AbortOMSIgnCmd)
+	{
+		omsEngineCommand[0].ResetLine();// not upstream: as above
+		omsEngineCommand[1].ResetLine();// not upstream: as above
+	}
 	BurnCompleted=true;
 	BurnInProg=false;
 	pOrbitDAP->UseRCS();
@@ -1442,6 +1455,7 @@ void OMSBurnSoftware::OPS1_DISP_INIT(int mm)// not upstream: as declared
 	}
 
 	//Load PEG-4 targets
+	bool bOPS3FmtOld = bDispOPS3Fmt;// not upstream
 	bDispOPS3Fmt = false;// not upstream
 	if (I > 0)
 	{
@@ -1457,12 +1471,20 @@ void OMSBurnSoftware::OPS1_DISP_INIT(int mm)// not upstream: as declared
 		// not upstream: the AOA OMS-2 target is an OPS 3 (deorbit) target, burned after the OPS 3 transition
 		if ((I == 3) && bAbortTgtOPS3)
 		{
+			if (!bOPS3FmtOld) PROP_DEP_SAVE = PROP_DEP;
 			PROP_DEP = PROP_DEP_ABORT;
 			bDispOPS3Fmt = true;
 		}
-		else PROP_DEP = 0.0f;
 	}
-	if (mm == 105) bBurnMode = !((I == 3) && bAbortTgtOPS3 && (ReadCOMPOOL_IS(SCP_S_AOA) != 0));// not upstream: AOA MNVR TRANS, no burn in OPS 1
+	if (bOPS3FmtOld && !bDispOPS3Fmt) PROP_DEP = PROP_DEP_SAVE;// not upstream: back from the abort format
+	bBurnMode = BurnAllowed( mm );// not upstream: AOA MNVR TRANS, no burn in OPS 1
+}
+
+bool OMSBurnSoftware::BurnAllowed( int mm ) const// not upstream: as declared
+{
+	if ((mm == 106) || (mm == 301) || (mm == 303)) return false;
+	if ((mm == 105) && bAbortTgtOPS3 && (ReadCOMPOOL_IS( SCP_S_AOA ) != 0)) return false;
+	return true;
 }
 
 void OMSBurnSoftware::OPS2_INIT()

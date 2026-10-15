@@ -29,6 +29,8 @@ Date         Developer
 // not upstream (Orbiter Linux): Orbiter flight recorder support, GLS-SSV/SSV issue #28 (design ssv-flightrec)
 #include <FlightRecorder.h>
 #include <cstdio>
+#include <cstdlib>
+#include <cctype>
 #include <set>
 
 
@@ -47,11 +49,6 @@ namespace flightrec
 		return nominal ? 0.5 : u;
 	}
 
-	bool Nominal( void )
-	{
-		return nominal != 0;
-	}
-
 	std::string Quote( const std::string& s )
 	{
 		return "\"" + s + "\"";
@@ -59,7 +56,7 @@ namespace flightrec
 
 	const char* SkipBlanks( const char* p )
 	{
-		while ((*p == ' ') || (*p == '\t')) p++;
+		while (isspace( static_cast<unsigned char>(*p) )) p++;
 		return p;
 	}
 
@@ -77,7 +74,7 @@ namespace flightrec
 			return true;
 		}
 		const char* e = s;
-		while ((*e != '\0') && (*e != ' ') && (*e != '\t')) e++;
+		while ((*e != '\0') && !isspace( static_cast<unsigned char>(*e) )) e++;
 		out.assign( s, e );
 		p = e;
 		return true;
@@ -115,7 +112,7 @@ namespace flightrec
 	{
 		const int prev = steps;
 		steps = v->Recording() ? ((steps < 2) ? (steps + 1) : 2) : 0;
-		started = (steps == 2) && (prev == 1);
+		started = (steps == 2) && (prev == 1);// marker on the second step: Orbiter truncates the .atc at its first save, stock Orbiter too
 		if (started)
 		{
 			char cbuf[16];
@@ -138,9 +135,17 @@ namespace flightrec
 		{
 			if (!locked && v->Playback())
 			{
+				const int format = atoi( event ? event : "" );
+				if (format != FORMAT)
+				{
+					static std::set<std::string> logged;
+					if (logged.insert( v->GetName() ).second)
+						oapiWriteLogV( "(SSV) [WARNING] Flight recorder: %s recorded in format %d, not %d: not played back nominal", v->GetName(), format, FORMAT );
+					return true;
+				}
 				locked = true;
 				nominal++;
-				oapiWriteLogV( "(SSV) [INFO] Flight recorder: %s plays back nominal (format %s)", v->GetName(), SkipBlanks( event ? event : "" ) );
+				oapiWriteLogV( "(SSV) [INFO] Flight recorder: %s plays back nominal (format %d)", v->GetName(), format );
 			}
 			return true;
 		}

@@ -162,12 +162,14 @@ class OMSBurnSoftware : public SimpleGPCSoftware
 
 	// not upstream: abort target in the third slot: propellant to deplete, OPS 3 format (AOA OMS-2: height above the ellipsoid, theta from TIG)
 	float PROP_DEP_ABORT;
+	float PROP_DEP_SAVE;// PROP_DEP of the nominal format while the abort target is displayed
 	bool bAbortTgtOPS3;
 	bool bDispOPS3Fmt;// the displayed target is in OPS 3 format
 	bool bAutoLoad;// load the carried AOA target on the first MM 301 pass
 	double THETA_LSS;// launch site to OMS-1 TIG angle of the last OMS-1 load [rad], 0 if none
 
 	DiscOutPort omsEngineCommand[2];
+	bool bAbortOMSIgnOut;// not upstream: abort OMS ignition last put on omsEngineCommand
 
 	OrbitDAP* pOrbitDAP;
 	StateVectorSoftware* pStateVector;
@@ -200,9 +202,11 @@ public:
 	void SetManeuverData(double maneuverTIG, const VECTOR3& maneuverDV);
 
 	// not upstream: AOA/ATO targeting interface
-	void SetAbortTarget( double HTGT, double THETA, double C1, double C2, double DTIG, double PROP_DEP, bool OPS3 );
+	void SetAbortTarget( double HTGT, double THETA, double C1, double C2, double DTIG, double PROP_DEP_TGT, bool OPS3 );
 	bool BurnEnabled( void ) const { return EXEC_CMD; };
 	double GetTHETA_LSS( void ) const { return THETA_LSS; };
+	// not upstream: the only driver of the OMS engine command lines, also for the abort OMS ignition (AbortControlSequence, all OPS 1)
+	void AbortOMSIgnCmd( void );
 
 	VECTOR3 GetAttitudeCommandErrors() const;
 
@@ -213,6 +217,7 @@ private:
 	//Display initialization tasks
 	void OPS1_INIT(int mm);
 	void OPS1_DISP_INIT(int mm);// not upstream
+	bool BurnAllowed( int mm ) const;// not upstream: the major mode and the target allow burns
 	void OPS2_INIT();
 	void OPS3_INIT(int mm);
 

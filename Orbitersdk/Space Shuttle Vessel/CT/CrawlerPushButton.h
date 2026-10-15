@@ -51,6 +51,46 @@ namespace vc
 {
 	using discsignals::DiscOutPort;
 
+	// not upstream: flight recorder state of a momentary button, 1 pressed or 0 (design ssv-flightrec)
+	class MomentaryPlayback
+	{
+		public:
+			bool pressed = false;
+
+			bool GetState( string& state ) const
+			{
+				state = pressed ? "1" : "0";
+				return true;
+			}
+
+			// 1 press, 0 release, -1 nothing now; a release in the step of its press waits for ReleaseDue
+			int OnEvent( double simt, const char* event )
+			{
+				const char* s = flightrec::SkipBlanks( event );
+				if ((*s != '0') && (*s != '1')) return -1;
+				if ((*s == '1') == pressed) return -1;
+				releaseSteps = 0;
+				if (*s == '1')
+				{
+					pressT = simt;
+					return 1;
+				}
+				if (simt != pressT) return 0;
+				releaseSteps = 2;// the crawler reads the lines after the panels' OnPreStep
+				return -1;
+			}
+
+			// once per OnPreStep: true when the held release is due
+			bool ReleaseDue( void )
+			{
+				return (releaseSteps > 0) && (--releaseSteps == 0);
+			}
+
+		private:
+			double pressT = -1.0;
+			int releaseSteps = 0;
+	};
+
 	class CrawlerPushButton : public BasicVCComponent<Crawler>
 	{
 		private:
@@ -70,12 +110,13 @@ namespace vc
 			virtual void OnDepress();
 			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
 			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
+			void OnPreStep( double simt, double simdt, double mjd ) override;// not upstream: as above
 
 			void SetMotionLength( double _motionlength );
 
 			DiscOutPort output;
-		private:
-			bool pressed = false;// not upstream: as above
+		private:// not upstream: flight recorder (design ssv-flightrec)
+			MomentaryPlayback playback;// not upstream: as above
 	};
 }
 

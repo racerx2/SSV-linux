@@ -178,9 +178,9 @@ GNC(_GNC)
 		vSoftware.push_back( new StateVectorSoftware( this ) );
 		vSoftware.push_back( new OMSBurnSoftware( this ) );
 		vSoftware.push_back( new AbortModing( this ) );// not upstream: ascent aborts
-		vSoftware.push_back( new AOA_ATO_TGT( this ) );
-		vSoftware.push_back( new AbortControlSequence( this ) );
-		vSoftware.push_back( new AbortOMSRCSInterconnect( this ) );
+		vSoftware.push_back( new AOA_ATO_TGT( this ) );// not upstream: as above
+		vSoftware.push_back( new AbortControlSequence( this ) );// not upstream: as above
+		vSoftware.push_back( new AbortOMSRCSInterconnect( this ) );// not upstream: as above
 		vSoftware.push_back( new OrbitTgtSoftware( this ) );
 		vSoftware.push_back( new RadarAltimeter_SOP( this ) );
 		vSoftware.push_back( new LandingSite( this ) );
@@ -386,7 +386,8 @@ void SimpleGPCSystem::SetMajorMode( unsigned short newMM )
 
 bool SimpleGPCSystem::IsModeRecall( unsigned short newMajorMode ) const// not upstream: as declared
 {
-	if (!GNC || (newMajorMode != ReadCOMPOOL_IS( SCP_MM ))) return false;
+	if (newMajorMode != ReadCOMPOOL_IS( SCP_MM )) return false;
+	if (!GNC) return newMajorMode == 201;// SM: the transition table rejects 201 to 201
 	switch (newMajorMode)
 	{
 		case 201:
@@ -429,7 +430,7 @@ bool SimpleGPCSystem::IsValidMajorModeTransition_GNC( unsigned short newMajorMod
 		case 202:
 			return MM == 201;
 		case 301:
-			return (MM == 0 || MM == 104 || MM == 105 || MM == 106 || MM == 201 || MM == 302 || MM == 303 || MM == 801);// not upstream: 303 to 301 is legal (PASS User's Guide table 2-5)
+			return (MM == 0 || MM == 104 || MM == 105 || MM == 106 || MM == 201 || MM == 302 || MM == 303 || MM == 801);// not upstream: MM == 303 added, PASS allows OPS 301 from 303 (PASS User's Guide table 2-5)
 		case 302:
 			return MM == 301;
 		case 303:
