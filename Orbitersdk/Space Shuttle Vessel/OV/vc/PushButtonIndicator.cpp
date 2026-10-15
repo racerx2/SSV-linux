@@ -8,6 +8,7 @@ Date         Developer
 2022/06/13   GLS
 2022/09/29   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "PushButtonIndicator.h"
 #include "../Atlantis.h"
@@ -67,6 +68,7 @@ namespace vc
 		if (bHasAnimations) SetAnimation( anim_pb, 1.0 );
 		output.SetLine();
 		SoundPlay( STS()->GetSound(), KEY_PRESS_SOUND );
+		bPressed = true;// not upstream: flight recorder (design ssv-flightrec)
 		return;
 	}
 
@@ -74,6 +76,24 @@ namespace vc
 	{
 		if (bHasAnimations) SetAnimation( anim_pb, 0.0 );
 		output.ResetLine();
+		bPressed = false;// not upstream: as above
+		return;
+	}
+
+	bool PushButtonIndicatorSingleLight::GetPlaybackState( string& state ) const// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
+	{
+		state = bPressed ? "1" : "0";
+		return true;
+	}
+
+	void PushButtonIndicatorSingleLight::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		const char* s = flightrec::SkipBlanks( event );
+		if ((*s != '0') && (*s != '1')) return;
+		const bool press = (*s == '1');
+		if (press == bPressed) return;
+		if (press) OnPress();
+		else OnRelease();
 		return;
 	}
 
@@ -141,6 +161,7 @@ namespace vc
 		if (bHasAnimations) SetAnimation( anim_pb, 1.0 );
 		output.SetLine();
 		SoundPlay( STS()->GetSound(), KEY_PRESS_SOUND );
+		bPressed = true;// not upstream: flight recorder (design ssv-flightrec)
 		return;
 	}
 
@@ -148,6 +169,24 @@ namespace vc
 	{
 		if (bHasAnimations) SetAnimation( anim_pb, 0.0 );
 		output.ResetLine();
+		bPressed = false;// not upstream: as above
+		return;
+	}
+
+	bool PushButtonIndicatorDoubleLight::GetPlaybackState( string& state ) const// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
+	{
+		state = bPressed ? "1" : "0";
+		return true;
+	}
+
+	void PushButtonIndicatorDoubleLight::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		const char* s = flightrec::SkipBlanks( event );
+		if ((*s != '0') && (*s != '1')) return;
+		const bool press = (*s == '1');
+		if (press == bPressed) return;
+		if (press) OnPress();
+		else OnRelease();
 		return;
 	}
 

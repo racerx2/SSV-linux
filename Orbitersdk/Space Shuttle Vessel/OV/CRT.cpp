@@ -106,6 +106,8 @@ bool CRT::ConsumeKeyBuffered (DWORD key)
 	{
 		if (mdu)
 		{
+			if (mdu->LiveKeyLocked()) return true;// not upstream: the recorded crew drives the MDU during playback (design ssv-flightrec)
+			mdu->RecordMFDKey( key );// not upstream: flight recorder (design ssv-flightrec)
 			if (mdu->NavigateMenu( key ))
 			{
 				InvalidateDisplay();

@@ -16,6 +16,7 @@ Date         Developer
 2022/09/29   GLS
 2023/02/19   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 // BasicSwitch.cpp: Implementierung der Klasse BasicSwitch.
 //
@@ -187,6 +188,22 @@ void BasicSwitch::OnPositionDown()
 void BasicSwitch::OnSaveState(FILEHANDLE scn) const
 {
 
+}
+
+bool BasicSwitch::GetPlaybackState( string& state ) const// not upstream: flight recorder, the position (design ssv-flightrec)
+{
+	state = "[" + std::to_string( usCurrentPosition ) + "]";
+	return true;
+}
+
+void BasicSwitch::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+{
+	unsigned short pos = 0;
+	if ((sscanf_s( event, " [%hu]", &pos ) != 1) || (pos >= usNumPositions)) return;
+	if (pos == usCurrentPosition) return;
+	usCurrentPosition = pos;
+	OnPositionChange( usCurrentPosition );
+	return;
 }
 
 void BasicSwitch::SetLabel( unsigned short iPosition, const string& _label )

@@ -190,6 +190,8 @@ namespace vc
 	{
 		double t0;
 		bool counting;
+		bool bOwnInput = false;// not upstream: the MDU drives its MFD itself, the CRT doesn't record those keys (design ssv-flightrec)
+		bool bReplay = false;// not upstream: a recorded action is being played back (design ssv-flightrec)
 
 		// MEDS pens and brushes
 #ifdef _WIN32
@@ -624,6 +626,11 @@ namespace vc
 		 * @sa BasicVCComponent::OnMouseEvent
 		 */
 		virtual bool OnMouseEvent(int _event, float x, float y) override;
+
+		// not upstream: flight recorder, the MDU's actions and keys from Orbiter's MFD keyboard (design ssv-flightrec)
+		void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;
+		bool LiveKeyLocked( void ) const;
+		void RecordMFDKey( DWORD key ) const;
 
 		/**
 		 * Paint the edge menu area on this HDC.

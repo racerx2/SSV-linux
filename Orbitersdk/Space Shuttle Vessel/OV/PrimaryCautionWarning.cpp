@@ -1042,6 +1042,13 @@ void PrimaryCautionWarning::OnPreStep( double simt, double simdt, double mjd )
 		MasterAlarm_MO52J_B.ResetLine();
 	}
 
+	const bool masteralarm = (MasterAlarmRelaySignal_A && CW_POWER_A) || (MasterAlarmRelaySignal_B && CW_POWER_B);// not upstream: flight recorder note (design ssv-flightrec)
+	if (masteralarm != lastMasterAlarm)// not upstream: as above
+	{
+		lastMasterAlarm = masteralarm;
+		STS()->FlightRecorder().Record( flightrec::MA, masteralarm ? "ON" : "OFF" );
+	}
+
 
 	//// outputs
 	// CW lights

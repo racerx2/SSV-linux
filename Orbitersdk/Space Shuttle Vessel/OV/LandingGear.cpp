@@ -17,6 +17,7 @@ Date         Developer
 2021/12/30   GLS
 2022/08/05   GLS
 2022/08/21   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "LandingGear.h"
 #include "Atlantis.h"
@@ -268,6 +269,7 @@ void LandingGear::OnPostStep( double simt, double simdt, double mjd )
 	SetLandingGearPosition();
 
 	// weight on wheels
+	const bool wasNoWOW[3] = {NLG_NoWOW, LMG_NoWOW, RMG_NoWOW};// not upstream: flight recorder notes (design ssv-flightrec)
 	if ((NLG == NLG_OPEN_POS) && (STS()->GroundContact()) && (STS()->GetPitch() < (-3.5 * RAD))) NLG_NoWOW = false;
 	else NLG_NoWOW = true;
 
@@ -276,6 +278,10 @@ void LandingGear::OnPostStep( double simt, double simdt, double mjd )
 
 	if ((RMG == MLG_OPEN_POS) && STS()->GroundContact()) RMG_NoWOW = false;
 	else RMG_NoWOW = true;
+
+	if (wasNoWOW[0] && !NLG_NoWOW) STS()->FlightRecorder().Record( flightrec::EVENT, "NLG TD" );// not upstream: as above
+	if (wasNoWOW[1] && !LMG_NoWOW) STS()->FlightRecorder().Record( flightrec::EVENT, "LMG TD" );// not upstream: as above
+	if (wasNoWOW[2] && !RMG_NoWOW) STS()->FlightRecorder().Record( flightrec::EVENT, "RMG TD" );// not upstream: as above
 
 	// brakes
 	Brakes();

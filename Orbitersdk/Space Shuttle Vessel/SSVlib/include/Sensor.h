@@ -30,6 +30,7 @@ Date         Developer
 2022/07/16   GLS
 2022/08/05   GLS
 2022/11/17   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -84,6 +85,7 @@ class Sensor
 
 		double conversor;
 		double error;
+		double draw;// not upstream: the random part of the error, [0,1) (design ssv-flightrec)
 
 		double MaxValue;
 		double MinValue;

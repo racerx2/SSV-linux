@@ -104,6 +104,7 @@
     <ClCompile Include="src\DiscreteBundleManager.cpp" />
     <ClCompile Include="src\DiscretePort.cpp" />
     <ClCompile Include="src\FADER.cpp" />
+    <ClCompile Include="src\FlightRecorder.cpp" />
     <ClCompile Include="src\FILT1.cpp" />
     <ClCompile Include="src\FILT2.cpp" />
     <ClCompile Include="src\HydraulicActuatedValve.cpp" />
@@ -137,6 +138,7 @@
     <ClInclude Include="include\discsignals.h" />
     <ClInclude Include="include\EngConst.h" />
     <ClInclude Include="include\FADER.h" />
+    <ClInclude Include="include\FlightRecorder.h" />
     <ClInclude Include="include\FILT1.h" />
     <ClInclude Include="include\FILT2.h" />
     <ClInclude Include="include\HydraulicActuatedValve.h" />

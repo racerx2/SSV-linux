@@ -167,9 +167,11 @@
     <ClInclude Include="MLP.h" />
     <ClInclude Include="..\PadMLPInterface.h" />
     <ClInclude Include="..\T0UmbilicalMLPInterface.h" />
+    <ClInclude Include="..\SSVlib\include\FlightRecorder.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="MLP.cpp" />
+    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -36,6 +36,7 @@ Date         Developer
 2021/12/25   GLS
 2021/12/30   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -67,6 +68,7 @@ Date         Developer
 
 
 #include <Orbitersdk.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 
 
 class SurfaceRoving;
@@ -81,6 +83,7 @@ class OTS: public VESSEL4
 		void clbkPostCreation( void ) override;
 		void clbkPreStep( double simt, double simdt, double mjd ) override;
 		int clbkConsumeBufferedKey( DWORD key, bool down, char* kstate ) override;
+		bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 		void clbkVisualCreated( VISHANDLE vis, int refcount ) override;
 		void clbkSaveState( FILEHANDLE scn ) override;
 		void clbkLoadStateEx( FILEHANDLE scn, void *status ) override;
@@ -98,6 +101,10 @@ class OTS: public VESSEL4
 		SurfaceRoving* surfaceroving;
 
 		void DefineAnimations( void );
+
+		flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the drive keys (design ssv-flightrec)
+		void Drive( double& value, double d );// not upstream: as above, a drive key, nothing while locked
+		void RecordDrive( void ) const;// not upstream: as above, SSV_CTRL <fwdsteer> <aftsteer> <drive>
 };
 
 #endif// __OTS_H

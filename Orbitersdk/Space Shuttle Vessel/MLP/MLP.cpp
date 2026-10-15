@@ -24,6 +24,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2025/03/20   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "MLP.h"
 #include "../CommonDefs.h"
@@ -228,6 +229,8 @@ void MLP::clbkPreStep(double simt, double simdt, double mjd)
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+
 		if (T0Umbilical_State.Moving()) {
 			double dp=simdt*TSM_UMBILICAL_RETRACT_SPEED;
 			T0Umbilical_State.Move(dp);
@@ -421,8 +424,14 @@ void MLP::HideSRBWaterBags( VISHANDLE vis )
 
 void MLP::FireSSMEH2BurnPICs( void )
 {
+	if (!HBOIOn) HBOITime = 8.0 + (flightrec::Rand() * 5.0);// not upstream: drawn when lit, nominal in a playback (design ssv-flightrec)
 	HBOIOn = true;
 	return;
+}
+
+bool MLP::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	return flightrecorder.OnPlaybackEvent( event_type, event );
 }
 
 void MLP::SetGMTLO( double GMTLO )

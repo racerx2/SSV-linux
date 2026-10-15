@@ -38,6 +38,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2022/10/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -71,6 +72,7 @@ Date         Developer
 #include "BasicPanel.h"
 #include <OrbiterAPI.h>
 #include "ISubsystem.h"
+#include "FlightRecorder.h"// not upstream: flight recorder (design ssv-flightrec)
 #include <set>
 #include <string>
 #include <cassert>
@@ -119,6 +121,9 @@ protected:
 	bool WriteScenarioInt(FILEHANDLE scn, const string& key, const int iValue) const;
 	bool WriteScenarioVector(FILEHANDLE scn, const string& key, const VECTOR3& vector) const;
 
+	// not upstream: an action of the crew to the flight recorder, played back by OnPlaybackEvent (design ssv-flightrec)
+	void RecordInput( const string& text ) const;
+
 
 public:
 	explicit BasicVCComponent(TVessel* _v);
@@ -154,6 +159,9 @@ public:
 	virtual const VECTOR3& GetReference() const;
 	virtual double GetState() const;
 	virtual bool GetStateString(unsigned long ulBufferSize, char* pszBuffer);
+
+	// not upstream: the state a crew action sets, false if none; a change by the mouse is recorded and played back by OnPlaybackEvent (design ssv-flightrec)
+	virtual bool GetPlaybackState( string& state ) const;
 
 	/**
 	 * @return true if the object uses multiple lines for saving it's
@@ -239,6 +247,19 @@ void BasicVCComponent<TVessel>::AddAIDToRedrawEventList(UINT aid)
 template <class TVessel>
 bool BasicVCComponent<TVessel>::GetStateString(unsigned long ulBufferSize, char* pszBuffer) {
 	return false;
+}
+
+template <class TVessel>
+bool BasicVCComponent<TVessel>::GetPlaybackState( string& state ) const// not upstream: as declared
+{
+	return false;
+}
+
+template <class TVessel>
+void BasicVCComponent<TVessel>::RecordInput( const string& text ) const// not upstream: as declared
+{
+	if (pParent && V()->FlightRecorder().Recording())
+		V()->FlightRecorder().Record( flightrec::VC, flightrec::Quote( pParent->GetIdentifier() ) + " " + flightrec::Quote( ident ) + " " + text );
 }
 
 template <class TVessel>

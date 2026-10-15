@@ -331,11 +331,18 @@ void SRB::clbkPostCreation ()
 	}
 }
 
+bool SRB::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: flight recorder (design ssv-flightrec)
+{
+	return flightrecorder.OnPlaybackEvent( event_type, event );
+}
+
 // Simulation time step
 void SRB::clbkPostStep (double simt, double simdt, double mjd)
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+
 		if (bMainEngine) {
 			double met = simt-t0;
 			if (met >= NO_SLAG_TIME)
@@ -449,7 +456,7 @@ void SRB::GetSRB_State( double met, double &thrust_level, double &prop_level, do
 
 	double SRB_ThrSCL=(SRB_Thrust[i+1]-SRB_Thrust[i])/(SRB_Seq[i+1]-SRB_Seq[i]);
 	thrust_level = SRB_ThrSCL * (met-SRB_Seq[i]) + SRB_Thrust[i];
-	if (met>0.0) thrust_level += (0.01435 * oapiRand()) - (0.01435 * oapiRand());
+	if (met>0.0) thrust_level += (0.01435 * flightrec::Rand()) - (0.01435 * flightrec::Rand());// not upstream: nominal in a playback (design ssv-flightrec)
 	thrust_level = std::max(0.0, thrust_level);// not upstream: windows.h max macro
 
 	double SRB_PrpSCL=(SRB_Prop[i+1]-SRB_Prop[i])/(SRB_Seq[i+1]-SRB_Seq[i]);

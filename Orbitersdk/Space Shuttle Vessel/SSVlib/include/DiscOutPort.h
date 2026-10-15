@@ -31,6 +31,7 @@ Date         Developer
 2021/08/24   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -76,6 +77,7 @@ public:
 	virtual void ResetLine();
 	void SetLine();
 	void SetLine(float fVoltage);
+	float GetVoltage() const;// not upstream: the voltage set on the line, for the flight recorder (design ssv-flightrec)
 	bool Connect( DiscreteBundle *pBundle, unsigned short iLine ) override;
 
 };

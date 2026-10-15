@@ -40,6 +40,7 @@ Date         Developer
 2022/09/29   GLS
 2023/02/19   GLS
 2024/02/05   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -74,6 +75,7 @@ Date         Developer
 #include <string>
 #include <vector>
 #include "BasicVCComponent.h"
+#include "FlightRecorder.h"// not upstream: flight recorder (design ssv-flightrec)
 
 
 namespace vc
@@ -141,6 +143,8 @@ public:
 	virtual void Realize();
 	virtual bool OnVCMouseEvent (int id, int _event, VECTOR3 &p);
 	virtual bool OnVCRedrawEvent (int id, int _event, SURFHANDLE surf);
+	// not upstream: a recorded event to the components named component; false if there is none (design ssv-flightrec)
+	virtual bool OnPlaybackEvent( const string& component, double simt, double event_t, const char* event_type, const char* event );
 	virtual void OnPreStep (double simt, double simdt, double mjd);
 	virtual void OnPostStep (double simt, double simdt, double mjd);
 	virtual void OnPropagate(double simt, double simdt, double mjd);
@@ -235,6 +239,8 @@ template <class TVessel>
 bool BasicPanel<TVessel>::DistributeMouseEvent( UINT aid, int _event, const VECTOR3& p )
 {
 	float mx = 0, my = 0;
+	const flightrec::Recorder& rec = V()->FlightRecorder();// not upstream: a state change by the mouse goes to the flight recorder (design ssv-flightrec)
+	const bool recording = rec.Recording();// not upstream: as above
 	for (const auto& x : components)
 	{
 		BasicVCComponent<TVessel>* currentElement = x;
@@ -243,7 +249,12 @@ bool BasicPanel<TVessel>::DistributeMouseEvent( UINT aid, int _event, const VECT
 			if(currentElement->IsPointOver((float)p.x, (float)p.y))
 			{
 				currentElement->ProjectMouse((float)p.x, (float)p.y, mx, my);
-				if(currentElement->OnMouseEvent(_event, mx, my))
+				string before, after;// not upstream: as above
+				const bool hasstate = recording && currentElement->GetPlaybackState( before );// not upstream: as above
+				const bool handled = currentElement->OnMouseEvent(_event, mx, my);// not upstream: as above, the call kept
+				if (hasstate && currentElement->GetPlaybackState( after ) && (after != before))// not upstream: as above
+					rec.Record( flightrec::VC, flightrec::Quote( name ) + " " + flightrec::Quote( currentElement->GetIdentifier() ) + " " + after );// not upstream: as above
+				if (handled)// not upstream: as above
 					return true;
 			}
 		}
@@ -477,6 +488,7 @@ void BasicPanel<TVessel>::OnSaveState(FILEHANDLE scn)
 template <class TVessel>
 bool BasicPanel<TVessel>::OnVCMouseEvent(int id, int _event, VECTOR3 &p)
 {
+	if (V()->FlightRecorder().Locked()) return false;// not upstream: the recorded crew drives the panels during playback (design ssv-flightrec)
 	if(availableForMouse.find(id) != availableForMouse.end()) {
 		if(bCoordinateDisplayMode)
 		{
@@ -520,6 +532,21 @@ bool BasicPanel<TVessel>::OnVCRedrawEvent(int id, int _event, SURFHANDLE surf)
 		++iter;
 	}
 	return bRedraw;
+}
+
+template <class TVessel>
+bool BasicPanel<TVessel>::OnPlaybackEvent( const string& component, double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	bool found = false;
+	for (const auto& x : components)
+	{
+		if (x->GetIdentifier() == component)
+		{
+			x->OnPlaybackEvent( simt, event_t, event_type, event );
+			found = true;
+		}
+	}
+	return found;
 }
 
 template <class TVessel>

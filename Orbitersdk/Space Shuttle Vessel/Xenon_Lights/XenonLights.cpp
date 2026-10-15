@@ -157,6 +157,8 @@ void XenonLights::clbkPreStep(double simT, double simDT, double mjd)
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+
 		updateClock -= simDT;
 		if (power)
 		{
@@ -179,7 +181,7 @@ void XenonLights::clbkPreStep(double simT, double simDT, double mjd)
 							MATRIX3 RotMatrix;
 							GetRotationMatrix(RotMatrix);
 							VECTOR3 pos = tmul(RotMatrix, -relPos);
-							pos.y = heightOffset;
+							pos.y = heightOffset + ((flightrec::Held( heightDraw ) - 0.5) * 50);// not upstream: the aim's draw added here, nominal in a playback (design ssv-flightrec)
 							lightDir=pos/length(pos);
 						}
 					}
@@ -214,14 +216,10 @@ int XenonLights::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 		{
 			if (key == OAPI_KEY_K)
 			{
-				power = !power;
-				if (!power)
+				if (!flightrecorder.Locked())// not upstream: flight recorder, the recorded crew drives during playback (design ssv-flightrec)
 				{
-					SetLightState( false );
-				}
-				else
-				{
-					updateClock = 0.0;
+					flightrecorder.Record( flightrec::CMD, power ? "POWER 0" : "POWER 1" );// not upstream: as above
+					SetPower( !power );// not upstream: as above
 				}
 				return 1;
 			}
@@ -378,12 +376,56 @@ bool XenonLights::FindTarget()
 				else {
 					heightOffset = PAD_HEIGHT_OFFSET;
 				}
-				heightOffset += (oapiRand() - 0.5) * 50;// point within 25m vertically of vehicle center
+				heightDraw = oapiRand();// point within 25m vertically of vehicle center; not upstream: added where the aim is set (design ssv-flightrec)
 				return true;
 			}
 		}
 	}
 	return false;
+}
+
+bool XenonLights::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	try
+	{
+		if (!event) event = "";
+		if (!_stricmp( event_type, flightrec::NOMINAL )) updateClock = 0.0;
+		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
+
+		if (!_stricmp( event_type, flightrec::CMD ))
+		{
+			const char* p = event;
+			std::string word, arg;
+			if (flightrec::NextToken( p, word ) && (word == "POWER") && flightrec::NextToken( p, arg ) && ((arg == "0") || (arg == "1"))) SetPower( arg == "1" );
+			else flightrec::LogUnknown( "SSV_XenonLights", event_type, word );
+			return true;
+		}
+		return false;
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(SSV_XenonLights) [FATAL ERROR] Exception in XenonLights::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(SSV_XenonLights) [FATAL ERROR] Exception in XenonLights::clbkPlaybackEvent" );
+		abort();
+	}
+}
+
+void XenonLights::SetPower( bool on )// not upstream: as declared, the power key's action
+{
+	power = on;
+	if (!power)
+	{
+		SetLightState( false );
+	}
+	else
+	{
+		updateClock = 0.0;
+	}
+	return;
 }
 
 OBJHANDLE XenonLights::GetAttachedParent(OBJHANDLE hVessel) const

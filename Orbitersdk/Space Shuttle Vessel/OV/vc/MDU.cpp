@@ -313,12 +313,14 @@ namespace vc
 
 	bool MDU::OnMouseEvent(int _event, float x, float y)
 	{
+		bOwnInput = true;// not upstream: flight recorder, the actions are recorded here (design ssv-flightrec)
 		//sprintf_s(oapiDebugString(), 256, "MDU %s mouse event %d (%f, %f)", GetQualifiedIdentifier().c_str(), _event, x, y);
 		if ((y >= 0.843f) && (y <= 0.917f) && (x >= 0.038f) && (x <= 0.1f))
 		{
 			if(_event & PANEL_MOUSE_LBDOWN)
 			{
 				//sprintf_s(oapiDebugString(), 256, "MDU %s POWER ON/OFF", GetQualifiedIdentifier().c_str());
+				RecordInput( "PWR" );// not upstream: as above
 				oapiSendMFDKey(usMDUID, OAPI_KEY_ESCAPE);
 				if (oapiGetMFDMode( usMDUID ) != 0) oapiOpenMFD( 1000, usMDUID );
 			}
@@ -332,6 +334,7 @@ namespace vc
 				if (fBrightness < 0.2) fBrightness = 0.2;
 
 				VisualCreated();
+				RecordInput( "BRT " + std::to_string( fBrightness ) );// not upstream: as above
 			}
 		}
 		else if ((y >= 0.843f) && (y <= 0.917f) && (x >= 0.9385f) && (x <= 0.97f))
@@ -343,6 +346,7 @@ namespace vc
 				if (fBrightness > 1.0) fBrightness = 1.0;
 
 				VisualCreated();
+				RecordInput( "BRT " + std::to_string( fBrightness ) );// not upstream: as above
 			}
 		}
 		else if ((y >= 0.928f) && (y <= 0.976f))
@@ -353,6 +357,7 @@ namespace vc
 				if(_event & PANEL_MOUSE_LBDOWN)
 				{
 					//sprintf_s(oapiDebugString(), 256, "MDU %s BUTTON 1", GetQualifiedIdentifier().c_str());
+					RecordInput( "BTN 0" );// not upstream: as above
 					oapiProcessMFDButton (usMDUID, 0, _event);
 				}
 			}
@@ -361,6 +366,7 @@ namespace vc
 				if(_event & PANEL_MOUSE_LBDOWN)
 				{
 					//sprintf_s(oapiDebugString(), 256, "MDU %s BUTTON 2", GetQualifiedIdentifier().c_str());
+					RecordInput( "BTN 1" );// not upstream: as above
 					oapiProcessMFDButton (usMDUID, 1, _event);
 				}
 			}
@@ -369,6 +375,7 @@ namespace vc
 				if(_event & PANEL_MOUSE_LBDOWN)
 				{
 					//sprintf_s(oapiDebugString(), 256, "MDU %s BUTTON 3", GetQualifiedIdentifier().c_str());
+					RecordInput( "BTN 2" );// not upstream: as above
 					oapiProcessMFDButton (usMDUID, 2, _event);
 				}
 			}
@@ -377,6 +384,7 @@ namespace vc
 				if(_event & PANEL_MOUSE_LBDOWN)
 				{
 					//sprintf_s(oapiDebugString(), 256, "MDU %s BUTTON 4", GetQualifiedIdentifier().c_str());
+					RecordInput( "BTN 3" );// not upstream: as above
 					oapiProcessMFDButton (usMDUID, 3, _event);
 				}
 			}
@@ -385,6 +393,7 @@ namespace vc
 				if(_event & PANEL_MOUSE_LBDOWN)
 				{
 					//sprintf_s(oapiDebugString(), 256, "MDU %s BUTTON 5", GetQualifiedIdentifier().c_str());
+					RecordInput( "BTN 4" );// not upstream: as above
 					oapiProcessMFDButton (usMDUID, 4, _event);
 				}
 			}
@@ -396,17 +405,67 @@ namespace vc
 					counting = true;
 				} else if ((_event & PANEL_MOUSE_LBUP) && counting) {
 					//sprintf_s(oapiDebugString(), 256, "MDU %s BUTTON 6: SWITCH PAGE", GetQualifiedIdentifier().c_str());
+					RecordInput( "PAGE" );// not upstream: as above
 					oapiSendMFDKey (usMDUID, OAPI_KEY_F2);
 					counting = false;
 				} else if ((_event & PANEL_MOUSE_LBPRESSED) && counting && (oapiGetSysTime()-t0 >= 1.0)) {
 					//sprintf_s(oapiDebugString(), 256, "MDU %s BUTTON 6: SWITCH MODE", GetQualifiedIdentifier().c_str());
+					RecordInput( "MODE" );// not upstream: as above
 					oapiSendMFDKey (usMDUID, OAPI_KEY_F1);
 					counting = false;
 				}
 			}
 			//else sprintf_s(oapiDebugString(), 256, "MDU %s EDGEKEYS: %f", GetQualifiedIdentifier().c_str(), edgekeyClickPos);
 		}
+		bOwnInput = false;// not upstream: as above
 		return true;
+	}
+
+	void MDU::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: flight recorder, the recorded action (design ssv-flightrec)
+	{
+		const char* p = event;
+		std::string act;
+		if (!flightrec::NextToken( p, act )) return;
+		bReplay = true;
+		if (act == "PWR")
+		{
+			oapiSendMFDKey( usMDUID, OAPI_KEY_ESCAPE );
+			if (oapiGetMFDMode( usMDUID ) != 0) oapiOpenMFD( 1000, usMDUID );
+		}
+		else if (act == "BTN")
+		{
+			int bt = -1;
+			if ((sscanf_s( p, "%d", &bt ) == 1) && (bt >= 0) && (bt <= 4)) oapiProcessMFDButton( usMDUID, bt, PANEL_MOUSE_LBDOWN );
+		}
+		else if (act == "PAGE") oapiSendMFDKey( usMDUID, OAPI_KEY_F2 );
+		else if (act == "MODE") oapiSendMFDKey( usMDUID, OAPI_KEY_F1 );
+		else if (act == "BRT")
+		{
+			double b = 0.0;
+			if (sscanf_s( p, "%lf", &b ) == 1)
+			{
+				fBrightness = range( 0.2, b, 1.0 );
+				VisualCreated();
+			}
+		}
+		else if (act == "KEY")
+		{
+			unsigned int k = 0;
+			if ((sscanf_s( p, "%u", &k ) == 1) && (k < 256)) oapiSendMFDKey( usMDUID, k );
+		}
+		bReplay = false;
+		return;
+	}
+
+	bool MDU::LiveKeyLocked( void ) const// not upstream: a key from Orbiter's MFD keyboard while the recorded crew drives the MDUs (design ssv-flightrec)
+	{
+		return STS()->FlightRecorder().Locked() && !bReplay;
+	}
+
+	void MDU::RecordMFDKey( DWORD key ) const// not upstream: a key from Orbiter's MFD keyboard, not one this MDU sent itself (design ssv-flightrec)
+	{
+		if (!bOwnInput) RecordInput( "KEY " + std::to_string( key ) );
+		return;
 	}
 
 	void MDU::PaintDisplay( oapi::Sketchpad* skp )

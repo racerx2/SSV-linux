@@ -151,10 +151,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="SRB.cpp" />
+    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SRB.h" />
     <ClInclude Include="..\CommonDefs.h" />
+    <ClInclude Include="..\SSVlib\include\FlightRecorder.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\cJSON\cJSON.vcxproj">

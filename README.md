@@ -24,6 +24,7 @@ Fly the Space Shuttle on Linux. No Wine, no virtual machine: this fork runs SSV 
 - **A cockpit that comes alive.** Power up the HUD and its glass glows green, bright enough to see from outside through the windshield. The display screens catch the light like real glass, and the cockpit textures are cleaned up.
 - **The pads as they were.** Orbiter Linux streams real-world 3D buildings and trees around you. SSV keeps the shuttle-era sites at LC-39A, LC-39B and SLC-6 clear, so today's towers never stand next to your stack.
 - **Solid ground.** With Orbiter Linux's Collision module the pads, VAB and LCC are real structures: the stack never shoves them aside, and the umbilicals let go cleanly at liftoff.
+- **Replay your flights.** Record with Orbiter's flight recorder (Ctrl+C) and SSV records the crew too: every switch, breaker, knob, MDU key, hand controller, pad and crawler command. Play it back and the cockpit works itself, with SSV's random variation held at nominal so the replay never trips a hold or a caution the original flight didn't have.
 
 ## Screenshots
 | | |

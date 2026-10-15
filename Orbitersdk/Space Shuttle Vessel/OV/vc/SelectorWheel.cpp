@@ -49,6 +49,27 @@ namespace vc
 		return true;
 	}
 
+	bool SelectorWheel::GetPlaybackState( string& state ) const// not upstream: flight recorder, the digit (design ssv-flightrec)
+	{
+		state = std::to_string( posidx );
+		return true;
+	}
+
+	void SelectorWheel::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		unsigned short idx = 0;
+		if ((sscanf_s( event, "%hu", &idx ) != 1) || (idx > 9)) return;
+		if (boundset && ((idx > uboundidx) || (idx < lboundidx))) return;
+		if (idx == posidx) return;
+		// the wheel turns the way the digit moved: the only way within bounds, else the shorter way
+		if (boundset) dirsign = (idx > posidx) ? 1 : -1;
+		else dirsign = (((idx + 10 - posidx) % 10) <= 5) ? 1 : -1;
+		posidx = idx;
+		SetOutput();
+		PlayChangeSound();
+		return;
+	}
+
 	void SelectorWheel::DefineWheelGroup( UINT _grpIndex )
 	{
 		grpIndex = _grpIndex;

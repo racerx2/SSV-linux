@@ -157,6 +157,8 @@ public:
 	virtual void LowerSDWW( void );
 	virtual void RaiseSDWW( void );
 
+	bool ApplyPadCommand( const char* cmd ) override;// not upstream: flight recorder, the commands of SLC6 (design ssv-flightrec)
+
 	//// LCCPadInterface ////
 	void RetractOrbiterAccessArm( void ) override;
 	void ExtendOrbiterAccessArm( bool EmergencyRate ) override;

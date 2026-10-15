@@ -53,6 +53,10 @@ Additions in this build
   Linux's PBR materials (metal-roughness paint under a clear coat, lit by environment reflections).
 - The cockpit textures stsvc01-03.dds are repaired: the purple DXT1 specks on dark surfaces such as
   the window posts are gone (linux/ssv_texfix.py).
+- Flight recorder (GLS-SSV/SSV issue #28): Orbiter's flight recorder (Ctrl+C) also records the
+  crew's VC, keyboard, hand controller, pad, crawler and LCC MFD inputs and plays them back. During a
+  playback SSV's random variation is at nominal values and live input to the vessel is ignored.
+  See the manual, "Flight recorder".
 
 Settings
 - Launchpad > Visual effects > Local light sources: on (the SSV lights need them).

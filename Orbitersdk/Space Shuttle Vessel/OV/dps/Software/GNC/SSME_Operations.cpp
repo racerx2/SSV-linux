@@ -18,6 +18,7 @@ Date         Developer
 2022/11/16   GLS
 2022/11/17   GLS
 2022/12/23   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "SSME_Operations.h"
 #include "../../../Atlantis.h"
@@ -595,6 +596,7 @@ namespace dps
 		if ((ReadCOMPOOL_IS( SCP_MECO_CONFIRMED ) == 0) && (ManualShutdownFlag[0] == true) && (ManualShutdownFlag[1] == true) && (ManualShutdownFlag[2] == true))
 		{
 			WriteCOMPOOL_IS( SCP_MECO_CMD, 1 );
+			STS()->FlightRecorder().Record( flightrec::EVENT, "MECO" );// not upstream: flight recorder note (design ssv-flightrec)
 			WriteCOMPOOL_IS( SCP_MECO_CONFIRMED, 1 );
 			timerMECOConfirmed = simt + TIME_TO_ZERO_THRUST;
 
@@ -614,6 +616,7 @@ namespace dps
 			(GetMajorMode() == 104)))
 		{
 			WriteCOMPOOL_IS( SCP_MECO_CMD, 1 );
+			STS()->FlightRecorder().Record( flightrec::EVENT, "MECO" );// not upstream: flight recorder note (design ssv-flightrec)
 			WriteCOMPOOL_IS( SCP_MECO_CONFIRMED, 1 );
 			timerMECOConfirmed = simt + TIME_TO_ZERO_THRUST;
 

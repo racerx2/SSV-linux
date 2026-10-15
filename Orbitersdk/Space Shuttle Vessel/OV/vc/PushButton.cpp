@@ -14,6 +14,7 @@ Date         Developer
 2022/09/29   GLS
 2022/10/04   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "../Atlantis.h"
 #include "PushButton.h"
@@ -77,6 +78,7 @@ namespace vc
 		}
 		output.SetLine();
 		SoundPlay( STS()->GetSound(), KEY_PRESS_SOUND );
+		bPressed = true;// not upstream: flight recorder (design ssv-flightrec)
 	}
 
 	void PushButton::OnDepress() {
@@ -85,6 +87,24 @@ namespace vc
 			SetAnimation(anim_pb, 0.0);
 		}
 		output.ResetLine();
+		bPressed = false;// not upstream: as above
+	}
+
+	bool PushButton::GetPlaybackState( string& state ) const// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
+	{
+		state = bPressed ? "1" : "0";
+		return true;
+	}
+
+	void PushButton::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		const char* s = flightrec::SkipBlanks( event );
+		if ((*s != '0') && (*s != '1')) return;
+		const bool press = (*s == '1');
+		if (press == bPressed) return;
+		if (press) OnPress();
+		else OnDepress();
+		return;
 	}
 
 	void PushButton::SetMotionLength( double _motionlength )

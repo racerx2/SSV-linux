@@ -35,6 +35,7 @@ Date         Developer
 2022/05/29   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -105,6 +106,8 @@ namespace vc
 			void OnPositionChange(unsigned short usNewPosition) override;
 			virtual void OnPull();
 			virtual void OnRelease();
+			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 	};
 
 	class LockableLever2 : public LockableLever

@@ -596,20 +596,16 @@ int SLC6::clbkConsumeBufferedKey(DWORD key, bool down, char * keystate)
 #endif
 					return 1;
 				case OAPI_KEY_C:
-					if(PCR_State.Closed()) ExtendPCR();
-					else RetractPCR();
+					PadCommand( PCR_State.Closed() ? "PCR EXTEND" : "PCR RETRACT" );// not upstream: flight recorder, the resulting command (design ssv-flightrec)
 					return 1;
 				case OAPI_KEY_Y:
-					if(SAB_State.Closed()) ExtendSAB();
-					else RetractSAB();
+					PadCommand( SAB_State.Closed() ? "SAB EXTEND" : "SAB RETRACT" );// not upstream: as above
 					return 1;
 				case OAPI_KEY_M:
-					if(MST_State.Closed()) ExtendMST();
-					else RetractMST();
+					PadCommand( MST_State.Closed() ? "MST EXTEND" : "MST RETRACT" );// not upstream: as above
 					return 1;
 				case OAPI_KEY_D:
-					if(SABDoor_State.Closed()) OpenSABDoor();
-					else CloseSABDoor();
+					PadCommand( SABDoor_State.Closed() ? "SABDOOR OPEN" : "SABDOOR CLOSE" );// not upstream: as above
 					return 1;
 			}
 		}
@@ -1215,97 +1211,97 @@ BOOL SLC6_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not 
 					oapiCloseDialog(hWnd);
 					return TRUE;
 				case IDC_OAA_DEPLOY:
-					pad->ExtendOAA( OAA_RATE_NORMAL );
+					pad->PadCommand( "OAA EXTEND" );// not upstream: flight recorder, each button a pad command (design ssv-flightrec)
 					return TRUE;
 				case IDC_OAA_HALT:
-					pad->HaltOAA();
+					pad->PadCommand( "OAA HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_OAA_RETRACT:
-					pad->RetractOAA();
+					pad->PadCommand( "OAA RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_GVA_EXTEND:
-					pad->ExtendGVA();
+					pad->PadCommand( "GVA EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_GVA_HALT:
-					pad->HaltGVA();
+					pad->PadCommand( "GVA HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_GVA_RETRACT:
-					pad->RetractGVA();
+					pad->PadCommand( "GVA RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_HOOD_LOWER:
-					pad->LowerGOXVentHood();
+					pad->PadCommand( "HOOD LOWER" );// not upstream: as above
 					return TRUE;
 				case IDC_HOOD_HALT:
-					pad->HaltGOXVentHood();
+					pad->PadCommand( "HOOD HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_HOOD_RAISE:
-					pad->RaiseGOXVentHood();
+					pad->PadCommand( "HOOD RAISE" );// not upstream: as above
 					return TRUE;
 				case IDC_GH2_DETACH:
-					pad->DetachETVAS();
+					pad->PadCommand( "ETVAS DETACH" );// not upstream: as above
 					return TRUE;
 				case IDC_GH2_ATTACH:
-					pad->AttachETVAS();
+					pad->PadCommand( "ETVAS ATTACH" );// not upstream: as above
 					return TRUE;
 				case IDC_IAA_DEPLOY:
-					pad->DeployIAA();
+					pad->PadCommand( "IAA DEPLOY" );// not upstream: as above
 					return TRUE;
 				case IDC_IAA_HALT:
-					pad->HaltIAA();
+					pad->PadCommand( "IAA HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_IAA_RETRACT:
-					pad->RetractIAA();
+					pad->PadCommand( "IAA RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_PCR_EXTEND:
-					pad->ExtendPCR();
+					pad->PadCommand( "PCR EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_PCR_HALT:
-					pad->HaltPCR();
+					pad->PadCommand( "PCR HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_PCR_RETRACT:
-					pad->RetractPCR();
+					pad->PadCommand( "PCR RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_SAB_EXTEND:
-					pad->ExtendSAB();
+					pad->PadCommand( "SAB EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_SAB_HALT:
-					pad->HaltSAB();
+					pad->PadCommand( "SAB HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_SAB_RETRACT:
-					pad->RetractSAB();
+					pad->PadCommand( "SAB RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_SAB_DOOR_OPEN:
-					pad->OpenSABDoor();
+					pad->PadCommand( "SABDOOR OPEN" );// not upstream: as above
 					return TRUE;
 				case IDC_SAB_DOOR_HALT:
-					pad->HaltSABDoor();
+					pad->PadCommand( "SABDOOR HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_SAB_DOOR_CLOSE:
-					pad->CloseSABDoor();
+					pad->PadCommand( "SABDOOR CLOSE" );// not upstream: as above
 					return TRUE;
 				case IDC_MST_EXTEND:
-					pad->ExtendMST();
+					pad->PadCommand( "MST EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_MST_HALT:
-					pad->HaltMST();
+					pad->PadCommand( "MST HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_MST_RETRACT:
-					pad->RetractMST();
+					pad->PadCommand( "MST RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_EAA_DEPLOY:
-					pad->DeployEAA();
+					pad->PadCommand( "EAA DEPLOY" );// not upstream: as above
 					return TRUE;
 				case IDC_EAA_HALT:
-					pad->HaltEAA();
+					pad->PadCommand( "EAA HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_EAA_RETRACT:
-					pad->RetractEAA();
+					pad->PadCommand( "EAA RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_SDWW_LOWER:
-					pad->LowerSDWW();
+					pad->PadCommand( "SDWW LOWER" );// not upstream: as above
 					return TRUE;
 				case IDC_SDWW_RAISE:
-					pad->RaiseSDWW();
+					pad->PadCommand( "SDWW RAISE" );// not upstream: as above
 					return TRUE;
 			}
 		}
@@ -1613,4 +1609,60 @@ void SLC6::RaiseSDWW( void )
 {
 	SSMEDuctWestWall_State.action = AnimState::CLOSING;
 	return;
+}
+
+bool SLC6::ApplyPadCommand( const char* cmd )// not upstream: as declared
+{
+	const char* p = cmd;
+	std::string part, action;
+	if (!flightrec::NextToken( p, part ) || !flightrec::NextToken( p, action )) return false;
+
+	if (part == "PCR")
+	{
+		if (action == "EXTEND") ExtendPCR();
+		else if (action == "HALT") HaltPCR();
+		else if (action == "RETRACT") RetractPCR();
+		else return false;
+		return true;
+	}
+	if (part == "SAB")
+	{
+		if (action == "EXTEND") ExtendSAB();
+		else if (action == "HALT") HaltSAB();
+		else if (action == "RETRACT") RetractSAB();
+		else return false;
+		return true;
+	}
+	if (part == "SABDOOR")
+	{
+		if (action == "OPEN") OpenSABDoor();
+		else if (action == "HALT") HaltSABDoor();
+		else if (action == "CLOSE") CloseSABDoor();
+		else return false;
+		return true;
+	}
+	if (part == "MST")
+	{
+		if (action == "EXTEND") ExtendMST();
+		else if (action == "HALT") HaltMST();
+		else if (action == "RETRACT") RetractMST();
+		else return false;
+		return true;
+	}
+	if (part == "EAA")
+	{
+		if (action == "DEPLOY") DeployEAA();
+		else if (action == "HALT") HaltEAA();
+		else if (action == "RETRACT") RetractEAA();
+		else return false;
+		return true;
+	}
+	if (part == "SDWW")
+	{
+		if (action == "LOWER") LowerSDWW();
+		else if (action == "RAISE") RaiseSDWW();
+		else return false;
+		return true;
+	}
+	return BaseSSVPad::ApplyPadCommand( cmd );
 }

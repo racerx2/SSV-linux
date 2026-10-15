@@ -635,7 +635,7 @@ DLLCLBK void ovcExit( VESSEL* vessel )
 
 
 Atlantis::Atlantis( OBJHANDLE hVessel, int fmodel ):VESSEL4( hVessel, fmodel ),
-pActiveLatches( 5, NULL ), pXRSound(NULL)
+pActiveLatches( 5, NULL ), pXRSound(NULL), flightrecorder( this )// not upstream: flight recorder (design ssv-flightrec)
 {
 	int i;
 
@@ -1301,6 +1301,8 @@ void Atlantis::clbkPreStep( double simt, double simdt, double mjd )
 
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder, before anything records (design ssv-flightrec)
+
 		if (firstStep) {
 			UpdateMassAndCoG();// update visual before simulation starts
 
@@ -1844,6 +1846,7 @@ void Atlantis::clbkPostStep( double simt, double simdt, double mjd )
 
 bool Atlantis::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )
 {
+	if (FlightRecorderPlayback( simt, event_t, event_type, event )) return true;// not upstream: SSV's flight recorder events (design ssv-flightrec)
 	/*if (!_stricmp(event_type, "STATUS")) {
 		if (!_stricmp(event, "SRB_IGNITION")) {
 			status = 1;
@@ -2066,16 +2069,16 @@ int Atlantis::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 				if (VCMode >= VC_PLBCAMA && VCMode <= VC_RMSCAM) {
 					switch (key) {
 					case OAPI_KEY_LEFT:
-						bPLBCamPanLeft_Man = false;
+						CrewCommand( PLBCamCommand( 0, false ) );// not upstream: flight recorder (design ssv-flightrec)
 						return 1;
 					case OAPI_KEY_RIGHT:
-						bPLBCamPanRight_Man = false;
+						CrewCommand( PLBCamCommand( 1, false ) );// not upstream: as above
 						return 1;
 					case OAPI_KEY_UP:
-						bPLBCamTiltUp_Man = false;
+						CrewCommand( PLBCamCommand( 2, false ) );// not upstream: as above
 						return 1;
 					case OAPI_KEY_DOWN:
-						bPLBCamTiltDown_Man = false;
+						CrewCommand( PLBCamCommand( 3, false ) );// not upstream: as above
 						return 1;
 					default:
 						return 0;
@@ -2116,8 +2119,7 @@ int Atlantis::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 					return 1;
 				case OAPI_KEY_RETURN:
 				case OAPI_KEY_BACK:
-					RMSGrapple.ResetLine();
-					RMSRelease.ResetLine();
+					CrewCommand( "RMSEE OFF" );// not upstream: as above
 					return 1;
 				case OAPI_KEY_K:
 				case OAPI_KEY_L:
@@ -2138,28 +2140,23 @@ int Atlantis::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			case OAPI_KEY_D:// prevent "manual" undocking
 				return 1;
 			case OAPI_KEY_G:
-				ManLandingGearArm();
+				CrewCommand( "GEAR ARM" );// not upstream: as above
 				return 1;
 			case OAPI_KEY_A:
 				if (pRMS)
 				{
-					ControlRMS = !ControlRMS;
-					if (ControlRMS) DisplayCameraLabel(TEXT_RMSCONTROL);
-					else DisplayCameraLabel(TEXT_RCSCONTROL);
+					CrewCommand( ControlRMS ? "RMS 0" : "RMS 1" );// not upstream: as above, also shows the label
 					return 1;
 				}
 				else return 0;
 			case OAPI_KEY_O:
-				if (RMSCoarseRateIn) RMSCoarseRateOut.ResetLine();
-				else RMSCoarseRateOut.SetLine();
+				CrewCommand( RMSCoarseRateIn ? "RMSRATE 0" : "RMSRATE 1" );// not upstream: as above
 				return 1;
 			case OAPI_KEY_RETURN:
-				RMSGrapple.SetLine();
-				RMSRelease.ResetLine();
+				CrewCommand( "RMSEE GRAPPLE" );// not upstream: as above
 				return 1;
 			case OAPI_KEY_BACK:
-				RMSGrapple.ResetLine();
-				RMSRelease.SetLine();
+				CrewCommand( "RMSEE RELEASE" );// not upstream: as above
 				return 1;
 #if _DEBUG
 			case OAPI_KEY_2:
@@ -2184,16 +2181,16 @@ int Atlantis::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			if (VCMode >= VC_PLBCAMA && VCMode <= VC_RMSCAM) {
 				switch (key) {
 				case OAPI_KEY_LEFT:
-					bPLBCamPanLeft_Man = true;
+					CrewCommand( PLBCamCommand( 0, true ) );// not upstream: as above
 					return 1;
 				case OAPI_KEY_RIGHT:
-					bPLBCamPanRight_Man = true;
+					CrewCommand( PLBCamCommand( 1, true ) );// not upstream: as above
 					return 1;
 				case OAPI_KEY_UP:
-					bPLBCamTiltUp_Man = true;
+					CrewCommand( PLBCamCommand( 2, true ) );// not upstream: as above
 					return 1;
 				case OAPI_KEY_DOWN:
-					bPLBCamTiltDown_Man = true;
+					CrewCommand( PLBCamCommand( 3, true ) );// not upstream: as above
 					return 1;
 				default:
 					return 0;
@@ -2230,7 +2227,7 @@ int Atlantis::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 				RPTA_Input = 1.0;
 				return 1;
 			case OAPI_KEY_G:
-				ManLandingGearDown();
+				CrewCommand( "GEAR DOWN" );// not upstream: as above
 				return 1;
 			case OAPI_KEY_LEFT:
 				THC_AltInput.y = -1.0;
@@ -2251,7 +2248,7 @@ int Atlantis::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 				THC_AltInput.z = 1.0;
 				return 1;
 			case OAPI_KEY_MULTIPLY: // NUMPAD *
-				for (int i = 0; i < 3; i++) SSMEPBAnalog[i].SetLine();
+				CrewCommand( "SSMEPB" );// not upstream: as above
 				return 0; // this key is used by Orbitersim, so make sure Orbitersim processes it as well
 			case OAPI_KEY_ADD:
 				SBTC_Input = -0.05;// back
@@ -3717,6 +3714,7 @@ void Atlantis::SeparateBoosters(double met)
 	// reconfigure
 	SetOrbiterTankConfiguration();
 	oapiWriteLog( "(SSV_OV) [INFO] SRBs separated" );
+	flightrecorder.Record( flightrec::EVENT, "SRB SEP" );// not upstream: flight recorder note (design ssv-flightrec)
 
 	//stop playing sound
 	SoundStop( pXRSound, SSME_RUNNING );
@@ -3742,6 +3740,7 @@ void Atlantis::DetachSRB(SIDE side, double thrust, double prop)
 
 void Atlantis::SeparateTank(void)
 {
+	flightrecorder.Record( flightrec::EVENT, "ET SEP" );// not upstream: flight recorder note (design ssv-flightrec)
 	DetachChild( ahET );
 
 	// create separate tanks for MPS dumps
@@ -4131,6 +4130,16 @@ double Atlantis::GetPropellantLevel(PROPELLANT_HANDLE ph) const
 
 void Atlantis::UpdateControllers( double dt )
 {
+	if (flightrecorder.Locked())// not upstream: the recorded crew moves the controllers, SetCrewControls (design ssv-flightrec)
+	{
+		SBTC_Input = 0.0;
+		SetAnimation( anim_leftsbtc, LeftSBTC );
+		SetAnimation( anim_leftsbtcto, LeftSBTCTO ? 1.0 : 0.0 );
+		SetAnimation( anim_rightsbtc, RightSBTC );
+		SetAnimation( anim_rightsbtcto, RightSBTCTO ? 1.0 : 0.0 );
+		return;
+	}
+
 	// RHC and THC input (RMS included)
 	if (ControlRMS)
 	{
@@ -4495,6 +4504,7 @@ void Atlantis::UpdateControllers( double dt )
 		BrakePLT[0] = 0.0;
 		BrakePLT[1] = 0.0;
 	}
+	RecordCrewControls();// not upstream: flight recorder (design ssv-flightrec)
 	return;
 }
 
@@ -4665,6 +4675,7 @@ void Atlantis::IgniteSRBs()
 	for (int i = 0; i < 2; i++)
 		SetThrusterLevel(th_srb[i], thrust_level);
 
+	flightrecorder.Record( flightrec::EVENT, "LIFTOFF" );// not upstream: flight recorder note (design ssv-flightrec)
 	status = STATE_STAGE1;
 	return;
 }

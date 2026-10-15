@@ -38,6 +38,7 @@ Date         Developer
 2022/03/26   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -85,7 +86,8 @@ namespace mps
 			double posMOV;
 			double posMFV;
 
-			double IMSLHeUsage;
+			double IMSLHeDraw;// not upstream: the random part of the IMSL He usage, [0,1) (design ssv-flightrec)
+			double IMSLHeUsage( void ) const;// not upstream: as above, nominal in a playback
 
 			Sensor Sensor_Press[22];
 			Sensor Sensor_Temp[16];

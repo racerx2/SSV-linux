@@ -75,7 +75,8 @@ LCC::LCC(OBJHANDLE hVessel, int flightmodel)
 
 	MPSHeSupply = true;
 	MPSHeSupplyPressure1 = 2000;
-	MPSHeSupplyPressure2 = 4150 + (300 * oapiRand());// 4150 - 4450 (give 50 psi leeway to LCC redlines)
+	MPSHeSupplyDraw = oapiRand();// not upstream: kept for flightrec::Held (design ssv-flightrec)
+	MPSHeSupplyPressure2 = 4150 + (300 * MPSHeSupplyDraw);// 4150 - 4450 (give 50 psi leeway to LCC redlines)
 
 	MPSTVCProfile = false;
 
@@ -140,6 +141,8 @@ void LCC::clbkPreStep(double simt, double simdt, double mjd)
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+
 		VESSEL4::clbkPreStep( simt, simdt, mjd );
 
 		if (!pPad) return;
@@ -167,6 +170,7 @@ void LCC::clbkPreStep(double simt, double simdt, double mjd)
 		}
 
 		/////////// MPS He Supply ///////////
+		MPSHeSupplyPressure2 = 4150 + (300 * flightrec::Held( MPSHeSupplyDraw ));// not upstream: nominal in a playback (design ssv-flightrec)
 		if (MPSHeSupply == true)
 		{
 			if (CountdownTime >= -12000.0)// T-3h20m
@@ -617,6 +621,97 @@ void LCC::IssueCutoff( void )
 	pPad->SetLPSGoForAutoSequenceStartFlag( false );
 	oapiWriteLog( "(SSV_LCC) [INFO] Cutoff" );
 	return;
+}
+
+bool LCC::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	try
+	{
+		if (!event) event = "";
+		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
+
+		if (!_stricmp( event_type, flightrec::CMD ))
+		{
+			if (!ApplyCrewCommand( event ))
+			{
+				const char* p = event;
+				std::string word;
+				flightrec::NextToken( p, word );
+				flightrec::LogUnknown( "SSV_LCC", event_type, word );
+			}
+			return true;
+		}
+		return false;
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(SSV_LCC) [FATAL ERROR] Exception in LCC::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(SSV_LCC) [FATAL ERROR] Exception in LCC::clbkPlaybackEvent" );
+		abort();
+	}
+}
+
+void LCC::CrewCommand( const std::string& cmd )// not upstream: as declared
+{
+	if (flightrecorder.Locked()) return;
+	flightrecorder.Record( flightrec::CMD, cmd );
+	ApplyCrewCommand( cmd.c_str() );
+	return;
+}
+
+bool LCC::ApplyCrewCommand( const char* cmd )// not upstream: as declared
+{
+	const char* p = cmd;
+	std::string word, arg, state;
+	if (!flightrec::NextToken( p, word )) return false;
+
+	if (word == "RESUME")
+	{
+		resumecmd = true;
+		return true;
+	}
+	if (word == "CUTOFF")
+	{
+		if (!pPad) return false;
+		IssueCutoff();
+		return true;
+	}
+
+	if (!flightrec::NextToken( p, arg ) || !flightrec::NextToken( p, state ) || ((state != "0") && (state != "1"))) return false;
+	const bool on = (state == "1");
+
+	if (word == "HOLD")
+	{
+		const struct { const char* name; bool* flag; bool autohold; } holds[] = {
+			{"0730", &hold0730, false},
+			{"0500", &hold0500, true},
+			{"0400", &hold0400, true},
+			{"0255", &hold0255, false},
+			{"0157", &hold0157, false},
+			{"0031", &hold0031, true}
+		};
+		for (const auto& h : holds)
+		{
+			if (arg != h.name) continue;
+			*h.flag = on;
+			if (h.autohold) requestautohold = false;
+			return true;
+		}
+		return false;
+	}
+	if (word == "FIREX")
+	{
+		if (!pPad || (arg.size() != 1) || (arg[0] < '1') || (arg[0] > '3')) return false;
+		const unsigned int sys = arg[0] - '0';
+		if (on) pPad->ActivateFirex( sys );
+		else pPad->DeactivateFirex( sys );
+		return true;
+	}
+	return false;
 }
 
 void LCC::clbkSaveState( FILEHANDLE scn )

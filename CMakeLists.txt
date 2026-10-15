@@ -126,3 +126,10 @@ enable_testing()
 add_executable(ssv_crt_test linux/tests/crt_test.cpp)
 target_link_libraries(ssv_crt_test PRIVATE ssv_crt)
 add_test(NAME ssv_crt COMMAND ssv_crt_test)
+
+# tests of the flight recorder support (design ssv-flightrec), Orbiter's recorder calls stubbed in the test
+add_executable(ssv_flightrec_test linux/tests/flightrec_test.cpp "${SSV_DIR}/SSVlib/src/FlightRecorder.cpp" "${SSV_DIR}/OV/CrewControls.cpp")
+target_include_directories(ssv_flightrec_test PRIVATE ${SDK_DIR}/include "${SSV_DIR}/SSVlib/include" "${SSV_DIR}/OV")
+target_compile_options(ssv_flightrec_test PRIVATE ${SSV_CRT_FLAGS})
+target_link_libraries(ssv_flightrec_test PRIVATE ssv_crt)
+add_test(NAME ssv_flightrec COMMAND ssv_flightrec_test)

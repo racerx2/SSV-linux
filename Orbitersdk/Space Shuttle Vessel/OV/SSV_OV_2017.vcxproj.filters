@@ -43,6 +43,12 @@
     <ClCompile Include="Atlantis.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="AtlantisFlightRecorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CrewControls.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="AtlantisSubsystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -868,6 +874,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Atlantis.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CrewControls.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="ASE_IUS.h">

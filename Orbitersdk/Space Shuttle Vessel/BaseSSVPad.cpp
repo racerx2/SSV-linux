@@ -21,6 +21,7 @@ Date         Developer
 2025/01/23   GLS
 2025/05/10   GLS
 2026/05/03   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "BaseSSVPad.h"
 #include <MathSSV.h>
@@ -186,6 +187,8 @@ bool BaseSSVPad::IsNight() const
 
 void BaseSSVPad::clbkPreStep(double simt, double simdt, double mjd)
 {
+	flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+
 	VESSEL4::clbkPreStep(simt, simdt, mjd);
 
 	if (simt > fNextLightUpdate)
@@ -414,19 +417,16 @@ int BaseSSVPad::clbkConsumeBufferedKey(DWORD key, bool down, char* keystate)
 	{
 		switch(key) {
 			case OAPI_KEY_K:
-				if(OAA_State.Open() || OAA_State.Opening()) RetractOAA();
-				else ExtendOAA( OAA_RATE_NORMAL );
+				PadCommand( (OAA_State.Open() || OAA_State.Opening()) ? "OAA RETRACT" : "OAA EXTEND" );// not upstream: flight recorder, the resulting command (design ssv-flightrec)
 				return 1;
 			case OAPI_KEY_G:
-				if(GOXVentHood_State.Closed()) ExtendGVAandHood();
-				else RetractGVAandHood();
+				PadCommand( GOXVentHood_State.Closed() ? "GVAHOOD EXTEND" : "GVAHOOD RETRACT" );// not upstream: as above
 				return 1;
 			case OAPI_KEY_V:
-				DetachETVAS();
+				PadCommand( "ETVAS DETACH" );// not upstream: as above
 				return 1;
 			case OAPI_KEY_A:
-				if(IAA_State.Open()) RetractIAA();
-				else DeployIAA();
+				PadCommand( IAA_State.Open() ? "IAA RETRACT" : "IAA DEPLOY" );// not upstream: as above
 				return 1;
 		}
 	}
@@ -556,4 +556,99 @@ void BaseSSVPad::HaltIAA()
 void BaseSSVPad::RetractIAA()
 {
 	IAA_State.action=AnimState::CLOSING;
+}
+
+void BaseSSVPad::PadCommand( const char* cmd )// not upstream: as declared
+{
+	if (flightrecorder.Locked()) return;
+	flightrecorder.Record( flightrec::CMD, cmd );
+	ApplyPadCommand( cmd );
+	return;
+}
+
+bool BaseSSVPad::ApplyPadCommand( const char* cmd )// not upstream: as declared
+{
+	const char* p = cmd;
+	std::string part, action;
+	if (!flightrec::NextToken( p, part ) || !flightrec::NextToken( p, action )) return false;
+
+	if (part == "OAA")
+	{
+		if (action == "EXTEND") ExtendOAA( OAA_RATE_NORMAL );
+		else if (action == "RETRACT") RetractOAA();
+		else if (action == "HALT") HaltOAA();
+		else return false;
+		return true;
+	}
+	if (part == "GVA")
+	{
+		if (action == "EXTEND") ExtendGVA();
+		else if (action == "RETRACT") RetractGVA();
+		else if (action == "HALT") HaltGVA();
+		else return false;
+		return true;
+	}
+	if (part == "HOOD")
+	{
+		if (action == "LOWER") LowerGOXVentHood();
+		else if (action == "RAISE") RaiseGOXVentHood();
+		else if (action == "HALT") HaltGOXVentHood();
+		else return false;
+		return true;
+	}
+	if (part == "GVAHOOD")
+	{
+		if (action == "EXTEND") ExtendGVAandHood();
+		else if (action == "RETRACT") RetractGVAandHood();
+		else return false;
+		return true;
+	}
+	if (part == "ETVAS")
+	{
+		if (action == "ATTACH") AttachETVAS();
+		else if (action == "DETACH") DetachETVAS();
+		else return false;
+		return true;
+	}
+	if (part == "IAA")
+	{
+		if (action == "DEPLOY") DeployIAA();
+		else if (action == "HALT") HaltIAA();
+		else if (action == "RETRACT") RetractIAA();
+		else return false;
+		return true;
+	}
+	return false;
+}
+
+bool BaseSSVPad::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	try
+	{
+		if (!event) event = "";
+		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
+
+		if (!_stricmp( event_type, flightrec::CMD ))
+		{
+			if (!ApplyPadCommand( event ))
+			{
+				const char* p = event;
+				std::string word;
+				flightrec::NextToken( p, word );
+				flightrec::LogUnknown( GetClassName(), event_type, word );
+			}
+			return true;
+		}
+		return false;
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(BaseSSVPad) [FATAL ERROR] Exception in BaseSSVPad::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(BaseSSVPad) [FATAL ERROR] Exception in BaseSSVPad::clbkPlaybackEvent" );
+		abort();
+	}
 }

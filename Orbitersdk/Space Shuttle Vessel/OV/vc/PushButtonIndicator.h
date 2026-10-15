@@ -32,6 +32,7 @@ Date         Developer
 2021/08/24   GLS
 2022/10/04   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -80,6 +81,7 @@ namespace vc
 			double motionlength;
 			MGROUP_TRANSLATE* pPushDown;
 			DiscOutPort output;
+			bool bPressed = false;// not upstream: flight recorder (design ssv-flightrec)
 
 		public:
 			PushButtonIndicatorSingleLight( Atlantis* _sts, const string& _ident );
@@ -89,6 +91,8 @@ namespace vc
 			bool OnMouseEvent( int _event, float x, float y ) override;
 			virtual void OnPress();
 			virtual void OnRelease();
+			bool GetPlaybackState( string& state ) const override;// not upstream: as above
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );
@@ -102,6 +106,7 @@ namespace vc
 			double motionlength;
 			MGROUP_TRANSLATE* pPushDown;
 			DiscOutPort output;
+			bool bPressed = false;// not upstream: flight recorder (design ssv-flightrec)
 
 		public:
 			PushButtonIndicatorDoubleLight( Atlantis* _sts, const string& _ident );
@@ -111,6 +116,8 @@ namespace vc
 			bool OnMouseEvent( int _event, float x, float y ) override;
 			virtual void OnPress();
 			virtual void OnRelease();
+			bool GetPlaybackState( string& state ) const override;// not upstream: as above
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );

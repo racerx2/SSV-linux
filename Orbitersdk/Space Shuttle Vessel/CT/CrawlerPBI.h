@@ -32,6 +32,7 @@ Date         Developer
 2021/12/25   GLS
 2022/09/29   GLS
 2025/01/04   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef _CRAWLERPBI_H_
@@ -55,6 +56,7 @@ namespace vc
 			UINT anim_pb;
 			double motionlength;
 			MGROUP_TRANSLATE* pPushDown;
+			bool pressed = false;// not upstream: flight recorder (design ssv-flightrec)
 		public:
 			CrawlerPBI( Crawler* _v, const string& _ident );
 			~CrawlerPBI();
@@ -63,6 +65,8 @@ namespace vc
 			bool OnMouseEvent( int _event, float x, float y ) override;
 			virtual void OnPress();
 			virtual void OnRelease();
+			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );
@@ -75,6 +79,7 @@ namespace vc
 			UINT anim_pb;
 			double motionlength;
 			MGROUP_TRANSLATE* pPushDown;
+			bool pressed = false;// not upstream: flight recorder (design ssv-flightrec)
 		public:
 			CrawlerPBI2( Crawler* _v, const string& _ident );
 			~CrawlerPBI2();
@@ -83,6 +88,8 @@ namespace vc
 			bool OnMouseEvent( int _event, float x, float y ) override;
 			virtual void OnPress();
 			virtual void OnRelease();
+			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );

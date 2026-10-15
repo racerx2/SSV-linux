@@ -42,6 +42,7 @@ Date         Developer
 2021/12/29   GLS
 2021/12/30   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -75,6 +76,7 @@ Date         Developer
 #include <Orbitersdk.h>
 #include <PIDControl.h>
 #include <cJSON.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 
 
 inline constexpr double RL10_START_SEQ = 270.0;// s
@@ -94,6 +96,7 @@ class Centaur: public VESSEL4
 		void clbkPostCreation( void ) override;
 		void clbkPreStep( double simt, double simdt, double mjd ) override;
 		int clbkConsumeBufferedKey( DWORD key, bool down, char* kstate ) override;
+		bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 		void clbkVisualCreated( VISHANDLE vis, int refcount ) override;
 		void clbkSaveState( FILEHANDLE scn ) override;
 		void clbkLoadStateEx( FILEHANDLE scn, void *status ) override;
@@ -156,6 +159,12 @@ class Centaur: public VESSEL4
 		void LoadMissionV1( cJSON* root );
 
 		void AddPayloadAdapter( void );
+
+		flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the crew's keys (design ssv-flightrec)
+		void ManRate( double& rate, double d );// not upstream: as above, a manual gimbal rate key, nothing while locked
+		void RecordManRates( void ) const;// not upstream: as above, SSV_CTRL <manP> <manY> <manR>
+		void CrewCommand( const std::string& cmd );// not upstream: as above, records and applies a command, nothing while locked
+		bool ApplyCrewCommand( const char* cmd );// not upstream: as above
 };
 
 #endif// __SC_H

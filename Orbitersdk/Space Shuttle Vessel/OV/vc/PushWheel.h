@@ -57,6 +57,8 @@ namespace vc
 			void DefineVCAnimations( UINT vc_idx ) override;
 			bool OnMouseEvent( int _event, float x, float y ) override;
 			void OnPostStep( double simt, double simdt, double mjd ) override;
+			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 	};
 }
 

@@ -31,6 +31,7 @@ Date         Developer
 2021/12/26   GLS
 2022/09/29   GLS
 2024/02/11   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -101,6 +102,8 @@ namespace vc
 			bool OnMouseEvent( int _event, float x, float y ) override;
 			void SetInitialPosition( bool in );
 			void OnPreStep( double simt, double simdt, double mjd ) override;
+			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 	};
 }
 

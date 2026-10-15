@@ -316,6 +316,7 @@ namespace vc
 	bool LDS::OnVCMouseEvent(int id, int _event, VECTOR3 &p)
 	{
 
+		if (V()->FlightRecorder().Locked()) return false;// not upstream: the recorded crew drives during playback (design ssv-flightrec)
 		if((cabID == FWD && id == AID_LDS_AREA) || (cabID == REAR && id==AID_LDS_AREA+AID_REAR_OFFSET))
 		{
 			//sprintf(oapiDebugString(),"%f%s%f",p.x," ",p.y);
@@ -328,9 +329,27 @@ namespace vc
 				CabSelectionSwitchPosition = CAB3;
 				V()->SetAnimation(CabSelectionSwitchAnim, 1);
 			}
+			V()->FlightRecorder().Record( flightrec::VC, flightrec::Quote( GetIdentifier() ) + " \"CAB SELECT\" " + ((CabSelectionSwitchPosition == CAB1) ? "1" : "3") );// not upstream: as above
 
 			return true;
 		}
 		else return false;
+	}
+
+	bool LDS::OnPlaybackEvent( const std::string& component, double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+	{
+		if (component != "CAB SELECT") return CrawlerPanel::OnPlaybackEvent( component, simt, event_t, event_type, event );
+		const char* s = flightrec::SkipBlanks( event );
+		if (*s == '1')
+		{
+			CabSelectionSwitchPosition = CAB1;
+			V()->SetAnimation( CabSelectionSwitchAnim, 0 );
+		}
+		else if (*s == '3')
+		{
+			CabSelectionSwitchPosition = CAB3;
+			V()->SetAnimation( CabSelectionSwitchAnim, 1 );
+		}
+		return true;
 	}
 }

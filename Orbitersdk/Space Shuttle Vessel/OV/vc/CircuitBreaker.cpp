@@ -11,6 +11,7 @@ Date         Developer
 2022/09/29   GLS
 2024/02/11   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "CircuitBreaker.h"
 #include "../Atlantis.h"
@@ -56,6 +57,24 @@ namespace vc
 		if (CBin) sprintf_s( pszBuffer, ulBufferSize, "CLOSED" );
 		else sprintf_s( pszBuffer, ulBufferSize, "OPEN" );
 		return true;
+	}
+
+	bool CircuitBreaker::GetPlaybackState( string& state ) const// not upstream: flight recorder, CLOSED or OPEN (design ssv-flightrec)
+	{
+		state = CBin ? "CLOSED" : "OPEN";
+		return true;
+	}
+
+	void CircuitBreaker::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		const char* s = flightrec::SkipBlanks( event );
+		bool in;
+		if (!_strnicmp( s, "CLOSED", 6 )) in = true;
+		else if (!_strnicmp( s, "OPEN", 4 )) in = false;
+		else return;
+		if (in != CBin) OnChange( in );
+		counting = false;
+		return;
 	}
 
 	void CircuitBreaker::DefineGroup( UINT _grpIndex )
