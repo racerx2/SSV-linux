@@ -128,7 +128,7 @@ namespace vc
 				AEPFD_XTRK( hDC );// TODO only NOM, TAL and ATO
 				if (0) AEPFD_RANGERW( hDC );// TODO ECAL/BDA
 				AEPFD_dINC( hDC );
-				if (0) AEPFD_TGTINC( hDC );// TODO ATO
+				if (GetIDP()->GetAbortMode() == 1) AEPFD_TGTINC( hDC );// not upstream: ATO
 				break;
 			case 104:
 				AEPFD_Header_TransDAP( hDC, 104, adiatt );
@@ -392,7 +392,7 @@ namespace vc
 				AEPFD_XTRK( skp );// TODO only NOM, TAL and ATO
 				if (0) AEPFD_RANGERW( skp );// TODO ECAL/BDA
 				AEPFD_dINC( skp );
-				if (0) AEPFD_TGTINC( skp );// TODO ATO
+				if (GetIDP()->GetAbortMode() == 1) AEPFD_TGTINC( skp );// not upstream: ATO
 				break;
 			case 104:
 				AEPFD_Header_TransDAP( skp, 104, adiatt );
@@ -5327,10 +5327,11 @@ namespace vc
 			TextOut( hDC, 85, 3, "CSS", 3 );
 		}
 
-		if (0) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (0) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (0) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (0) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		TextOut( hDC, 449, 3, cbuf, strlen( cbuf ) );
@@ -5376,10 +5377,11 @@ namespace vc
 			skp->Text( 85, 3, "CSS", 3 );
 		}
 
-		if (0) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (0) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (0) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (0) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		skp->Text( 449, 3, cbuf, strlen( cbuf ) );
@@ -5417,10 +5419,11 @@ namespace vc
 		if (1) TextOut( hDC, 85, 3, "Auto", 4 );// TODO get TransDAP state
 		else TextOut( hDC, 85, 3, "INRTL", 5 );
 
-		if (0) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (0) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (0) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (0) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		TextOut( hDC, 449, 3, cbuf, strlen( cbuf ) );
@@ -5446,10 +5449,11 @@ namespace vc
 		if (1) skp->Text( 85, 3, "Auto", 4 );// TODO get TransDAP state
 		else skp->Text( 85, 3, "INRTL", 5 );
 
-		if (0) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (0) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (0) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (0) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		skp->Text( 449, 3, cbuf, strlen( cbuf ) );
@@ -5498,10 +5502,11 @@ namespace vc
 			TextOut( hDC, 85, 18, "CSS", 3 );
 		}
 
-		if (0) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (0) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (0) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (0) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		TextOut( hDC, 449, 3, cbuf, strlen( cbuf ) );
@@ -5555,10 +5560,11 @@ namespace vc
 			skp->Text( 85, 18, "CSS", 3 );
 		}
 
-		if (0) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (0) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (0) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (0) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		skp->Text( 449, 3, cbuf, strlen( cbuf ) );
@@ -6294,7 +6300,7 @@ namespace vc
 		SelectObject( hDC, gdiSSVBFont_h18w9 );
 		SetTextColor( hDC, CR_WHITE );
 		SetTextAlign( hDC, TA_RIGHT );
-		double dtmp = 0;// TODO
+		double dtmp = range( 0.0, GetIDP()->GetTargetInclination() * DEG, 99.99 );// not upstream
 		char cbuf[8];
 		sprintf_s( cbuf, 8, "%5.2f", dtmp );
 		TextOut( hDC, 489, 419, cbuf, strlen( cbuf ) );
@@ -6316,7 +6322,7 @@ namespace vc
 		skp->SetFont( skpSSVBFont_h18w9 );
 		skp->SetTextColor( CR_WHITE );
 		skp->SetTextAlign( oapi::Sketchpad::RIGHT );
-		double dtmp = 0;// TODO
+		double dtmp = range( 0.0, GetIDP()->GetTargetInclination() * DEG, 99.99 );// not upstream
 		char cbuf[8];
 		sprintf_s( cbuf, 8, "%5.2f", dtmp );
 		skp->Text( 489, 419, cbuf, strlen( cbuf ) );

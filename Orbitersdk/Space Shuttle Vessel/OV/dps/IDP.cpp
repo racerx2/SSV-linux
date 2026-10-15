@@ -30,6 +30,7 @@ Date         Developer
 2023/01/11   GLS
 2025/12/27   indy91
 2025/12/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "IDP.h"
 #include "../Atlantis.h"
@@ -45,6 +46,7 @@ Date         Developer
 #include "Software/GNC/Landing_SOP.h"
 #include "Software/GNC/OMSBurnSoftware.h"
 #include "Software/GNC/DedicatedDisplay_SOP.h"
+#include "Software/GNC/AbortModing.h"
 
 
 namespace dps {
@@ -84,6 +86,8 @@ namespace dps {
 		assert( (pOMSBurnSoftware != NULL) && "IDP::Realize.pOMSBurnSoftware" );
 		pDedicatedDisplay_SOP = dynamic_cast<DedicatedDisplay_SOP*> (pGPC1->FindSoftware( "DedicatedDisplay_SOP" ));
 		assert( (pDedicatedDisplay_SOP != NULL) && "IDP::Realize.pDedicatedDisplay_SOP" );
+		pAbortModing = dynamic_cast<AbortModing*> (pGPC1->FindSoftware( "AbortModing" ));// not upstream
+		assert( (pAbortModing != NULL) && "IDP::Realize.pAbortModing" );
 		pADC1 = dynamic_cast<ADC*>(director->GetSubsystemByName( (usIDPID <= 2) ? "ADC1A" : "ADC1B" ));
 		assert( (pADC1 != NULL) && "IDP::Realize.pADC1" );
 		pADC2 = dynamic_cast<ADC*>(director->GetSubsystemByName( (usIDPID <= 2) ? "ADC2A" : "ADC2B" ));
@@ -469,7 +473,7 @@ namespace dps {
 					{
 						// if OPS transition, clear SPEC and DISP displays
 						// HACK only clears the displays on this IDP
-						if ((int)(newMM / 100) != (int)(GetGPC()->GetMajorMode() / 100))
+						if (((int)(newMM / 100) != (int)(GetGPC()->GetMajorMode() / 100)) || (newMM == GetGPC()->GetMajorMode()))// not upstream: a mode recall also brings back the major mode display
 						{
 							SetSpec( dps::MODE_UNDEFINED );
 							SetDisp( dps::MODE_UNDEFINED );
@@ -1174,6 +1178,16 @@ namespace dps {
 	bool IDP::GetFCSmode( void ) const
 	{
 		return pAscentDAP->GetFCSmode();
+	}
+
+	unsigned short IDP::GetAbortMode( void ) const
+	{
+		return pAbortModing->GetAbortMode();
+	}
+
+	double IDP::GetTargetInclination( void ) const
+	{
+		return pAscentDAP->GetTargetInclination();
 	}
 
 	double IDP::GetAltitude( void ) const

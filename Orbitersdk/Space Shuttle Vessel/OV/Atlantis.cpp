@@ -275,6 +275,7 @@ Date         Developer
 #include "mps/MPS.h"
 #include "oms/OMS.h"
 #include "oms/OMS_TVC.h"
+#include "oms/OMSRCSFeed.h"
 #include "vc/PanelA7A3_ISS.h"
 #include "vc/PanelA7A3_SPDS.h"
 #include "vc/PanelA8A3.h"
@@ -405,6 +406,10 @@ static void SSV_FontsRemove( void )// not upstream: as added
 // Global (class-wide) parameters
 
 GDIParams g_Param;
+
+// not upstream: manifold group (0 1/2, 1 3/4/5) and AFT_RCS_DUMP command line of each dump jet; nulls per pod L1U L2D L2U L3D L4U L4D L1L L2L L3L L4L
+static constexpr int DUMP_JET_MANF[24] = {0, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1};
+static constexpr int DUMP_JET_LINE[24] = {0, 1, 0, 1, 2, 2, 4, 4, 3, 3, 2, 2, 3, 3, 2, 2, 4, 4, 3, 3, 2, 2, 3, 3};
 
 #if _DEBUG
 std::ofstream animlog;
@@ -764,6 +769,9 @@ pActiveLatches( 5, NULL ), pXRSound(NULL)
 	bSSMEsDefined = false;
 	bOMSDefined = false;
 	bRCSDefined = false;
+
+	for (i = 0; i < 24; i++) th_rcs_dump[i] = NULL;// not upstream
+	aftRCSFromOMS[0][0] = aftRCSFromOMS[0][1] = aftRCSFromOMS[1][0] = aftRCSFromOMS[1][1] = false;// not upstream
 
 	phLOXdump = NULL;
 	phLH2dump = NULL;
@@ -1572,6 +1580,12 @@ void Atlantis::clbkPreStep( double simt, double simdt, double mjd )
 			SetThrusterGroupLevel(thg_transdown, 0.0);
 			SetThrusterGroupLevel(thg_transup, 0.0);
 			lastTransCommand[2] = 0;
+		}
+
+		// not upstream: aft RCS abort dump jets
+		if (th_rcs_dump[0] != NULL)
+		{
+			for (int i = 0; i < 24; i++) SetThrusterLevel( th_rcs_dump[i], AftRCSDump[DUMP_JET_LINE[i]].IsSet() ? 1.0 : 0.0 );
 		}
 
 		// during launch, turn engine light source on
@@ -3176,7 +3190,76 @@ void Atlantis::CreateAttControls_RCS(VECTOR3 center)
 	AddRCSExhaust( th_att_lin[13], center + _V( -0.3722116, -0.606043, 16.448312 ), _V( 0.0, 0.0, 1.0 ) );//F1F
 	AddRCSExhaust( th_att_lin[13], center + _V( 0.3722116, -0.606043, 16.448312 ), _V( 0.0, 0.0, 1.0 ) );//F2F
 
+	CreateRCSDumpJets( center );// not upstream
+
 	bRCSDefined = true;
+	ApplyAftRCSFeed();// not upstream
+}
+
+void Atlantis::CreateRCSDumpJets( const VECTOR3& center )
+{
+	constexpr double DUMP_JET_THRUST = RCS_DUMP_JET_THRUST;
+	constexpr double DUMP_JET_ISP0 = RCS_DUMP_JET_ISP0;
+	constexpr double DUMP_JET_ISP1 = DUMP_JET_ISP0 * 0.75;
+
+	// +X jets L1A, L3A, R1A, R3A: position and exhaust direction
+	static const VECTOR3 pxPos[4] = {
+		{-3.1496, 1.428624, -15.265366}, {-3.4798, 1.428624, -15.265366},
+		{3.1496, 1.428624, -15.265366}, {3.4798, 1.428624, -15.265366}};
+	static const VECTOR3 pxExh = {0.0, 0.173648, -0.984808};
+
+	// null jets of the left pod, in opposing pairs (thrust cancels): L1U-L2D, L2U-L3D, L4U-L4D, L1L-L2L, L3L-L4L
+	static const VECTOR3 nullPos[10] = {
+		{-3.3528, 1.6176, -14.9278}, {-2.84353, 0.52286, -14.5976},
+		{-3.3528, 1.6176, -14.5976}, {-2.84353, 0.52286, -14.9278},
+		{-3.3528, 1.6176, -14.2674}, {-2.84353, 0.52286, -14.2674},
+		{-3.806698, 1.0715, -15.258}, {-3.806698, 1.0715, -14.5976},
+		{-3.806698, 1.0715, -14.9278}, {-3.806698, 1.0715, -14.2674}};
+	static const VECTOR3 nullExh[10] = {
+		{0.0, 1.0, 0.0}, {-0.2844, -0.9481, -0.1422},
+		{0.0, 1.0, 0.0}, {-0.2844, -0.9481, -0.1422},
+		{0.0, 1.0, 0.0}, {-0.2844, -0.9481, -0.1422},
+		{-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0},
+		{-1.0, 0.0, 0.0}, {-1.0, 0.0, 0.0}};
+	// pair reference points and thrust axes, left pod
+	static const VECTOR3 pairRef = {-3.3, 1.07, -14.76};
+	static const VECTOR3 pairDir[5] = {{0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {0.0, 1.0, 0.0}, {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}};
+
+	if (th_rcs_dump[0] == NULL)
+	{
+		for (int i = 0; i < 4; i++)
+			th_rcs_dump[i] = CreateThruster( center + pxPos[i], -pxExh, DUMP_JET_THRUST, AftRCSFeed( (i < 2) ? LEFT : RIGHT, DUMP_JET_MANF[i] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
+		for (int s = 0; s < 2; s++)
+		{
+			VECTOR3 mirror = _V( (s == 0) ? 1.0 : -1.0, 1.0, 1.0 );
+			VECTOR3 ref = _V( pairRef.x * mirror.x, pairRef.y, pairRef.z );
+			for (int p = 0; p < 5; p++)
+			{
+				VECTOR3 dir = _V( pairDir[p].x * mirror.x, pairDir[p].y, pairDir[p].z );
+				int k = 4 + (s * 10) + (p * 2);
+				th_rcs_dump[k] = CreateThruster( center + ref, dir, DUMP_JET_THRUST, AftRCSFeed( s, DUMP_JET_MANF[k] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
+				th_rcs_dump[k + 1] = CreateThruster( center + ref, -dir, DUMP_JET_THRUST, AftRCSFeed( s, DUMP_JET_MANF[k + 1] ), DUMP_JET_ISP0, DUMP_JET_ISP1 );
+			}
+		}
+	}
+	else
+	{
+		for (int i = 0; i < 4; i++) SetThrusterRef( th_rcs_dump[i], center + pxPos[i] );
+		for (int s = 0; s < 2; s++)
+		{
+			VECTOR3 ref = _V( pairRef.x * ((s == 0) ? 1.0 : -1.0), pairRef.y, pairRef.z );
+			for (int j = 0; j < 10; j++) SetThrusterRef( th_rcs_dump[4 + (s * 10) + j], center + ref );
+		}
+	}
+
+	for (int i = 0; i < 4; i++) AddRCSExhaust( th_rcs_dump[i], center + pxPos[i], pxExh );
+	for (int s = 0; s < 2; s++)
+	{
+		double mx = (s == 0) ? 1.0 : -1.0;
+		for (int j = 0; j < 10; j++)
+			AddRCSExhaust( th_rcs_dump[4 + (s * 10) + j], center + _V( nullPos[j].x * mx, nullPos[j].y, nullPos[j].z ), _V( nullExh[j].x * mx, nullExh[j].y, nullExh[j].z ) );
+	}
+	return;
 }
 
 void Atlantis::AddRCSExhaust(THRUSTER_HANDLE thX, const VECTOR3& pos, const VECTOR3& dir)
@@ -3951,17 +4034,65 @@ void Atlantis::EnableThrusters(const int Thrusters[], int nThrusters)
 			case 7:
 			case 11:
 			case 14:
-				SetThrusterResource(th_att_rcs[Thrusters[i]], ph_lrcs);
+				SetThrusterResource(th_att_rcs[Thrusters[i]], AftRCSFeed( LEFT ));// not upstream: OMS/RCS interconnect
 				break;
 			case 2:
 			case 5:
 			case 9:
 			case 12:
 			case 15:
-				SetThrusterResource(th_att_rcs[Thrusters[i]], ph_rrcs);
+				SetThrusterResource(th_att_rcs[Thrusters[i]], AftRCSFeed( RIGHT ));// not upstream: OMS/RCS interconnect
 				break;
 		}
 	}
+}
+
+PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side ) const
+{
+	bool oms = aftRCSFromOMS[side][0] || aftRCSFromOMS[side][1];
+	if (side == LEFT) return oms ? ph_loms : ph_lrcs;
+	else return oms ? ph_roms : ph_rrcs;
+}
+
+PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side, unsigned int group ) const
+{
+	bool oms = aftRCSFromOMS[side][group];
+	if (side == LEFT) return oms ? ph_loms : ph_lrcs;
+	else return oms ? ph_roms : ph_rrcs;
+}
+
+double Atlantis::GetOMSPropellantMass( void ) const
+{
+	return GetPropellantMass( ph_loms ) + GetPropellantMass( ph_roms );
+}
+
+void Atlantis::SetAftRCSFeedFromOMS( unsigned int side, unsigned int group, bool fromOMS )
+{
+	if ((side > 1) || (group > 1)) return;
+	aftRCSFromOMS[side][group] = fromOMS;
+	ApplyAftRCSFeed();
+	return;
+}
+
+void Atlantis::ApplyAftRCSFeed( void )
+{
+	if (!bRCSDefined) return;
+
+	// move every aft jet that has a source to the current source of its pod; a jet without a source was disabled by the DAP
+	auto move = [this]( THRUSTER_HANDLE th )
+	{
+		if (th == NULL) return;
+		PROPELLANT_HANDLE ph = GetThrusterResource( th );
+		if ((ph == ph_lrcs) || (ph == ph_loms)) SetThrusterResource( th, AftRCSFeed( LEFT ) );
+		else if ((ph == ph_rrcs) || (ph == ph_roms)) SetThrusterResource( th, AftRCSFeed( RIGHT ) );
+	};
+	for (int i = 0; i < 17; i++) move( th_att_rcs[i] );
+	for (int i = 0; i < 14; i++) move( th_att_lin[i] );
+	for (int i = 0; i < 24; i++)
+	{
+		if (th_rcs_dump[i] != NULL) SetThrusterResource( th_rcs_dump[i], AftRCSFeed( ((i < 2) || ((i >= 4) && (i < 14))) ? LEFT : RIGHT, DUMP_JET_MANF[i] ) );
+	}
+	return;
 }
 
 void Atlantis::DisableThrusters(const int Thrusters[], int nThrusters)
@@ -4890,6 +5021,9 @@ void Atlantis::RealizeSubsystemConnections( void )
 	}
 	RotThrusterCommands[3].Connect(pBundle, 6);// SERC RCS thrusters
 
+	pBundle = bundleManager->CreateBundle( "AFT_RCS_DUMP", 16 );// not upstream
+	for (int i = 0; i < 5; i++) AftRCSDump[i].Connect( pBundle, i );
+
 	pBundle = bundleManager->CreateBundle("RMS_EE", 16);
 	RMSGrapple.Connect(pBundle, 0);
 	RMSRelease.Connect(pBundle, 1);
@@ -5765,6 +5899,8 @@ void Atlantis::CreateSubsystems( void )
 
 	psubsystems->AddSubsystem( new oms::OMS_TVC( psubsystems, "OMS_TVC_LEFT", 0 ) );
 	psubsystems->AddSubsystem( new oms::OMS_TVC( psubsystems, "OMS_TVC_RIGHT", 1 ) );
+
+	psubsystems->AddSubsystem( new oms::OMSRCSFeed( psubsystems ) );// not upstream
 
 	psubsystems->AddSubsystem( new DDU( psubsystems, "DDU1", 1 ) );
 	psubsystems->AddSubsystem( new DDU( psubsystems, "DDU2", 2 ) );

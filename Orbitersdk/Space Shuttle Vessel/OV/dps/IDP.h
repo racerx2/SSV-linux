@@ -47,6 +47,7 @@ Date         Developer
 2022/10/21   GLS
 2022/11/09   GLS
 2025/12/27   indy91
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -104,6 +105,7 @@ namespace dps
 	class AerojetDAP;
 	class Landing_SOP;
 	class OMSBurnSoftware;
+	class AbortModing;
 	class Elevon_PFB_SOP;
 	class Rudder_PFB_SOP;
 	class Speedbrake_PFB_SOP;
@@ -154,6 +156,7 @@ namespace dps
 		Landing_SOP* pLanding_SOP;
 		OMSBurnSoftware* pOMSBurnSoftware;
 		DedicatedDisplay_SOP* pDedicatedDisplay_SOP;
+		AbortModing* pAbortModing;// not upstream
 
 		ADC* pADC1;
 		ADC* pADC2;
@@ -249,6 +252,8 @@ namespace dps
 		double GetSelectedRunwayHeading( void ) const;
 		double GetTargetHeading( void ) const;
 		bool GetFCSmode( void ) const;
+		unsigned short GetAbortMode( void ) const;// not upstream: 0 none, 1 ATO, 2 AOA, 3 TAL, 4 RTLS
+		double GetTargetInclination( void ) const;// not upstream: ascent target inclination [rad]
 		double GetAltitude( void ) const;
 		double GetAltitudeRate( void ) const;
 		double GetVrel( void ) const;

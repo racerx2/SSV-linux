@@ -153,6 +153,18 @@ namespace dps
 		DT_LIMIT = DTMAX;
 	}
 
+	void AscentGuidance::SetTargets(double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50)
+	{
+		RDMAG = r_D * MPS2FPS;
+		VDMAG = v_D * MPS2FPS;
+		GAMD = gamma_D;
+		if (IY_M50 != NULL)
+		{
+			IYD = unit(*IY_M50);
+			IY = IYD;
+		}
+	}
+
 	void AscentGuidance::Cycle(VECTOR3 R, VECTOR3 V, double T, int K_CMD, int N_SSME, int N_OMS, double mass, VECTOR3 DV, VECTOR3& U_STEER)
 	{
 		// INPUTS:
@@ -361,7 +373,7 @@ namespace dps
 		{
 			N = 2;
 		}
-		// TBD: In the future, there is some AOA/ATO logic here for the IY vector
+		// not upstream: with variable IY, AOA/ATO targeting has set IYD (S_ATO_IY); the first stage engine-out plane (V_AZ_STOP) is not modeled
 		IY = IYD;
 		// Initialize the predicted cutoff position and velocity and VGO as follows:
 		RP = RGD;
@@ -845,6 +857,8 @@ AscentDAP::AscentDAP(SimpleGPCSystem* _gpc)
 
 	XTRK = 0.0;
 	MEDS_D_INCL = 0.0;
+	INCL_TGT = 0.0;// not upstream
+	RD_TGT = VD_TGT = GAMD_TGT = 0.0;// not upstream
 
 	// I-LOADs init
 	KMAX_NOM = 104;
@@ -861,8 +875,6 @@ AscentDAP::AscentDAP(SimpleGPCSystem* _gpc)
 	THROT[3] = 104;
 	TREF_ADJUST = 17.87;
 	VREF_ADJUST = 368.0;
-	OMSASS = 1;
-	NOMTM = 59.0;
 	MASS_LOW_LEVEL = 11500.0;
 	ALIM_1 = 96.200405;
 	ALIM_2 = 96.522146;
@@ -877,12 +889,7 @@ AscentDAP::~AscentDAP()
 
 void AscentDAP::Realize()
 {
-	DiscreteBundle* pBundle = BundleManager()->CreateBundle("LOMS", 4);
-	OMSCommand[LEFT].Connect(pBundle, 2);
-	pBundle = BundleManager()->CreateBundle("ROMS", 4);
-	OMSCommand[RIGHT].Connect(pBundle, 2);
-
-	pBundle = BundleManager()->CreateBundle( "THRUSTER_CMD", 16 );
+	DiscreteBundle* pBundle = BundleManager()->CreateBundle( "THRUSTER_CMD", 16 );
 	SERC.Connect( pBundle, 6 );
 
 	pSSME_SOP = dynamic_cast<SSME_SOP*> (FindSoftware( "SSME_SOP" ));
@@ -901,6 +908,8 @@ void AscentDAP::Realize()
 	assert((pGNCUtilities != NULL) && "OMSBurnSoftware::Realize.pGNCUtilities");
 	pStateVectorSoftware = dynamic_cast<StateVectorSoftware*>(FindSoftware("StateVectorSoftware"));
 	assert((pStateVectorSoftware != NULL) && "OMSBurnSoftware::Realize.pStateVectorSoftware");
+
+	NominalMECOTargets();// not upstream
 }
 
 void AscentDAP::ReadILOADs( const std::map<std::string,std::string>& ILOADs )
@@ -913,8 +922,6 @@ void AscentDAP::ReadILOADs( const std::map<std::string,std::string>& ILOADs )
 	GetValILOAD( "THROT", ILOADs, 4, THROT );
 	GetValILOAD( "VREF_ADJUST", ILOADs, VREF_ADJUST );
 	GetValILOAD( "TREF_ADJUST", ILOADs, TREF_ADJUST );
-	GetValILOAD( "OMSASS", ILOADs, OMSASS );
-	GetValILOAD( "NOMTM", ILOADs, NOMTM );
 	GetValILOAD( "MASS_LOW_LEVEL", ILOADs, MASS_LOW_LEVEL );
 	GetValILOAD( "ALIM_1", ILOADs, ALIM_1 );
 	GetValILOAD( "ALIM_2", ILOADs, ALIM_2 );
@@ -998,28 +1005,11 @@ void AscentDAP::OnPreStep( double simt, double simdt, double mjd )
 					degReqdRates = _V( range( -12, pRHC_SOP->GetPitchCommand() * 0.5, 12 ), -range( -6, pRHC_SOP->GetYawCommand() * 0.5, 6 ), range( -12, pRHC_SOP->GetRollCommand() * 0.5, 12 ) );
 				}
 
-				// OMS Assist
-				if (OMSASS == 1)
-				{
-					if ((STS()->GetMET() >= (tSRBSep + 10)) && (STS()->GetMET() < (tSRBSep + 10 + NOMTM)))
-					{
-						OMSCommand[LEFT].SetLine();
-						OMSCommand[RIGHT].SetLine();
-					}
-					else
-					{
-						OMSCommand[LEFT].ResetLine();
-						OMSCommand[RIGHT].ResetLine();
-					}
-				}
+				// not upstream: the OMS assist is in AbortControlSequence
 			}
 			else
 			{
 				degReqdRates = _V( 0.0, 0.0, 0.0 );// hold attitude post-MECO
-
-				// stop any existing OMS dump
-				OMSCommand[LEFT].ResetLine();
-				OMSCommand[RIGHT].ResetLine();
 
 				if (pSSME_Operations->GetZeroThrustFlag() == true)
 				{
@@ -1107,6 +1097,8 @@ bool AscentDAP::OnMajorModeChange(unsigned int newMajorMode)
 		if (newMajorMode == 102)
 		{
 			WriteCOMPOOL_IS( SCP_KMAX, KMAX_NOM );
+			WriteCOMPOOL_IS( SCP_GUID_MECO_PREP_FLAG, 0 );// not upstream
+			WriteCOMPOOL_IS( SCP_SERC_FLAG, 0 );// not upstream
 			InitializeAutopilot();
 		}
 		else if (newMajorMode == 103) tSRBSep = STS()->GetMET();
@@ -1257,8 +1249,39 @@ void AscentDAP::InitializeAutopilot()
 
 	// Initialize ascent guidance
 	guid.Init(PRED_GMT_LO, TgtRad, VDMAG, TgtFPA, IY_M50);
+	RD_TGT = TgtRad;// not upstream
+	VD_TGT = VDMAG;
+	GAMD_TGT = TgtFPA;
 
 	// sprintf_s(oapiDebugString(), 128, "PRED_GMT_LO %lf TgtInc %lf EF_PLANE_SW %d IYD %lf %lf %lf IY_M50 %lf %lf %lf", PRED_GMT_LO, TgtInc*DEG, EF_PLANE_SW, IYD.x, IYD.y, IYD.z, IY_M50.x, IY_M50.y, IY_M50.z);
+}
+
+void AscentDAP::NominalMECOTargets( void )
+{
+	mission::Mission* pMission = STS()->GetMissionData();
+	if ((pMission == NULL) || (STS()->GetSurfaceRef() == NULL)) return;
+	RD_TGT = pMission->GetMECOAlt() + oapiGetSize( STS()->GetSurfaceRef() );
+	VD_TGT = pMission->GetMECOVel();
+	GAMD_TGT = pMission->GetMECOFPA();
+	return;
+}
+
+void AscentDAP::SetMECOTargets( double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50 )
+{
+	RD_TGT = r_D;
+	VD_TGT = v_D;
+	GAMD_TGT = gamma_D;
+	guid.SetTargets( r_D, v_D, gamma_D, IY_M50 );
+	if (NSSME > 0) TgtSpd = VD_TGT - (SSMETailoffDV[NSSME - 1] / MPS2FPS);
+	return;
+}
+
+void AscentDAP::GetMECOTargets( double& r_D, double& v_D, double& gamma_D ) const
+{
+	r_D = RD_TGT;
+	v_D = VD_TGT;
+	gamma_D = GAMD_TGT;
+	return;
 }
 
 double AscentDAP::GetCurrentHeading() const
@@ -1407,7 +1430,8 @@ void AscentDAP::GimbalSSMEs( double simdt, const VECTOR3& degReqdRates, const VE
 	// SERC
 	if (enaSERC == true)
 	{
-		if (abs( degRateError.data[ROLL] ) < 0.1) SERC.ResetLine();
+		if ((ReadCOMPOOL_IS( SCP_RCS_12_ALL_JET_INH ) != 0) || (ReadCOMPOOL_IS( SCP_RCS_345_ALL_JET_INH ) != 0)) SERC.ResetLine();// not upstream: aft jets inhibited during an OMS/RCS interconnect
+		else if (abs( degRateError.data[ROLL] ) < 0.1) SERC.ResetLine();
 		else SERC.SetLine( static_cast<float>(-range( -1, 0.5 * degRateError.data[ROLL], 1 )) );
 	}
 }
@@ -1515,13 +1539,14 @@ void AscentDAP::FirstStageThrottle( double dt )
 			double vi = length( v3vi ) * MPS2FPS;
 			if (NSSME == 2) EOVI[0] = vi;
 			else if (NSSME == 1) EOVI[1] = vi;
+			WriteCOMPOOL_SS( SCP_V_ME_OUT, static_cast<float>(length( GetVelocity_ECEF( STS(), hEarth ) ) * MPS2FPS) );// not upstream: SSME-OUT SAF TSK, earth relative
 
 			AGT_done = true;// don't do AGT
 			J = 5;// bypass throttle table
 			WriteCOMPOOL_IS( SCP_K_CMD, ReadCOMPOOL_IS( SCP_KMAX ) );// throttle to mission power level
 
 			// update MECO targets
-			if (NSSME > 0) TgtSpd = STS()->GetMissionData()->GetMECOVel() - (SSMETailoffDV[NSSME - 1] / MPS2FPS);
+			if (NSSME > 0) TgtSpd = VD_TGT - (SSMETailoffDV[NSSME - 1] / MPS2FPS);// not upstream: the current MECO target
 		}
 	}
 
@@ -1529,6 +1554,7 @@ void AscentDAP::FirstStageThrottle( double dt )
 	if ((NSSME == 1) && (pSRBSepSequence->GetLHRHSRBPC50PSIFlag() == true))// enable SERC in MM102 only at SRB tailoff
 	{
 		enaSERC = true;
+		WriteCOMPOOL_IS( SCP_SERC_FLAG, 1 );// not upstream
 	}
 
 	// calc and set SSME throttle
@@ -1576,13 +1602,14 @@ void AscentDAP::SecondStageThrottle( double dt )
 			double vi = length( v3vi ) * MPS2FPS;
 			if (NSSME == 2) EOVI[0] = vi;
 			else if (NSSME == 1) EOVI[1] = vi;
+			WriteCOMPOOL_SS( SCP_V_ME_OUT, static_cast<float>(length( GetVelocity_ECEF( STS(), hEarth ) ) * MPS2FPS) );// not upstream: SSME-OUT SAF TSK, earth relative
 
 			glimiting = false;// reset g-limiting
 			dt_thrt_glim = -2;// HACK delay g-limiting action by 2sec (if it re-triggers) to account for failed engine tailoff thrust
 			WriteCOMPOOL_IS( SCP_K_CMD, ReadCOMPOOL_IS( SCP_KMAX ) );// throttle to mission power level
 
 			// update MECO targets
-			if (NSSME > 0) TgtSpd = STS()->GetMissionData()->GetMECOVel() - (SSMETailoffDV[NSSME - 1] / MPS2FPS);
+			if (NSSME > 0) TgtSpd = VD_TGT - (SSMETailoffDV[NSSME - 1] / MPS2FPS);// not upstream: the current MECO target
 		}
 	}
 
@@ -1590,6 +1617,7 @@ void AscentDAP::SecondStageThrottle( double dt )
 	if (NSSME == 1)// enable SERC automatically in MM103
 	{// TODO enable SERC when "sensed acceleration falls below a predefined limit"
 		enaSERC = true;
+		WriteCOMPOOL_IS( SCP_SERC_FLAG, 1 );// not upstream
 	}
 
 	// low-level sensor arm
@@ -1635,6 +1663,9 @@ void AscentDAP::SecondStageThrottle( double dt )
 		}
 	}
 
+	// not upstream: MECO PREP TSK, ABORT_MECO_PREP_TIME 10 s
+	if (timeRemaining < 10.0) WriteCOMPOOL_IS( SCP_GUID_MECO_PREP_FLAG, 1 );
+
 	// fine count
 	// HACK only throttle back, no real count for now
 	if ((timeRemaining <= 6) && (finecount == false))
@@ -1667,7 +1698,7 @@ void AscentDAP::MajorCycle()
 	vel = mul(M_J2000_to_M50, vel);
 
 	// Call guidance function
-	guid.Cycle(pos, vel, ReadClock(), ReadCOMPOOL_IS(SCP_K_CMD), NSSME, 0, STS()->GetMass(), DVS, U_STEER);
+	guid.Cycle(pos, vel, ReadClock(), ReadCOMPOOL_IS(SCP_K_CMD), NSSME, (ReadCOMPOOL_IS(SCP_ABORT_OMS_IGN_CMD) != 0) ? 2 : 0, STS()->GetMass(), DVS, U_STEER);// not upstream: OMS thrust in a dump
 
 	// Convert to old steering system
 	MATRIX3 M_EF_M50;
@@ -1790,6 +1821,7 @@ void AscentDAP::AscentUPP()
 	IYT_EF = tmul(pGNCUtilities->EARTH_FIXED_TO_M50_COORD(T_STATE), IY_XTRK);
 	INCL_TARGET = acos(-IYT_EF.z);
 	MEDS_D_INCL = INCL_TARGET - acos(-IYC_EF.z);
+	INCL_TGT = INCL_TARGET;// not upstream
 }
 
 void AscentDAP::NullSRBNozzles( void )

@@ -173,6 +173,11 @@ pOrbitDAP(NULL), pStateVector(NULL)
 	C1_OMS[2] = 0.0f;
 	C2_OMS[2] = 0.0f;
 	DTIG_OMS[2] = 0.0f;
+	PROP_DEP_ABORT = 0.0f;// not upstream
+	bAbortTgtOPS3 = false;
+	bDispOPS3Fmt = false;
+	bAutoLoad = false;
+	THETA_LSS = 0.0;
 }
 
 OMSBurnSoftware::~OMSBurnSoftware()
@@ -215,6 +220,28 @@ void OMSBurnSoftware::ReadILOADs( const std::map<std::string,std::string>& ILOAD
 void OMSBurnSoftware::OnPreStep(double simt, double simdt, double mjd)
 {
 	T_GMT = ReadClock(); //This is used often enough to warrent updating it every timestep
+
+	// not upstream: new AOA/ATO targets (ABORT_INIT from AOA/ATO targeting) reinitialize the display before the burn is enabled
+	if (ReadCOMPOOL_IS( SCP_ABORT_INIT ) != 0)
+	{
+		WriteCOMPOOL_IS( SCP_ABORT_INIT, 0 );
+		unsigned int mm = GetMajorMode();
+		if (((mm == 104) || (mm == 105)) && !EXEC_CMD)
+		{
+			OPS1_DISP_INIT( mm );
+			MnvrLoad = false;
+			VGO_LVLH = _V( 0, 0, 0 );
+			VGO_DISP = _V( 0, 0, 0 );
+			DV_TOT = 0.0;
+			MnvrToBurnAtt = false;
+		}
+	}
+	// not upstream: the AOA OMS-2 target carried into OPS 3 is loaded without an item 22
+	if (bAutoLoad && (GetMajorMode() == 301))
+	{
+		bAutoLoad = false;
+		PRE_MAN_DISP_SUPT_TSK1();
+	}
 
 	if((simt-lastUpdateSimTime) > 0.96)
 	{
@@ -594,6 +621,20 @@ bool OMSBurnSoftware::ItemInput( int item, const char* Data )
 			WriteCOMPOOL_IS( SCP_OMS_CK_ENA_CMD, 1 );
 		}
 		else return false;
+	}
+	else if (item == 35)
+	{
+		// not upstream: ABORT TGT, an AOA or ATO with a target set (STS 83-0020 4.2.29 (11))
+		int num;
+		if (!GetIntegerUnsigned( Data, num )) return false;
+		unsigned int mm = GetMajorMode();
+		if ((mm != 104) && (mm != 105)) return false;
+		if ((EXEC_CMD && !BurnCompleted) || BurnInProg) return false;
+		if ((mm == 104) && (num != 1) && ((num < 3) || (num > 5))) return false;
+		if ((mm == 105) && ((num < 1) || (num > 12))) return false;
+		WriteCOMPOOL_IS( SCP_I_TGT, num );
+		if (num <= 2) WriteCOMPOOL_IS( SCP_ATO_TGT_SEL, 1 );
+		else WriteCOMPOOL_IS( SCP_AOA_TGT_SEL, 1 );
 	}
 	else return false;
 	return true;
@@ -1086,8 +1127,16 @@ void OMSBurnSoftware::OnPaint( vc::MDU* pMDU ) const
 	}
 
 	pMDU->mvprint(35, 15, "35 ABORT TGT");
+	if ((GetMajorMode() == 104) || (GetMajorMode() == 105))// not upstream: crew target index
+	{
+		sprintf_s( cbuf, 255, "%2hu", ReadCOMPOOL_IS( SCP_I_TGT ) );
+		pMDU->mvprint( 48, 15, cbuf );
+	}
 	pMDU->Underline( 48, 15 );
 	pMDU->Underline( 49, 15 );
+
+	// not upstream: AOA OMS-2 targeting complete, OPS 3 transition
+	if ((GetMajorMode() == 105) && (ReadCOMPOOL_IS( SCP_S_AOA ) != 0) && (ReadCOMPOOL_IS( SCP_S_AOA_OMS2 ) != 0)) pMDU->mvprint( 20, 21, "OPS 301", dps::DEUATT_FLASHING );
 
 	pMDU->mvprint( 37, 17, "FWD RCS" );
 	pMDU->mvprint( 39, 18, "ARM   36" );
@@ -1196,6 +1245,20 @@ bool OMSBurnSoftware::OnParseLine(const char* keyword, const char* value)
 		WriteCOMPOOL_SD(SCP_T_ET_SEP, temp);
 		return true;
 	}
+	else if (!_strnicmp(keyword, "ABORT_TGT", 9)) {// not upstream
+		int ops3 = 0;
+		sscanf_s(value, "%f %f %f %f %f %f %d", &HTGT_OMS[2], &THETA_OMS[2], &C1_OMS[2], &C2_OMS[2], &DTIG_OMS[2], &PROP_DEP_ABORT, &ops3);
+		bAbortTgtOPS3 = (ops3 != 0);
+		return true;
+	}
+	else if (!_strnicmp(keyword, "PRPLT", 5)) {// not upstream
+		int fmt = 0;
+		int al = 0;
+		sscanf_s(value, "%f %d %d %lf", &PROP_DEP, &fmt, &al, &THETA_LSS);
+		bDispOPS3Fmt = (fmt != 0);
+		bAutoLoad = (al != 0);
+		return true;
+	}
 	return false;
 }
 
@@ -1237,6 +1300,22 @@ void OMSBurnSoftware::OnSaveState(FILEHANDLE scn) const
 	{
 		oapiWriteScenario_float(scn, "T_ET_SEP", ReadCOMPOOL_SD(SCP_T_ET_SEP));
 	}
+	sprintf_s(cbuf, 255, "%.1f %.6f %.2f %.6f %.2f %.1f %d", HTGT_OMS[2], THETA_OMS[2], C1_OMS[2], C2_OMS[2], DTIG_OMS[2], PROP_DEP_ABORT, bAbortTgtOPS3);// not upstream
+	oapiWriteScenario_string(scn, "ABORT_TGT", cbuf);
+	sprintf_s(cbuf, 255, "%.1f %d %d %.6f", PROP_DEP, bDispOPS3Fmt, bAutoLoad, THETA_LSS);
+	oapiWriteScenario_string(scn, "PRPLT", cbuf);
+}
+
+void OMSBurnSoftware::SetAbortTarget( double HTGT, double THETA, double C1, double C2, double DTIG, double PROP_DEP_TGT, bool OPS3 )
+{
+	HTGT_OMS[2] = static_cast<float>(HTGT);
+	THETA_OMS[2] = static_cast<float>(THETA);
+	C1_OMS[2] = static_cast<float>(C1);
+	C2_OMS[2] = static_cast<float>(C2);
+	DTIG_OMS[2] = static_cast<float>(DTIG);
+	PROP_DEP_ABORT = static_cast<float>(PROP_DEP_TGT);
+	bAbortTgtOPS3 = OPS3;
+	return;
 }
 
 void OMSBurnSoftware::SetManeuverData(double maneuverTIG, const VECTOR3& maneuverDV)
@@ -1322,8 +1401,14 @@ void OMSBurnSoftware::OPS1_INIT(int mm)
 	{
 		double T_ET_SEP = ReadClock() - 4.0; //Just a rough estimate for now
 		WriteCOMPOOL_SD(SCP_T_ET_SEP, T_ET_SEP);
+		THETA_LSS = 0.0;// not upstream
 	}
 
+	OPS1_DISP_INIT(mm);
+}
+
+void OMSBurnSoftware::OPS1_DISP_INIT(int mm)
+{
 	//DISP_INIT_TSK
 	PEG_MODE_4 = true;
 	int I = 0;
@@ -1343,18 +1428,20 @@ void OMSBurnSoftware::OPS1_INIT(int mm)
 		MNVR_TITLE_IND = 7;
 	}
 
-	if (false) //TBD: Check on AOA flag
+	// not upstream: the abort flags select the AOA/ATO titles and the targets of the third slot
+	if (ReadCOMPOOL_IS(SCP_S_AOA) != 0)
 	{
 		MNVR_TITLE_IND += 2;
 		I = 3;
 	}
-	else if (false) //TBD: Check on ATO flag
+	else if (ReadCOMPOOL_IS(SCP_S_ATO) != 0)
 	{
 		MNVR_TITLE_IND += 1;
 		I = 3;
 	}
 
 	//Load PEG-4 targets
+	bDispOPS3Fmt = false;// not upstream
 	if (I > 0)
 	{
 		HTGT_DISP = HTGT_OMS[I - 1] * NAUTMI_PER_FT;
@@ -1365,7 +1452,16 @@ void OMSBurnSoftware::OPS1_INIT(int mm)
 		tig = ReadCOMPOOL_SD(SCP_T_ET_SEP) + DTIG_OMS[I - 1];
 		tig = tig - ReadCOMPOOL_SD(SCP_T_MET_REF);
 		ConvertSecondsToDDHHMMSS(tig, TIG);
+
+		// not upstream: the AOA OMS-2 target is an OPS 3 (deorbit) target, burned after the OPS 3 transition
+		if ((I == 3) && bAbortTgtOPS3)
+		{
+			PROP_DEP = PROP_DEP_ABORT;
+			bDispOPS3Fmt = true;
+		}
+		else PROP_DEP = 0.0f;
 	}
+	if (mm == 105) bBurnMode = !((I == 3) && bAbortTgtOPS3 && (ReadCOMPOOL_IS(SCP_S_AOA) != 0));// not upstream: AOA MNVR TRANS, no burn in OPS 1
 }
 
 void OMSBurnSoftware::OPS2_INIT()
@@ -1396,6 +1492,9 @@ void OMSBurnSoftware::OPS3_INIT(int mm)
 {
 	if (mm == 301)
 	{
+		// not upstream: an AOA carries its OMS-2 targets from MM 105, displayed and loaded without an item 22 (STS 83-0020 4.2.29 (11a))
+		if ((GetMajorMode() == 105) && bDispOPS3Fmt && (ReadCOMPOOL_IS(SCP_S_AOA) != 0) && (ReadCOMPOOL_IS(SCP_S_AOA_OMS2) != 0)) bAutoLoad = true;
+
 		//DISP_MONIT_TSK init pass
 		ST_CRT_TIMER = false;
 		MnvrLoad = false;
@@ -1508,7 +1607,7 @@ bool OMSBurnSoftware::PRE_MAN_DISP_SUPT_TSK1()
 		// calculate target position
 		VECTOR3 IR = unit(RGD);
 
-		if (GetMajorMode() < 200)
+		if ((GetMajorMode() < 200) && !bDispOPS3Fmt)// not upstream: an AOA OMS-2 target in MM 105 is in OPS 3 format
 		{
 			//OPS1
 			VECTOR3 RLS_M50 = pStateVector->GetPositionAtT0();
@@ -1518,6 +1617,7 @@ bool OMSBurnSoftware::PRE_MAN_DISP_SUPT_TSK1()
 			{
 				THETA_LS += PI2;
 			}
+			if (GetMajorMode() == 104) THETA_LSS = THETA_LS;// not upstream: for the AOA OMS-2 TIG adjustment
 			double DTHETA = THETA - THETA_LS;
 			VECTOR3 IRT = IR * cos(DTHETA) + IDR * sin(DTHETA);
 			RT = IRT * (EARTH_RADIUS_EQUATOR + HTGT_DISP / NAUTMI_PER_FT);

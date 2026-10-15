@@ -5,6 +5,7 @@ Date         Developer
 2021/08/24   GLS
 2022/09/29   GLS
 2023/02/19   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "StandardRotarySwitch.h"
 #include <cassert>
@@ -46,6 +47,20 @@ namespace vc
 		for (unsigned short i = 0; i < usNumPositions; i++)
 		{
 			if ((i == usNewPosition) && bOutput) outputSignals[i].SetLine();
+			else outputSignals[i].ResetLine();
+		}
+		return;
+	}
+
+
+	void RotaryDemuxSwitch::OnPreStep( double simt, double simdt, double mjd )
+	{
+		if (!bInputConnected || (usCurrentPosition >= usNumPositions)) return;
+
+		bool bOutput = inputSignal.IsSet();
+		for (unsigned short i = 0; i < usNumPositions; i++)
+		{
+			if ((i == usCurrentPosition) && bOutput) outputSignals[i].SetLine();
 			else outputSignals[i].ResetLine();
 		}
 		return;

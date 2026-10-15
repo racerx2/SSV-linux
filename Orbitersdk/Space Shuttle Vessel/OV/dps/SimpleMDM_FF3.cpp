@@ -28,6 +28,7 @@ Date         Developer
 2022/10/25   GLS
 2022/10/29   GLS
 2022/12/27   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "SimpleMDM_FF3.h"
 #include "SimpleShuttleBus.h"
@@ -49,6 +50,11 @@ namespace dps
 		DiscreteBundle* pBundle = BundleManager()->CreateBundle( "MDM_Power", 16 );
 		Power1.Connect( pBundle, 2 );
 		Power2.Connect( pBundle, 2 );
+
+		pBundle = BundleManager()->CreateBundle( "ABORT_MODE", 16 );// not upstream
+		dipIOM12[2][3].Connect( pBundle, 1 );// 3-ATO ABORT REQUEST SIGNAL C
+		dipIOM12[2][4].Connect( pBundle, 2 );// 4-TAL ABORT REQUEST SIGNAL C
+		dipIOM12[2][5].Connect( pBundle, 3 );// 5-RTLS ABORT REQUEST SIGNAL C
 
 		pBundle = BundleManager()->CreateBundle( "PLT_TRIM_BF", 16 );
 		dipIOM12[1][8].Connect( pBundle, 0 );// 0: F3 PLT TRIM RHC/PNL inh

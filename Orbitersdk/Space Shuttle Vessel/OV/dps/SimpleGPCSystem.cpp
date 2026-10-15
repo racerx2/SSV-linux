@@ -65,6 +65,10 @@ Date         Developer
 #include "Software/GNC/AscentDAP.h"
 #include "Software/GNC/OrbitDAP.h"
 #include "Software/GNC/OMSBurnSoftware.h"
+#include "Software/GNC/AbortModing.h"
+#include "Software/GNC/AOA_ATO_TGT.h"
+#include "Software/GNC/AbortControlSequence.h"
+#include "Software/GNC/AbortOMSRCSInterconnect.h"
 #include "Software/GNC/StateVectorSoftware.h"
 #include "Software/GNC/OrbitTgtSoftware.h"
 #include "Software/GNC/AerojetDAP.h"
@@ -172,6 +176,10 @@ GNC(_GNC)
 		vSoftware.push_back( new OrbitDAP( this ) );
 		vSoftware.push_back( new StateVectorSoftware( this ) );
 		vSoftware.push_back( new OMSBurnSoftware( this ) );
+		vSoftware.push_back( new AbortModing( this ) );// not upstream: ascent aborts
+		vSoftware.push_back( new AOA_ATO_TGT( this ) );
+		vSoftware.push_back( new AbortControlSequence( this ) );
+		vSoftware.push_back( new AbortOMSRCSInterconnect( this ) );
 		vSoftware.push_back( new OrbitTgtSoftware( this ) );
 		vSoftware.push_back( new RadarAltimeter_SOP( this ) );
 		vSoftware.push_back( new LandingSite( this ) );
@@ -329,6 +337,8 @@ unsigned short SimpleGPCSystem::SetSPECDISP( unsigned short spec, unsigned short
 
 bool SimpleGPCSystem::SetMajorModeKB( unsigned short newMM, unsigned short crt )
 {
+	if (IsModeRecall( newMM )) return true;// not upstream: OPS/mode recall, no transition (PASS User's Guide table 2-5)
+
 	if (!IsValidMajorModeTransition( newMM ))
 	{
 		// set illegal entry
@@ -373,6 +383,21 @@ void SimpleGPCSystem::SetMajorMode( unsigned short newMM )
 	return;
 }
 
+bool SimpleGPCSystem::IsModeRecall( unsigned short newMajorMode ) const
+{
+	if (!GNC || (newMajorMode != ReadCOMPOOL_IS( SCP_MM ))) return false;
+	switch (newMajorMode)
+	{
+		case 201:
+		case 301:
+		case 801:
+		case 901:
+			return true;
+		default:
+			return false;
+	}
+}
+
 bool SimpleGPCSystem::IsValidMajorModeTransition( unsigned short newMajorMode ) const
 {
 	if (GNC) return IsValidMajorModeTransition_GNC( newMajorMode );
@@ -403,7 +428,7 @@ bool SimpleGPCSystem::IsValidMajorModeTransition_GNC( unsigned short newMajorMod
 		case 202:
 			return MM == 201;
 		case 301:
-			return (MM == 0 || MM == 104 || MM == 105 || MM == 106 || MM == 201 || MM == 302 || MM == 801);
+			return (MM == 0 || MM == 104 || MM == 105 || MM == 106 || MM == 201 || MM == 302 || MM == 303 || MM == 801);// not upstream: 303 to 301 is legal (PASS User's Guide table 2-5)
 		case 302:
 			return MM == 301;
 		case 303:

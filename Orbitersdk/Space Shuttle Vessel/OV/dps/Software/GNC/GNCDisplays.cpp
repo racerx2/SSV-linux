@@ -36,6 +36,7 @@ Date         Developer
 2022/12/01   indy91
 2022/12/23   GLS
 2023/01/02   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "GNCDisplays.h"
 #include "../../../Atlantis.h"
@@ -48,6 +49,7 @@ Date         Developer
 #include "OMSBurnSoftware.h"
 #include "OrbitDAP.h"
 #include "MM801.h"
+#include "AbortControlSequence.h"
 #include "../../../APU.h"
 #include <MathSSV.h>
 #include <EngConst.h>
@@ -512,8 +514,57 @@ namespace dps
 
 	bool GNCDisplays::ItemInput_SPEC51( int item, const char* Data )
 	{
+		unsigned int mm = GetMajorMode();
+		bool ops1Dump = ((mm >= 101) && (mm <= 103));// not upstream: items 5 to 9 are illegal in MM 104 to 106, OPS 3 and 6 dumps are later phases
 		switch (item)
 		{
+			case 1:// not upstream: TAL select, legal in MM 103 and 104 once TAL is implemented (phase 2)
+				return false;
+			case 2:// not upstream: ATO select
+				if ((mm < 102) || (mm > 104)) return false;
+				WriteCOMPOOL_IS( SCP_OVRD_ABORT_SEL, 2 );
+				break;
+			case 3:// not upstream: initiate the selected abort
+				{
+					unsigned short sel = ReadCOMPOOL_IS( SCP_OVRD_ABORT_SEL );
+					if ((sel == 2) && (mm >= 102) && (mm <= 104)) WriteCOMPOOL_IS( SCP_OVRD_ABORT_INIT, 1 );
+					else return false;
+				}
+				break;
+			case 5:// not upstream: OMS/RCS interconnect enable/inhibit
+				if (!ops1Dump || (strlen( Data ) != 0)) return false;
+				if (ReadCOMPOOL_IS( SCP_SERC_FLAG ) != 0) return false;
+				WriteCOMPOOL_IS( SCP_OMS_RCS_ICNCT_ENA, (ReadCOMPOOL_IS( SCP_OMS_RCS_ICNCT_ENA ) == 0) ? 1 : 0 );
+				break;
+			case 6:// not upstream: dump ARM
+				if (!ops1Dump || (strlen( Data ) != 0)) return false;
+				WriteCOMPOOL_IS( SCP_OVRD_DUMP_ARM, 1 );
+				WriteCOMPOOL_IS( SCP_ORBITER_DUMP_INH, 0 );
+				break;
+			case 7:// not upstream: dump START, only when armed
+				if (!ops1Dump || (strlen( Data ) != 0)) return false;
+				if (ReadCOMPOOL_IS( SCP_OVRD_DUMP_ARM ) == 0) return false;
+				WriteCOMPOOL_IS( SCP_ORBITER_DUMP_ENA, 1 );
+				break;
+			case 8:// not upstream: dump STOP, stops a manual or an automatic dump and inhibits the automatic one
+				if (!ops1Dump || (strlen( Data ) != 0)) return false;
+				WriteCOMPOOL_IS( SCP_OVRD_DUMP_ARM, 0 );
+				WriteCOMPOOL_IS( SCP_ORBITER_DUMP_ENA, 0 );
+				WriteCOMPOOL_IS( SCP_ORBITER_DUMP_INH, 1 );
+				break;
+			case 9:// not upstream: dump quantity per side [%], the dump time at the two OMS engine rate
+				{
+					if (!ops1Dump) return false;
+					int quan;
+					if (!GetIntegerUnsigned( Data, quan )) return false;
+					const AbortControlSequence* pACS = dynamic_cast<const AbortControlSequence*>(FindSoftware( "AbortControlSequence" ));
+					if (pACS == NULL) return false;
+					if (quan > (pACS->GetManualOMSDTILoad() * OMS_DUMP_PCT_PER_SEC)) return false;
+					float dt = static_cast<float>(quan / OMS_DUMP_PCT_PER_SEC);
+					WriteCOMPOOL_SS( SCP_MANUAL_OMS_DT, dt );
+					WriteCOMPOOL_SS( SCP_OMS_DT_COMPUTED, dt );
+				}
+				break;
 			case 4:
 				switch (GetMajorMode())
 				{
@@ -2753,6 +2804,34 @@ namespace dps
 
 
 		// dynamic parts
+		// not upstream: abort mode selection and the OPS 1 propellant dump
+		if ((GetMajorMode() / 100) == 1)
+		{
+			unsigned short sel = ReadCOMPOOL_IS( SCP_OVRD_ABORT_SEL );
+			if (sel == 1) pMDU->mvprint( 11, 3, "*" );
+			else if (sel == 2) pMDU->mvprint( 11, 4, "*" );
+			if (ReadCOMPOOL_IS( SCP_OVRD_ABORT_INIT ) != 0) pMDU->mvprint( 11, 5, "*" );
+
+			pMDU->mvprint( 0, 10, (ReadCOMPOOL_IS( SCP_OMS_RCS_ICNCT_ENA ) != 0) ? "ENA" : "INH" );
+			if (ReadCOMPOOL_IS( SCP_OMS_RCS_ICNCT_CPLT ) != 0) pMDU->mvprint( 12, 10, "CPLT" );
+			if (ReadCOMPOOL_IS( SCP_OVRD_DUMP_ARM ) != 0) pMDU->mvprint( 11, 12, "*" );
+			if (ReadCOMPOOL_IS( SCP_ORBITER_DUMP_ENA ) != 0) pMDU->mvprint( 11, 13, "*" );
+			if (ReadCOMPOOL_IS( SCP_ORBITER_DUMP_INH ) != 0) pMDU->mvprint( 11, 14, "*" );
+
+			char cbuf[8];
+			double dt = ReadCOMPOOL_SS( SCP_OMS_DT_COMPUTED );
+			sprintf_s( cbuf, 8, "%3d", static_cast<int>(range( 0.0, round( dt * OMS_DUMP_PCT_PER_SEC ), 999.0 )) );
+			pMDU->mvprint( 13, 15, cbuf );
+			double scale = ReadCOMPOOL_SS( SCP_OMS_TIME_SCALE_FACTOR );
+			if (scale < 1.0) scale = 1.0;
+			double ttg = (dt - ReadCOMPOOL_SS( SCP_OMS_EQUIV_ON_TIME )) / scale;
+			sprintf_s( cbuf, 8, "%3d", static_cast<int>(range( 0.0, round( ttg ), 999.0 )) );
+			pMDU->mvprint( 13, 16, cbuf );
+		}
+		pMDU->Underline( 13, 15 );// not upstream: item 9 entry field
+		pMDU->Underline( 14, 15 );
+		pMDU->Underline( 15, 15 );
+
 		switch (GetMajorMode())
 		{
 			case 102:
@@ -4097,7 +4176,7 @@ namespace dps
 
 	void GNCDisplays::OnPaint_ASCENTTRAJ1_PASS( vc::MDU* pMDU ) const// OI-32 PASS ASCENT TRAJ 1
 	{
-		PrintCommonHeader( "  ASCENT TRAJ 1", pMDU );
+		PrintCommonHeader( (ReadCOMPOOL_IS( SCP_S_ATO ) != 0) ? "     ATO TRAJ 1" : "  ASCENT TRAJ 1", pMDU );// not upstream: the abort mode in the title
 
 		// static parts (labels)
 		pMDU->mvprint( 7, 5, "CONT ABORT" );
@@ -4181,7 +4260,7 @@ namespace dps
 
 	void GNCDisplays::OnPaint_ASCENTTRAJ2_PASS( vc::MDU* pMDU ) const// OI-32 PASS ASCENT TRAJ 2
 	{
-		PrintCommonHeader( "  ASCENT TRAJ 2", pMDU );
+		PrintCommonHeader( (ReadCOMPOOL_IS( SCP_S_ATO ) != 0) ? "     ATO TRAJ 2" : "  ASCENT TRAJ 2", pMDU );// not upstream: the abort mode in the title
 
 		// static parts (labels)
 		pMDU->mvprint( 9, 4, "25" );

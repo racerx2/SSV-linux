@@ -202,6 +202,18 @@
     <ClCompile Include="dps\Software\GNC\OMSBurnSoftware.cpp">
       <Filter>Software\GNC</Filter>
     </ClCompile>
+    <ClCompile Include="dps\Software\GNC\AbortModing.cpp">
+      <Filter>Software\GNC</Filter>
+    </ClCompile>
+    <ClCompile Include="dps\Software\GNC\AOA_ATO_TGT.cpp">
+      <Filter>Software\GNC</Filter>
+    </ClCompile>
+    <ClCompile Include="dps\Software\GNC\AbortControlSequence.cpp">
+      <Filter>Software\GNC</Filter>
+    </ClCompile>
+    <ClCompile Include="dps\Software\GNC\AbortOMSRCSInterconnect.cpp">
+      <Filter>Software\GNC</Filter>
+    </ClCompile>
     <ClCompile Include="dps\Software\GNC\OrbitDAP.cpp">
       <Filter>Software\GNC</Filter>
     </ClCompile>
@@ -476,6 +488,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="oms\OMS_TVC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="oms\OMSRCSFeed.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="oms\OMS.cpp">
@@ -1005,6 +1020,18 @@
     <ClInclude Include="dps\Software\GNC\OMSBurnSoftware.h">
       <Filter>Software\GNC</Filter>
     </ClInclude>
+    <ClInclude Include="dps\Software\GNC\AbortModing.h">
+      <Filter>Software\GNC</Filter>
+    </ClInclude>
+    <ClInclude Include="dps\Software\GNC\AOA_ATO_TGT.h">
+      <Filter>Software\GNC</Filter>
+    </ClInclude>
+    <ClInclude Include="dps\Software\GNC\AbortControlSequence.h">
+      <Filter>Software\GNC</Filter>
+    </ClInclude>
+    <ClInclude Include="dps\Software\GNC\AbortOMSRCSInterconnect.h">
+      <Filter>Software\GNC</Filter>
+    </ClInclude>
     <ClInclude Include="dps\Software\GNC\OrbitDAP.h">
       <Filter>Software\GNC</Filter>
     </ClInclude>
@@ -1288,6 +1315,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="oms\OMS_TVC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="oms\OMSRCSFeed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="oms\OMS.h">
