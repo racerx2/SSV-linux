@@ -49,8 +49,8 @@ Additions in this build
   Vandenberg.cfg, for every SSV scenario; FixedStructureClear in the pads' Config/Vessels files).
 - Materials (Config/GC/SSV_OV.cfg and SSV_SRB.cfg, written by linux/ssv_materials.py): glass shine on
   the MDU screens and the windshield; the HUD combiners glow green while their HUD POWER switch is on
-  and with its brightness, seen through the windshield from outside; a satin sheen on the SRB paint
-  (Orbiter Linux client).
+  and with its brightness, seen through the windshield from outside; the SRB paint uses Orbiter
+  Linux's PBR materials (metal-roughness paint under a clear coat, lit by environment reflections).
 - The cockpit textures stsvc01-03.dds are repaired: the purple DXT1 specks on dark surfaces such as
   the window posts are gone (linux/ssv_texfix.py).
 
