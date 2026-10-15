@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Space Shuttle Vessel, Linux port: builds the add-on zip from the repo's tracked files and the built modules. Modified by racerx2, 2026.
 # Licensed under the GNU General Public License version 2 or any later version (see SSV-LICENSE.txt).
-# usage: linux/mkpkg.py <build dir> <manual pdf or -> <out dir>
+# usage: linux/mkpkg.py <build dir> <manual pdf or -> <out dir> [zip name]
 import os, re, subprocess, sys, zipfile, zlib
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -44,6 +44,7 @@ def place(p, manual):
 
 def main():
 	build, manual, outdir = sys.argv[1], sys.argv[2], sys.argv[3]
+	name = sys.argv[4] if len(sys.argv) > 4 else NAME  # linux/rc.sh: the release candidate's name
 	manual = None if manual == '-' else manual
 	head = subprocess.run(['git', '-C', REPO, 'rev-parse', '--short', 'HEAD'], capture_output=True, check=True, text=True).stdout.strip()
 	dirty = subprocess.run(['git', '-C', REPO, 'status', '--porcelain', '--untracked-files=no'], capture_output=True, text=True).stdout.strip()
@@ -79,7 +80,7 @@ def main():
 		s = os.path.join(stripped, m)
 		subprocess.run(['strip', '--strip-unneeded', '-o', s, os.path.join(build, m)], check=True)
 		files['Modules/' + m] = s
-	zpath = os.path.join(outdir, NAME)
+	zpath = os.path.join(outdir, name)
 	with zipfile.ZipFile(zpath, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as z:
 		for name in sorted(files):
 			info = zipfile.ZipInfo.from_file(files[name], name)

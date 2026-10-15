@@ -37,15 +37,15 @@ Fly the Space Shuttle on Linux. No Wine, no virtual machine: this fork runs SSV 
 | ![Final approach to KSC runway 15 on the HUD](linux/screenshots/hud-approach.jpg)<br>Final approach to KSC runway 15 on the HUD | ![The HUD glass glowing through the windshield](linux/screenshots/hud-glass-glow.jpg)<br>The HUD glass glowing through the windshield |
 
 ## Get flying
-1. Install [Orbiter Linux](https://github.com/racerx2/orbiter-2027-linux).
-2. Extract `SSV-1.16-linux-1.0-x64.zip` into your Orbiter folder.
+1. Install [Orbiter Linux](https://github.com/racerx2/orbiter-2027-linux) (2027 RC4 or newer).
+2. Download the zip from this repository's [releases](https://github.com/racerx2/SSV-linux/releases) and extract it into your Orbiter folder. It runs on every distribution Orbiter Linux runs on.
 3. From that folder, run once: `python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"`. It adds SSV's bases and pad scenery to Orbiter's configuration, and running it again is harmless.
 4. Start Orbiter and pick a scenario under **Space Shuttle Vessel**.
 
 The details, the settings SSV likes and how to remove it are in [`linux/SSV-Linux.txt`](linux/SSV-Linux.txt) (in the zip: `Doc/Space Shuttle Vessel/SSV-Linux.txt`).
 
 ## Build it yourself
-CMake 3.19+, Ninja, GCC and Qt 6: `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder>`, then `cmake --build out/build`. The Orbiter SDK libraries come from Orbiter's CMake package (`Orbitersdk/lib/cmake/Orbiter` in the Orbiter folder). The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip.
+CMake 3.19+, Ninja, GCC and Qt 6: `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder>`, then `cmake --build out/build`. The Orbiter SDK libraries come from Orbiter's CMake package (`Orbitersdk/lib/cmake/Orbiter` in the Orbiter folder). The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip. Releases are built by `linux/rc.sh release`: in Orbiter's AlmaLinux 9 release root against Orbiter's release build, checked over the newest Orbiter package, then published.
 
 ## About this port
 Space Shuttle Vessel is by the SSV team (GLS and indy91). This Linux port and its additions are by racerx2. It is unofficial and not supported by the SSV team, so please report problems with it to racerx2, not to them. Every Linux change in the code is marked `not upstream`, and the Windows code stays as it is under `#ifdef _WIN32`. Same licence as SSV: GNU GPL v2.
