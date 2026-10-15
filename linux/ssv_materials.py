@@ -97,18 +97,18 @@ def add_combiners():
 MARK = '; not upstream (SSV Linux port'
 
 
-def ours(lines):  # the upstream part of a GC file: everything before our marker
-    for i, l in enumerate(lines):
-        if l.startswith(MARK):
-            return lines[:i]
-    return [l for l in lines if l != '']
+def ours(lines):  # the upstream part of a GC file: everything before our marker, trailing blank lines dropped
+    up = next((lines[:i] for i, l in enumerate(lines) if l.startswith(MARK)), lines)
+    while up and up[-1].strip() == '':
+        up = up[:-1]
+    return up
 
 
 def gc_ov():
     path = os.path.join(ROOT, 'Config', 'GC', 'SSV_OV.cfg')
     up = ours(read(path))
-    last = [l.split()[1] for l in up if l.startswith('MESH ')][-1]
-    if last != 'SSV\\OV\\OV':
+    meshes = [l.split()[1] for l in up if l.startswith('MESH ') and len(l.split()) > 1]
+    if not meshes or meshes[-1] != 'SSV\\OV\\OV':
         sys.exit('SSV_OV.cfg: the OV block is no longer the last; merge the windows by hand')
     out = up + [MARK + ', design ssv-pbr): MDU screen glass, HUD combiner glass and windshield. Written by linux/ssv_materials.py.',
                 '; legacy keys, read by every graphics client',

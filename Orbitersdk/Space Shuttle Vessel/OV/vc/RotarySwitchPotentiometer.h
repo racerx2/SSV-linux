@@ -22,6 +22,10 @@
   file SSV-LICENSE.txt for more details.
 
   **************************************************************************/
+/******* SSV File Modification Notice *******
+Date         Developer
+2026/10/15   racerx2
+********************************************/
 #ifndef __ROTARYSWITCHPOTENTIOMETER_H
 #define __ROTARYSWITCHPOTENTIOMETER_H
 

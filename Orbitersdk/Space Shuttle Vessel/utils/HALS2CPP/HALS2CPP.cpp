@@ -22,6 +22,10 @@
   file SSV-LICENSE.txt for more details.
 
   **************************************************************************/
+/******* SSV File Modification Notice *******
+Date         Developer
+2026/10/15   racerx2
+********************************************/
 
 #define _CRT_SECURE_NO_DEPRECATE
 

@@ -663,14 +663,14 @@ void HUD::SetBrightness( void )
 	return;
 }
 
-double HUD::Intensity( void ) const
+double HUD::Intensity( void ) const// not upstream: as declared
 {
 	if (HUDBrightNight.IsSet()) return (HUDBright.GetVoltage() / (5.0 / 0.4)) + 0.1;// night: [10:50]
 	else if (HUDBrightDay.IsSet()) return (HUDBright.GetVoltage() / (5.0 / 0.5)) + 0.5;// day: [50:100]
 	return 0.55;// auto: 55
 }
 
-double HUD::Glow( void ) const
+double HUD::Glow( void ) const// not upstream: as declared
 {
 	return HUDPower.IsSet() ? Intensity() : 0.0;
 }

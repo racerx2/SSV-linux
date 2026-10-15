@@ -76,7 +76,7 @@ LCC::LCC(OBJHANDLE hVessel, int flightmodel)
 	MPSHeSupply = true;
 	MPSHeSupplyPressure1 = 2000;
 	MPSHeSupplyDraw = oapiRand();// not upstream: kept for flightrec::Held (design ssv-flightrec)
-	MPSHeSupplyPressure2 = 4150 + (300 * MPSHeSupplyDraw);// 4150 - 4450 (give 50 psi leeway to LCC redlines)
+	MPSHeSupplyPressure2 = 4150 + (300 * MPSHeSupplyDraw);// 4150 - 4450 (give 50 psi leeway to LCC redlines); not upstream: the draw above
 
 	MPSTVCProfile = false;
 

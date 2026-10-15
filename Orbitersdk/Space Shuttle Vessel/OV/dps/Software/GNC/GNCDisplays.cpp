@@ -49,7 +49,7 @@ Date         Developer
 #include "OMSBurnSoftware.h"
 #include "OrbitDAP.h"
 #include "MM801.h"
-#include "AbortControlSequence.h"
+#include "AbortControlSequence.h"// not upstream: the SPEC 51 dump items
 #include "../../../APU.h"
 #include <MathSSV.h>
 #include <EngConst.h>
@@ -514,8 +514,8 @@ namespace dps
 
 	bool GNCDisplays::ItemInput_SPEC51( int item, const char* Data )
 	{
-		unsigned int mm = GetMajorMode();
-		bool ops1Dump = ((mm >= 101) && (mm <= 103));// not upstream: items 5 to 9 are illegal in MM 104 to 106, OPS 3 and 6 dumps are later phases
+		unsigned int mm = GetMajorMode();// not upstream: items 5 to 9 are illegal in MM 104 to 106, OPS 3 and 6 dumps are later phases
+		bool ops1Dump = ((mm >= 101) && (mm <= 103));// not upstream: as above
 		switch (item)
 		{
 			case 1:// not upstream: TAL select, legal in MM 103 and 104 once TAL is implemented (phase 2)

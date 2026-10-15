@@ -22,6 +22,10 @@
   file SSV-LICENSE.txt for more details.
 
   **************************************************************************/
+/******* SSV File Modification Notice *******
+Date         Developer
+2026/10/15   racerx2
+********************************************/
 #ifndef __SELECTORWHEEL_H
 #define __SELECTORWHEEL_H
 

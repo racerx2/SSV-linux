@@ -66,10 +66,10 @@ Date         Developer
 #include "Software/GNC/AscentDAP.h"
 #include "Software/GNC/OrbitDAP.h"
 #include "Software/GNC/OMSBurnSoftware.h"
-#include "Software/GNC/AbortModing.h"
-#include "Software/GNC/AOA_ATO_TGT.h"
-#include "Software/GNC/AbortControlSequence.h"
-#include "Software/GNC/AbortOMSRCSInterconnect.h"
+#include "Software/GNC/AbortModing.h"// not upstream: the OPS 1 abort software
+#include "Software/GNC/AOA_ATO_TGT.h"// not upstream: as above
+#include "Software/GNC/AbortControlSequence.h"// not upstream: as above
+#include "Software/GNC/AbortOMSRCSInterconnect.h"// not upstream: as above
 #include "Software/GNC/StateVectorSoftware.h"
 #include "Software/GNC/OrbitTgtSoftware.h"
 #include "Software/GNC/AerojetDAP.h"
@@ -384,7 +384,7 @@ void SimpleGPCSystem::SetMajorMode( unsigned short newMM )
 	return;
 }
 
-bool SimpleGPCSystem::IsModeRecall( unsigned short newMajorMode ) const
+bool SimpleGPCSystem::IsModeRecall( unsigned short newMajorMode ) const// not upstream: as declared
 {
 	if (!GNC || (newMajorMode != ReadCOMPOOL_IS( SCP_MM ))) return false;
 	switch (newMajorMode)

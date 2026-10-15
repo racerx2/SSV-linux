@@ -275,7 +275,7 @@ Date         Developer
 #include "mps/MPS.h"
 #include "oms/OMS.h"
 #include "oms/OMS_TVC.h"
-#include "oms/OMSRCSFeed.h"
+#include "oms/OMSRCSFeed.h"// not upstream: OMS/RCS interconnect
 #include "vc/PanelA7A3_ISS.h"
 #include "vc/PanelA7A3_SPDS.h"
 #include "vc/PanelA8A3.h"
@@ -4068,26 +4068,26 @@ void Atlantis::EnableThrusters(const int Thrusters[], int nThrusters)
 	}
 }
 
-PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side ) const
+PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side ) const// not upstream: as declared
 {
 	bool oms = aftRCSFromOMS[side][0] || aftRCSFromOMS[side][1];
 	if (side == LEFT) return oms ? ph_loms : ph_lrcs;
 	else return oms ? ph_roms : ph_rrcs;
 }
 
-PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side, unsigned int group ) const
+PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side, unsigned int group ) const// not upstream: as declared
 {
 	bool oms = aftRCSFromOMS[side][group];
 	if (side == LEFT) return oms ? ph_loms : ph_lrcs;
 	else return oms ? ph_roms : ph_rrcs;
 }
 
-double Atlantis::GetOMSPropellantMass( void ) const
+double Atlantis::GetOMSPropellantMass( void ) const// not upstream: as declared
 {
 	return GetPropellantMass( ph_loms ) + GetPropellantMass( ph_roms );
 }
 
-void Atlantis::SetAftRCSFeedFromOMS( unsigned int side, unsigned int group, bool fromOMS )
+void Atlantis::SetAftRCSFeedFromOMS( unsigned int side, unsigned int group, bool fromOMS )// not upstream: as declared
 {
 	if ((side > 1) || (group > 1)) return;
 	aftRCSFromOMS[side][group] = fromOMS;
@@ -4095,7 +4095,7 @@ void Atlantis::SetAftRCSFeedFromOMS( unsigned int side, unsigned int group, bool
 	return;
 }
 
-void Atlantis::ApplyAftRCSFeed( void )
+void Atlantis::ApplyAftRCSFeed( void )// not upstream: as declared
 {
 	if (!bRCSDefined) return;
 

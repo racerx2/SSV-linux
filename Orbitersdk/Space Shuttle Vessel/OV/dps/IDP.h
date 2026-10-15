@@ -105,7 +105,7 @@ namespace dps
 	class AerojetDAP;
 	class Landing_SOP;
 	class OMSBurnSoftware;
-	class AbortModing;
+	class AbortModing;// not upstream
 	class Elevon_PFB_SOP;
 	class Rudder_PFB_SOP;
 	class Speedbrake_PFB_SOP;

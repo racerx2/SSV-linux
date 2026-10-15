@@ -5328,10 +5328,10 @@ namespace vc
 		}
 
 		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
-		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS; not upstream: as above
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL; not upstream: as above
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO; not upstream: as above
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA; not upstream: as above
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		TextOut( hDC, 449, 3, cbuf, strlen( cbuf ) );
@@ -5378,10 +5378,10 @@ namespace vc
 		}
 
 		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
-		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS; not upstream: as above
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL; not upstream: as above
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO; not upstream: as above
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA; not upstream: as above
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		skp->Text( 449, 3, cbuf, strlen( cbuf ) );
@@ -5420,10 +5420,10 @@ namespace vc
 		else TextOut( hDC, 85, 3, "INRTL", 5 );
 
 		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
-		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS; not upstream: as above
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL; not upstream: as above
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO; not upstream: as above
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA; not upstream: as above
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		TextOut( hDC, 449, 3, cbuf, strlen( cbuf ) );
@@ -5450,10 +5450,10 @@ namespace vc
 		else skp->Text( 85, 3, "INRTL", 5 );
 
 		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
-		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS; not upstream: as above
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL; not upstream: as above
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO; not upstream: as above
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA; not upstream: as above
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		skp->Text( 449, 3, cbuf, strlen( cbuf ) );
@@ -5503,10 +5503,10 @@ namespace vc
 		}
 
 		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
-		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS; not upstream: as above
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL; not upstream: as above
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO; not upstream: as above
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA; not upstream: as above
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		TextOut( hDC, 449, 3, cbuf, strlen( cbuf ) );
@@ -5561,10 +5561,10 @@ namespace vc
 		}
 
 		unsigned short abortmode = GetIDP()->GetAbortMode();// not upstream
-		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS
-		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL
-		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO
-		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA
+		if (abortmode == 4) sprintf_s( cbuf, 8, "%dR", MM );// RTLS; not upstream: as above
+		else if (abortmode == 3) sprintf_s( cbuf, 8, "%dT", MM );// TAL; not upstream: as above
+		else if (abortmode == 1) sprintf_s( cbuf, 8, "%dATO", MM );// ATO; not upstream: as above
+		else if (abortmode == 2) sprintf_s( cbuf, 8, "%dAOA", MM );// AOA; not upstream: as above
 		else if (0) sprintf_s( cbuf, 8, "%dCA", MM );// CA
 		else sprintf_s( cbuf, 8, "%d", MM );// NOM
 		skp->Text( 449, 3, cbuf, strlen( cbuf ) );

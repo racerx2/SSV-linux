@@ -83,6 +83,8 @@ def base_cfg(root):
 
 def deindex(earth, layer, key):
 	# the stream manages, replaces and evicts only files in its index; a tile replaced here becomes someone else's
+	if layer not in INDEX:
+		return False
 	p = os.path.join(earth, 'TileStream', INDEX[layer] + '.idx')
 	if not os.path.exists(p):
 		return False
@@ -119,8 +121,8 @@ def terrain(root):
 						os.makedirs(os.path.dirname(bak), exist_ok=True)
 						shutil.copy2(t, bak)
 					parts = rel.split(os.sep)
-					key = (int(parts[1]), int(parts[2]), int(os.path.splitext(parts[3])[0]))
-					if deindex(earth, layer, key):
+					tile = len(parts) == 4 and parts[1].isdigit() and parts[2].isdigit() and os.path.splitext(parts[3])[0].isdigit()  # layer/level/lat/lng.ext
+					if tile and deindex(earth, layer, (int(parts[1]), int(parts[2]), int(os.path.splitext(parts[3])[0]))):
 						notes.append('%s: was a tile stream tile; the stream now leaves it alone (old one in Earth-backup)' % rel)
 					os.unlink(t)
 					replaced += 1

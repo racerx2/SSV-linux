@@ -376,7 +376,7 @@ bool XenonLights::FindTarget()
 				else {
 					heightOffset = PAD_HEIGHT_OFFSET;
 				}
-				heightDraw = oapiRand();// point within 25m vertically of vehicle center; not upstream: added where the aim is set (design ssv-flightrec)
+				heightDraw = oapiRand();// point within 25m vertically of vehicle center; not upstream: kept, added where the aim is used (design ssv-flightrec)
 				return true;
 			}
 		}

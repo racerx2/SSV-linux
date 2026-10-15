@@ -46,7 +46,7 @@ Date         Developer
 #include "Software/GNC/Landing_SOP.h"
 #include "Software/GNC/OMSBurnSoftware.h"
 #include "Software/GNC/DedicatedDisplay_SOP.h"
-#include "Software/GNC/AbortModing.h"
+#include "Software/GNC/AbortModing.h"// not upstream: the abort mode
 
 
 namespace dps {
@@ -1180,12 +1180,12 @@ namespace dps {
 		return pAscentDAP->GetFCSmode();
 	}
 
-	unsigned short IDP::GetAbortMode( void ) const
+	unsigned short IDP::GetAbortMode( void ) const// not upstream: as declared
 	{
 		return pAbortModing->GetAbortMode();
 	}
 
-	double IDP::GetTargetInclination( void ) const
+	double IDP::GetTargetInclination( void ) const// not upstream: as declared
 	{
 		return pAscentDAP->GetTargetInclination();
 	}
