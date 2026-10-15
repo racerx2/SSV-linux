@@ -161,17 +161,15 @@ Date         Developer
 
 
 typedef struct {
-#ifdef _WIN32
 	HINSTANCE hDLL;
+#ifdef _WIN32// not upstream: the GDI bitmaps are left out on Linux (the MDUs draw with Sketchpad)
 	HBITMAP deu_characters;
 	HBITMAP deu_characters_overbright;
 	HBITMAP deu_characters_fault;
 	HDC DeuCharBitmapDC;
 	HDC DeuCharOvrBrgtBitmapDC;
 	HDC DeuCharFaultBitmapDC;
-#else
-	void* hDLL;// not upstream: the dlopen handle; the GDI bitmaps are left out (the MDUs draw with Sketchpad)
-#endif
+#endif// not upstream: as above
 	SURFHANDLE deu_charactersSH;
 	SURFHANDLE deu_characters_overbrightSH;
 	SURFHANDLE deu_characters_faultSH;

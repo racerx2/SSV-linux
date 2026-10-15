@@ -4,6 +4,7 @@
   **************************************************************************/
 // not upstream: tests of ssv_crt (the MSVC secure C library functions), against glibc where the results must agree
 #include "ssv_crt.h"
+#include <cerrno>
 #include <cmath>
 #include <cstdlib>
 
@@ -20,6 +21,9 @@ static void Printf ()
 	CHECK (sprintf_s (big, 4, "%s", "abc") == 3 && !strcmp (big, "abc"));
 	CHECK (sprintf_s (big, 3, "%s", "abc") == -1 && big[0] == '\0');
 	CHECK (sprintf_s (nullptr, 4, "x") == -1);
+	// the invalid parameter path: errno set, reported on stderr
+	errno = 0; CHECK (sprintf_s (b, "%d", 12345678) == -1 && errno == ERANGE);
+	errno = 0; CHECK (sprintf_s (big, sizeof (big), nullptr) == -1 && big[0] == '\0' && errno == EINVAL);
 }
 
 static void Strings ()
@@ -32,8 +36,18 @@ static void Strings ()
 	CHECK (strncpy_s (b, "abcdef", 3) == 0 && !strcmp (b, "abc"));
 	CHECK (strncpy_s (b, "abcdef", 4) != 0 && b[0] == '\0');
 	CHECK (_stricmp ("SSV_OV", "ssv_ov") == 0 && _strnicmp ("ABCx", "abcy", 3) == 0 && _strnicmp ("ABCx", "abcy", 4) != 0);
+	errno = 0; CHECK (strcpy_s (b, "abcd") == ERANGE && errno == ERANGE);
+	errno = 0; CHECK (strcpy_s (b, nullptr) == EINVAL && b[0] == '\0' && errno == EINVAL);
+	errno = 0; CHECK (strcpy_s (nullptr, 4, "a") == EINVAL && errno == EINVAL);
+	CHECK (strcpy_s (b, "ab") == 0);
+	errno = 0; CHECK (strcat_s (b, "cd") == ERANGE && b[0] == '\0' && errno == ERANGE);
+	errno = 0; CHECK (strncpy_s (b, "abcdef", 4) == ERANGE && errno == ERANGE);
+	errno = 0; CHECK (strncpy_s (b, nullptr, 1) == EINVAL && errno == EINVAL);
 	FILE *f = nullptr;
 	CHECK (fopen_s (&f, "/nonexistent/file", "r") != 0 && f == nullptr);
+	f = stdout; CHECK (fopen_s (&f, nullptr, "r") == EINVAL && f == nullptr);
+	f = stdout; CHECK (fopen_s (&f, "/dev/null", nullptr) == EINVAL && f == nullptr);
+	CHECK (fopen_s (nullptr, "/dev/null", "r") == EINVAL);
 }
 
 // every format SSV passes to sscanf_s without a size argument agrees with glibc sscanf
@@ -84,6 +98,12 @@ static void ScanStrings ()
 	{ char s[8]; CHECK (sscanf_s ("", "%s", s, 8u) == EOF); }
 	{ char s[8]; CHECK (sscanf_s ("ab", "%*s %s", s, 8u) == EOF); }
 	{ int a = 0; CHECK (sscanf_s ("5", "%*d %d", &a) == EOF); } // glibc: EOF until something is assigned
+	// a bare sizeof (size_t) as SSV passes it (LCC.cpp:762): the size is read as unsigned, as MSVC reads it
+	{ char s[8]; CHECK (sscanf_s ("LC39A rest", "%s", s, sizeof (s)) == 1 && !strcmp (s, "LC39A")); }
+	{ char s[4]; CHECK (sscanf_s ("LC39A", "%s", s, sizeof (s)) == 0 && s[0] == '\0'); }
+	{ char a[8]; int n = 0; CHECK (sscanf_s ("SLF,3", "%[^,],%d", a, sizeof (a), &n) == 2 && !strcmp (a, "SLF") && n == 3); }
+	{ char c = 0; int a = 0; CHECK (sscanf_s ("q 5", "%c %d", &c, sizeof (c), &a) == 2 && c == 'q' && a == 5); }
+	errno = 0; CHECK (sscanf_s (nullptr, "%d", nullptr) == EOF && errno == EINVAL);
 }
 
 int main ()

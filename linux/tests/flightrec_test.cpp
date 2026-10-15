@@ -75,12 +75,12 @@ static void Recorder ()
 		recording = false;
 		events.clear ();
 
-		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", "1") && !r.Locked () && !flightrec::Nominal ());
+		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", "1") && !r.Locked () && (flightrec::Held (0.8) == 0.8));
 		CHECK (flightrec::Rand () == 0.25 && flightrec::Held (0.8) == 0.8);
 
 		playback = true;
 		flightrec::Recorder s (&w);
-		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", " 1") && r.Locked () && flightrec::Nominal ());
+		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", " 1") && r.Locked () && (flightrec::Held (0.8) == 0.5));
 		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", "1") && r.Locked ());
 		CHECK (s.OnPlaybackEvent ("ssv_nominal", "1") && s.Locked ());
 		CHECK (flightrec::Rand () == 0.5 && flightrec::Held (0.8) == 0.5);
@@ -89,9 +89,9 @@ static void Recorder ()
 
 		playback = false;
 		r.Step ();
-		CHECK (!r.Locked () && s.Locked () && flightrec::Nominal ());
+		CHECK (!r.Locked () && s.Locked () && (flightrec::Held (0.8) == 0.5));
 	}
-	CHECK (!flightrec::Nominal () && flightrec::Rand () == 0.25);
+	CHECK ((flightrec::Held (0.8) == 0.8) && flightrec::Rand () == 0.25);
 }
 
 static void Log ()

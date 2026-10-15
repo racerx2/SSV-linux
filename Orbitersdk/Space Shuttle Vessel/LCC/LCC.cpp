@@ -170,7 +170,7 @@ void LCC::clbkPreStep(double simt, double simdt, double mjd)
 		}
 
 		/////////// MPS He Supply ///////////
-		MPSHeSupplyPressure2 = 4150 + (300 * flightrec::Held( MPSHeSupplyDraw ));// not upstream: nominal in a playback (design ssv-flightrec)
+		const double press2 = 4150 + (300 * flightrec::Held( MPSHeSupplyDraw ));// not upstream: MPSHeSupplyPressure2, nominal in a playback (design ssv-flightrec)
 		if (MPSHeSupply == true)
 		{
 			if (CountdownTime >= -12000.0)// T-3h20m
@@ -178,11 +178,11 @@ void LCC::clbkPreStep(double simt, double simdt, double mjd)
 				// eng
 				for (int i = 1; i <= 3; i++)
 				{
-					if (pPad->GetHeTankPress( i ) < MPSHeSupplyPressure2) pPad->HeFillTank( i, 30 * oapiGetSimStep() );// add mass
+					if (pPad->GetHeTankPress( i ) < press2) pPad->HeFillTank( i, 30 * oapiGetSimStep() );// add mass; not upstream: press2 above
 				}
 
 				// pneu
-				if (pPad->GetHeTankPress( 0 ) < MPSHeSupplyPressure2) pPad->HeFillTank( 0, 2 * oapiGetSimStep() );// add mass
+				if (pPad->GetHeTankPress( 0 ) < press2) pPad->HeFillTank( 0, 2 * oapiGetSimStep() );// add mass; not upstream: as above
 			}
 			else
 			{
@@ -776,19 +776,11 @@ void LCC::clbkLoadStateEx( FILEHANDLE scn, void* status )
 	}
 }
 
-#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 }
 
-#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 }
 

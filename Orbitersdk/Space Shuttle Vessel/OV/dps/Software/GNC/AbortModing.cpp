@@ -38,8 +38,15 @@ namespace dps
 	AbortModing::AbortModing( SimpleGPCSystem* _gpc ):SimpleGPCSoftware( _gpc, "AbortModing" ),
 		pAscentDAP( NULL ), pOMSBurnSoftware( NULL ), pAOA_ATO_TGT( NULL ), tgtItemUsed( false )
 	{
+		Reset();
+		return;
+	}
+
+	void AbortModing::Reset( void )
+	{
 		prevReq[0] = prevReq[1] = prevReq[2] = false;
 		logged[0] = logged[1] = false;
+		tgtItemUsed = false;
 		return;
 	}
 
@@ -79,7 +86,7 @@ namespace dps
 				WriteCOMPOOL_IS( SCP_S_ATO_IY, 0 );
 				WriteCOMPOOL_IS( SCP_S_AOA_OMS2, 0 );
 				WriteCOMPOOL_SS( SCP_V_ME_OUT, 0.0f );
-				tgtItemUsed = false;
+				Reset();
 			}
 			else if (newMajorMode == 103)
 			{
@@ -128,16 +135,19 @@ namespace dps
 		if (ReadCOMPOOL_IS( SCP_OVRD_ABORT_INIT ) == 1)
 		{
 			WriteCOMPOOL_IS( SCP_OVRD_ABORT_INIT, 2 );
-			unsigned short sel = ReadCOMPOOL_IS( SCP_OVRD_ABORT_SEL );
-			if (sel == 2)
-			{
-				if (!tgtItemUsed) DeclareATO();
-			}
-			else if (sel == 1) NotAvailable( 0 );
+			if ((ReadCOMPOOL_IS( SCP_OVRD_ABORT_SEL ) == 2) && !tgtItemUsed) DeclareATO();
 		}
 
-		// maneuver display ITEM 35: AOA or ATO with a crew target set (events A16A, A19A), up or down mode
-		if (ReadCOMPOOL_IS( SCP_AOA_TGT_SEL ) != 0)
+		// maneuver display ITEM 35: AOA or ATO with a crew target set (events A16A, A19A), up or down mode, before the OMS-x execute command
+		bool tgtSel = (ReadCOMPOOL_IS( SCP_AOA_TGT_SEL ) != 0) || (ReadCOMPOOL_IS( SCP_ATO_TGT_SEL ) != 0);
+		unsigned int mm = GetMajorMode();
+		if (tgtSel && (((mm != 104) && (mm != 105)) || pOMSBurnSoftware->BurnEnabled()))
+		{
+			WriteCOMPOOL_IS( SCP_AOA_TGT_SEL, 0 );
+			WriteCOMPOOL_IS( SCP_ATO_TGT_SEL, 0 );
+			oapiWriteLogV( "(SSV_OV) [INFO] ITEM 35 target %hu refused, MM %u", ReadCOMPOOL_IS( SCP_I_TGT ), mm );
+		}
+		else if (ReadCOMPOOL_IS( SCP_AOA_TGT_SEL ) != 0)
 		{
 			tgtItemUsed = true;
 			if (ReadCOMPOOL_IS( SCP_S_AOA ) == 0)

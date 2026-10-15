@@ -180,11 +180,7 @@ const static char* MESHNAME_CRAWLER = "SSV\\CT\\mainbody_2004";
 const static char* MESHNAME_CRAWLER_1980 = "SSV\\CT\\mainbody_1980";
 
 
-#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hModule)
-#else
-DLLCLBK void InitModule(void* hModule)// not upstream: the module handle is the dlopen handle
-#endif
 {
 	try
 	{
@@ -210,11 +206,7 @@ DLLCLBK void InitModule(void* hModule)// not upstream: the module handle is the 
 	}
 }
 
-#ifdef _WIN32
 DLLCLBK void ExitModule (HINSTANCE hModule)
-#else
-DLLCLBK void ExitModule (void* hModule)// not upstream: as above
-#endif
 {
 	try
 	{
@@ -695,6 +687,7 @@ void Crawler::clbkPreStep(double simt, double simdt, double mjd)
 	try
 	{
 		flightrecorder.Step();// not upstream: flight recorder, before anything records (design ssv-flightrec)
+		if (flightrecorder.Locked()) increaseTgtSpeed = decreaseTgtSpeed = false;// not upstream: no live speed keys latched across the lock
 
 		if (!firstTimestepDone) DoFirstTimestep();
 
@@ -1286,14 +1279,14 @@ int Crawler::clbkConsumeBufferedKey(DWORD key, bool down, char *kstate)
 		}
 
 		if (key == OAPI_KEY_ADD) {
-			if (flightrecorder.Locked()) return 1;// not upstream: as above
+			if (flightrecorder.Locked() && down) return 1;// not upstream: as above, a key-up still clears
 			//pEngine->IncreaseTgtSpeed(down);
 			increaseTgtSpeed = down;
 			decreaseTgtSpeed = false;
 			return 1;
 		}
 		else if (key == OAPI_KEY_SUBTRACT) {
-			if (flightrecorder.Locked()) return 1;// not upstream: as above
+			if (flightrecorder.Locked() && down) return 1;// not upstream: as above
 			//pEngine->DecreaseTgtSpeed(down);
 			decreaseTgtSpeed = down;
 			increaseTgtSpeed = false;

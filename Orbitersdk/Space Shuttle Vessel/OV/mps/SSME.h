@@ -102,7 +102,7 @@ namespace mps
 	class HeSysEng;
 	class MPS;
 	class SSMEController;// not upstream: friends used as types, declared for lookup
-	class PneumaticControlAssembly;
+	class PneumaticControlAssembly;// not upstream: as above
 
 	using namespace discsignals;
 

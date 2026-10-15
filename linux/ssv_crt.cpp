@@ -11,16 +11,30 @@
   **************************************************************************/
 // not upstream: the MSVC "secure" C library functions SSV calls (ssv_crt.h)
 #include "ssv_crt.h"
+#include <atomic>
 #include <cerrno>
 #include <climits>
 #include <string>
 
+namespace {
+
+// MSVC's invalid parameter handler ends the program: here errno is set and the first 20 calls are reported on stderr
+void InvalidParameter (const char *fn, int err)
+{
+	static std::atomic<int> reported (0);
+	if (reported++ < 20) fprintf (stderr, "SSV: invalid parameter to %s (MSVC would terminate)\n", fn);
+	errno = err;
+}
+
+} // namespace
+
 int vsprintf_s (char *buf, size_t size, const char *fmt, va_list ap)
 {
-	if (!buf || !size) return -1;
-	if (!fmt) { buf[0] = '\0'; return -1; }
+	if (!buf || !size) { InvalidParameter ("sprintf_s", EINVAL); return -1; }
+	if (!fmt) { buf[0] = '\0'; InvalidParameter ("sprintf_s", EINVAL); return -1; }
 	int n = vsnprintf (buf, size, fmt, ap);
-	if (n < 0 || size_t (n) >= size) { buf[0] = '\0'; return -1; } // too long or an encoding error
+	if (n < 0) { buf[0] = '\0'; return -1; } // an encoding error, errno set by vsnprintf
+	if (size_t (n) >= size) { buf[0] = '\0'; InvalidParameter ("sprintf_s", ERANGE); return -1; } // too long
 	return n;
 }
 
@@ -74,7 +88,7 @@ const char *NextDirective (const char *f, Directive &d)
 
 int vsscanf_s (const char *str, const char *fmt, va_list ap)
 {
-	if (!str || !fmt) return EOF;
+	if (!str || !fmt) { InvalidParameter ("sscanf_s", EINVAL); return EOF; }
 	const char *s = str;
 	int assigned = 0;
 	Directive d;
@@ -158,32 +172,32 @@ int sscanf_s (const char *str, const char *fmt, ...)
 
 errno_t strcpy_s (char *dst, size_t size, const char *src)
 {
-	if (!dst || !size) return EINVAL;
-	if (!src) { dst[0] = '\0'; return EINVAL; }
+	if (!dst || !size) { InvalidParameter ("strcpy_s", EINVAL); return EINVAL; }
+	if (!src) { dst[0] = '\0'; InvalidParameter ("strcpy_s", EINVAL); return EINVAL; }
 	size_t n = strlen (src);
-	if (n >= size) { dst[0] = '\0'; return ERANGE; }
+	if (n >= size) { dst[0] = '\0'; InvalidParameter ("strcpy_s", ERANGE); return ERANGE; }
 	memcpy (dst, src, n + 1);
 	return 0;
 }
 
 errno_t strcat_s (char *dst, size_t size, const char *src)
 {
-	if (!dst || !size) return EINVAL;
-	if (!src) { dst[0] = '\0'; return EINVAL; }
+	if (!dst || !size) { InvalidParameter ("strcat_s", EINVAL); return EINVAL; }
+	if (!src) { dst[0] = '\0'; InvalidParameter ("strcat_s", EINVAL); return EINVAL; }
 	size_t d = strnlen (dst, size);
-	if (d == size) { dst[0] = '\0'; return EINVAL; } // not terminated
+	if (d == size) { dst[0] = '\0'; InvalidParameter ("strcat_s", EINVAL); return EINVAL; } // not terminated
 	size_t n = strlen (src);
-	if (d + n >= size) { dst[0] = '\0'; return ERANGE; }
+	if (d + n >= size) { dst[0] = '\0'; InvalidParameter ("strcat_s", ERANGE); return ERANGE; }
 	memcpy (dst + d, src, n + 1);
 	return 0;
 }
 
 errno_t strncpy_s (char *dst, size_t size, const char *src, size_t count)
 {
-	if (!dst || !size) return EINVAL;
-	if (!src) { dst[0] = '\0'; return EINVAL; }
+	if (!dst || !size) { InvalidParameter ("strncpy_s", EINVAL); return EINVAL; }
+	if (!src) { dst[0] = '\0'; InvalidParameter ("strncpy_s", EINVAL); return EINVAL; }
 	size_t n = strnlen (src, count);
-	if (n >= size) { dst[0] = '\0'; return ERANGE; }
+	if (n >= size) { dst[0] = '\0'; InvalidParameter ("strncpy_s", ERANGE); return ERANGE; }
 	memcpy (dst, src, n);
 	dst[n] = '\0';
 	return 0;
@@ -191,7 +205,9 @@ errno_t strncpy_s (char *dst, size_t size, const char *src, size_t count)
 
 errno_t fopen_s (FILE **f, const char *name, const char *mode)
 {
-	if (!f) return EINVAL;
+	if (!f) { InvalidParameter ("fopen_s", EINVAL); return EINVAL; }
+	*f = nullptr;
+	if (!name || !mode) { InvalidParameter ("fopen_s", EINVAL); return EINVAL; }
 	*f = fopen (name, mode);
 	return *f ? 0 : errno;
 }

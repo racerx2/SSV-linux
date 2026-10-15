@@ -30,15 +30,12 @@ Date         Developer
 #include <MathSSV.h>
 #include "vc_defs.h"
 #include "../meshres_vc.h"
-#ifndef _WIN32
-constexpr int FW_MEDIUM = 500;// not upstream: wingdi.h font weights, as oapiCreateFontEx takes them
-constexpr int FW_BOLD = 700;
-#endif
+#include <cmath>// not upstream: std::isfinite
 
 
 namespace vc
 {
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: Win32 GDI drawing left out; on Linux the MDUs draw with Sketchpad only
 	HBRUSH MDU::gdiBlackBrush = NULL;
 	HBRUSH MDU::gdiDarkGrayBrush;
 	HBRUSH MDU::gdiLightGrayBrush;
@@ -49,7 +46,7 @@ namespace vc
 	HBRUSH MDU::gdiMagentaBrush;
 	HBRUSH MDU::gdiLightGreenBrush;
 	HBRUSH MDU::gdiBlueBrush;
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	oapi::Brush* MDU::skpBlackBrush = NULL;
 	oapi::Brush* MDU::skpDarkGrayBrush;
@@ -63,7 +60,7 @@ namespace vc
 	oapi::Brush* MDU::skpBlueBrush;
 	oapi::Brush* MDU::_skpBlackBrush;
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	HPEN MDU::gdiBlackPen;
 	HPEN MDU::gdiDarkGrayPen;
 	HPEN MDU::gdiLightGrayPen;
@@ -76,7 +73,7 @@ namespace vc
 	HPEN MDU::gdiLightGreenPen;
 	HPEN MDU::gdiDarkGreenPen;
 	HPEN MDU::gdiLightGreenThickPen;
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	oapi::Pen* MDU::skpBlackPen;
 	oapi::Pen* MDU::skpDarkGrayPen;
@@ -92,24 +89,24 @@ namespace vc
 	oapi::Pen* MDU::skpLightGreenThickPen;
 	oapi::Pen* MDU::_skpBlackPen;
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	HPEN MDU::gdiOverbrightPen;
 	HPEN MDU::gdiNormalPen;
 	HPEN MDU::gdiDashedNormalPen;
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	oapi::Pen* MDU::skpOverbrightPen;
 	oapi::Pen* MDU::skpNormalPen;
 	oapi::Pen* MDU::skpDashedNormalPen;
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	HFONT MDU::gdiSSVAFont_h20w17;
 	HFONT MDU::gdiSSVAFont_h10w10bold;
 	HFONT MDU::gdiSSVAFont_h11w9;
 	HFONT MDU::gdiSSVBFont_h18w9;
 	HFONT MDU::gdiSSVBFont_h12w7;
 	HFONT MDU::gdiSSVBFont_h16w9;
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	oapi::Font* MDU::skpSSVAFont_h20w17;
 	oapi::Font* MDU::skpSSVAFont_h10w10bold;
@@ -118,7 +115,7 @@ namespace vc
 	oapi::Font* MDU::skpSSVBFont_h12w7;
 	oapi::Font* MDU::skpSSVBFont_h16w9;
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	HDC MDU::hDC_Tape_MACHV = NULL;
 	HDC MDU::hDC_Tape_KEAS;
 	HDC MDU::hDC_Tape_Alpha;
@@ -134,7 +131,7 @@ namespace vc
 	HBITMAP MDU::hBM_Tape_Hdot_tmp;
 	HBITMAP MDU::hBM_ADIMASK_tmp;
 	HBITMAP MDU::hBM_ADIMASK_ORBIT_tmp;
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	SURFHANDLE MDU::sfh_Tape_MACHV;
 	SURFHANDLE MDU::sfh_Tape_KEAS;
@@ -148,9 +145,9 @@ namespace vc
 	{
 		_sts->RegisterMDU(_usMDUID, this);
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 		hDC_ADI = NULL;
-#endif
+#endif// not upstream: as above
 
 		if (STS()->D3D9())
 		{
@@ -163,17 +160,17 @@ namespace vc
 		}
 		else
 		{
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 			// using GDI in MOGE
 			CreateGDIObjects();
 			CreateTapes_GDI();
 			CreateADI();
-#else
+#else// not upstream: as above
 			// not upstream: no GDI on Linux, the MDUs need gcCore (Sketchpad); logged once
 			static bool logged = false;
 			if (!logged) oapiWriteLog( "(SSV_OV) [ERROR] the graphics client has no gcCore interface: the MDUs stay blank" );
 			logged = true;
-#endif
+#endif// not upstream: as above
 		}
 
 		display = 0;
@@ -182,14 +179,14 @@ namespace vc
 
 	MDU::~MDU()
 	{
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 		DestroyADI();
-#endif
+#endif// not upstream: as above
 		DestroyTapes();
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 		DestroyGDIObjects();
-#endif
+#endif// not upstream: as above
 		DestroySketchpadObjects();
 
 		if (hADIball) oapiDeleteMesh( hADIball );
@@ -237,8 +234,8 @@ namespace vc
 	{
 		oapiWriteScenario_int( scn, "DISPLAY", display );
 		oapiWriteScenario_int( scn, "MENU", menu );
-		oapiWriteScenario_string( scn, "PORT_CFG", const_cast<char*>(bPortConfigMan ? "MAN" : "AUTO") );// not upstream: the SDK takes char*, the literals are const
-		oapiWriteScenario_string( scn, "PORT_SEL", const_cast<char*>(bUseSecondaryPort ? "SEC" : "PRI") );// not upstream: the SDK takes char*, the literals are const
+		oapiWriteScenario_string( scn, "PORT_CFG", bPortConfigMan ? "MAN" : "AUTO" );
+		oapiWriteScenario_string( scn, "PORT_SEL", bUseSecondaryPort ? "SEC" : "PRI" );
 		oapiWriteScenario_float( scn, "BRIGHTNESS", fBrightness );
 		return;
 	}
@@ -330,11 +327,12 @@ namespace vc
 			//sprintf_s(oapiDebugString(), 256, "MDU %s BRIGHTNESS", GetQualifiedIdentifier().c_str());
 			if (_event & PANEL_MOUSE_LBPRESSED)
 			{
+				const double fOld = fBrightness;// not upstream: as above
 				fBrightness -= oapiGetSimStep() * 0.4;
 				if (fBrightness < 0.2) fBrightness = 0.2;
 
 				VisualCreated();
-				RecordInput( "BRT " + std::to_string( fBrightness ) );// not upstream: as above
+				if (fBrightness != fOld) RecordBrightness();// not upstream: as above, only a change
 			}
 		}
 		else if ((y >= 0.843f) && (y <= 0.917f) && (x >= 0.9385f) && (x <= 0.97f))
@@ -342,11 +340,12 @@ namespace vc
 			//sprintf_s(oapiDebugString(), 256, "MDU %s BRIGHTNESS", GetQualifiedIdentifier().c_str());
 			if (_event & PANEL_MOUSE_LBPRESSED)
 			{
+				const double fOld = fBrightness;// not upstream: as above
 				fBrightness += oapiGetSimStep() * 0.4;
 				if (fBrightness > 1.0) fBrightness = 1.0;
 
 				VisualCreated();
-				RecordInput( "BRT " + std::to_string( fBrightness ) );// not upstream: as above
+				if (fBrightness != fOld) RecordBrightness();// not upstream: as above, only a change
 			}
 		}
 		else if ((y >= 0.928f) && (y <= 0.976f))
@@ -442,7 +441,7 @@ namespace vc
 		else if (act == "BRT")
 		{
 			double b = 0.0;
-			if (sscanf_s( p, "%lf", &b ) == 1)
+			if ((sscanf_s( p, "%lf", &b ) == 1) && std::isfinite( b ))// not upstream: no NaN
 			{
 				fBrightness = range( 0.2, b, 1.0 );
 				VisualCreated();
@@ -468,6 +467,14 @@ namespace vc
 		return;
 	}
 
+	void MDU::RecordBrightness( void ) const// not upstream: as above, round-trip format
+	{
+		char cbuf[40];
+		sprintf_s( cbuf, sizeof(cbuf), "BRT %.17g", fBrightness );
+		RecordInput( cbuf );
+		return;
+	}
+
 	void MDU::PaintDisplay( oapi::Sketchpad* skp )
 	{
 		switch (display)
@@ -486,7 +493,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -503,7 +510,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 			case 1:// A/E PFD
 				if (STS()->D3D9())
@@ -518,7 +525,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -534,7 +541,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 			case 2:// ORBIT PFD
 				if (STS()->D3D9())
@@ -549,7 +556,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -565,7 +572,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 			case 3:// OMS/MPS
 				if (STS()->D3D9())
@@ -580,7 +587,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -596,7 +603,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 			case 4:// HYD/APU
 				if (STS()->D3D9())
@@ -611,7 +618,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -627,7 +634,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 			case 5:// SPI
 				if (STS()->D3D9())
@@ -642,7 +649,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -658,7 +665,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 			case 6:// CST Menu
 				if (STS()->D3D9())
@@ -673,7 +680,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -689,7 +696,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 			case 7:// IDP Interactive CST
 				if (STS()->D3D9())
@@ -704,7 +711,7 @@ namespace vc
 					//}
 					//else oapiWriteLog( "(SSV_OV) [ERROR] Sketchpad not v2" );
 				}
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 				else
 				{
 					HDC hDC = skp->GetDC();
@@ -720,7 +727,7 @@ namespace vc
 					}
 					else oapiWriteLog( "(SSV_OV) [ERROR] no GDI handle" );
 				}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 				break;
 		}
 		return;
@@ -844,6 +851,22 @@ namespace vc
 		return false;
 	}
 
+	bool MDU::IsMenuKey( DWORD key ) const// not upstream: as declared, the key cases of NavigateMenu
+	{
+		switch (menu)
+		{
+			case 0: return (key == OAPI_KEY_1) || (key == OAPI_KEY_2) || (key == OAPI_KEY_3) || (key == OAPI_KEY_4);
+			case 1: return (key == OAPI_KEY_U) || (key == OAPI_KEY_1) || (key == OAPI_KEY_2);
+			case 2: return (key == OAPI_KEY_U) || (key == OAPI_KEY_1) || (key == OAPI_KEY_2) || (key == OAPI_KEY_3) || (key == OAPI_KEY_4);
+			case 3: return (key == OAPI_KEY_U);
+			case 4: return (key == OAPI_KEY_U) || (key == OAPI_KEY_2) || (key == OAPI_KEY_3);
+			case 5: return (key == OAPI_KEY_U) || (key == OAPI_KEY_2);
+			case 6: return (key == OAPI_KEY_U);
+			case 7: return (key == OAPI_KEY_U) || (key == OAPI_KEY_1) || (key == OAPI_KEY_2);
+		}
+		return false;
+	}
+
 	char* MDU::ButtonLabel( int bt )
 	{
 		static char *label[8][5] = {{"", "FLT", "SUB", "DPS", "MEDS1"},
@@ -875,7 +898,7 @@ namespace vc
 		return 5;// return the number of buttons used
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::PaintEdgeMenu( HDC hDC )
 	{
 		SelectObject( hDC, gdiCyanPen );
@@ -1138,7 +1161,7 @@ namespace vc
 		}*/
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::PaintEdgeMenu( oapi::Sketchpad* skp )
 	{
@@ -1402,7 +1425,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::DrawMenuButton( HDC hDC, int x )
 	{
 		MoveToEx( hDC, x - 36, 510, NULL );
@@ -1413,7 +1436,7 @@ namespace vc
 		LineTo( hDC, x + 36, 510 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::DrawMenuButton( oapi::Sketchpad* skp, int x )
 	{
@@ -1519,47 +1542,47 @@ namespace vc
 
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::CreateGDIObjects()
 	{
 		if (gdiBlackBrush) return;// already created
 
-		if (!(gdiBlackBrush = CreateSolidBrush( CR_BLACK ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiDarkGrayBrush = CreateSolidBrush( CR_DARK_GRAY ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiLightGrayBrush = CreateSolidBrush( CR_LIGHT_GRAY ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiWhiteBrush = CreateSolidBrush( CR_WHITE ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiRedBrush = CreateSolidBrush( CR_RED ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiYellowBrush = CreateSolidBrush( CR_YELLOW ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiCyanBrush = CreateSolidBrush( CR_CYAN ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiMagentaBrush = CreateSolidBrush( CR_MAGENTA ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiLightGreenBrush = CreateSolidBrush( CR_LIGHT_GREEN ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiBlueBrush = CreateSolidBrush( CR_BLUE ))) throw std::runtime_error( "CreateSolidBrush() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(gdiBlackBrush = CreateSolidBrush( CR_BLACK ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiDarkGrayBrush = CreateSolidBrush( CR_DARK_GRAY ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiLightGrayBrush = CreateSolidBrush( CR_LIGHT_GRAY ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiWhiteBrush = CreateSolidBrush( CR_WHITE ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiRedBrush = CreateSolidBrush( CR_RED ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiYellowBrush = CreateSolidBrush( CR_YELLOW ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiCyanBrush = CreateSolidBrush( CR_CYAN ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiMagentaBrush = CreateSolidBrush( CR_MAGENTA ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiLightGreenBrush = CreateSolidBrush( CR_LIGHT_GREEN ))) throw std::exception( "CreateSolidBrush() failed" );
+		if (!(gdiBlueBrush = CreateSolidBrush( CR_BLUE ))) throw std::exception( "CreateSolidBrush() failed" );
 
-		if (!(gdiBlackPen = CreatePen( PS_SOLID, 2, CR_BLACK ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiDarkGrayPen = CreatePen( PS_SOLID, 2, CR_DARK_GRAY ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiLightGrayPen = CreatePen( PS_SOLID, 2, CR_LIGHT_GRAY ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiLightGrayThickPen = CreatePen( PS_SOLID, 3, CR_LIGHT_GRAY ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiWhitePen = CreatePen( PS_SOLID, 2, CR_WHITE ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiRedPen = CreatePen( PS_SOLID, 2, CR_RED ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiYellowPen = CreatePen( PS_SOLID, 2, CR_YELLOW ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiCyanPen = CreatePen( PS_SOLID, 2, CR_CYAN ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiMagentaPen = CreatePen( PS_SOLID, 2, CR_MAGENTA ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiLightGreenPen = CreatePen( PS_SOLID, 2, CR_LIGHT_GREEN ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiDarkGreenPen = CreatePen( PS_SOLID, 2, CR_DARK_GREEN ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiLightGreenThickPen = CreatePen( PS_SOLID, 4, CR_LIGHT_GREEN ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(gdiBlackPen = CreatePen( PS_SOLID, 2, CR_BLACK ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiDarkGrayPen = CreatePen( PS_SOLID, 2, CR_DARK_GRAY ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiLightGrayPen = CreatePen( PS_SOLID, 2, CR_LIGHT_GRAY ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiLightGrayThickPen = CreatePen( PS_SOLID, 3, CR_LIGHT_GRAY ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiWhitePen = CreatePen( PS_SOLID, 2, CR_WHITE ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiRedPen = CreatePen( PS_SOLID, 2, CR_RED ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiYellowPen = CreatePen( PS_SOLID, 2, CR_YELLOW ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiCyanPen = CreatePen( PS_SOLID, 2, CR_CYAN ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiMagentaPen = CreatePen( PS_SOLID, 2, CR_MAGENTA ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiLightGreenPen = CreatePen( PS_SOLID, 2, CR_LIGHT_GREEN ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiDarkGreenPen = CreatePen( PS_SOLID, 2, CR_DARK_GREEN ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiLightGreenThickPen = CreatePen( PS_SOLID, 4, CR_LIGHT_GREEN ))) throw std::exception( "CreatePen() failed" );
 
-		if (!(gdiOverbrightPen = CreatePen( PS_SOLID, 2, CR_DPS_OVERBRIGHT ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiNormalPen = CreatePen( PS_SOLID, 2, CR_DPS_NORMAL ))) throw std::runtime_error( "CreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(gdiOverbrightPen = CreatePen( PS_SOLID, 2, CR_DPS_OVERBRIGHT ))) throw std::exception( "CreatePen() failed" );
+		if (!(gdiNormalPen = CreatePen( PS_SOLID, 2, CR_DPS_NORMAL ))) throw std::exception( "CreatePen() failed" );
 		LOGBRUSH lb = {BS_SOLID, CR_DPS_NORMAL, 0};
 		DWORD pstyle[2] = {16, 8};
-		if (!(gdiDashedNormalPen = ExtCreatePen( PS_GEOMETRIC | PS_USERSTYLE, 2, &lb, 2, pstyle ))) throw std::runtime_error( "ExtCreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(gdiDashedNormalPen = ExtCreatePen( PS_GEOMETRIC | PS_USERSTYLE, 2, &lb, 2, pstyle ))) throw std::exception( "ExtCreatePen() failed" );
 
-		if (!(gdiSSVAFont_h20w17 = CreateFont( 20, 17, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_A" ))) throw std::runtime_error( "CreateFont() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiSSVAFont_h10w10bold = CreateFont( 10, 10, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_A" ))) throw std::runtime_error( "CreateFont() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiSSVAFont_h11w9 = CreateFont( 11, 9, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_A" ))) throw std::runtime_error( "CreateFont() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiSSVBFont_h18w9 = CreateFont( 18, 9, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_B" ))) throw std::runtime_error( "CreateFont() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiSSVBFont_h12w7 = CreateFont( 12, 7, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_B" ))) throw std::runtime_error( "CreateFont() failed" );// not upstream: std::exception has no text constructor outside MSVC
-		if (!(gdiSSVBFont_h16w9 = CreateFont( 16, 9, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_B" ))) throw std::runtime_error( "CreateFont() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(gdiSSVAFont_h20w17 = CreateFont( 20, 17, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_A" ))) throw std::exception( "CreateFont() failed" );
+		if (!(gdiSSVAFont_h10w10bold = CreateFont( 10, 10, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_A" ))) throw std::exception( "CreateFont() failed" );
+		if (!(gdiSSVAFont_h11w9 = CreateFont( 11, 9, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_A" ))) throw std::exception( "CreateFont() failed" );
+		if (!(gdiSSVBFont_h18w9 = CreateFont( 18, 9, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_B" ))) throw std::exception( "CreateFont() failed" );
+		if (!(gdiSSVBFont_h12w7 = CreateFont( 12, 7, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_B" ))) throw std::exception( "CreateFont() failed" );
+		if (!(gdiSSVBFont_h16w9 = CreateFont( 16, 9, 0, 0, FW_MEDIUM, FALSE, FALSE, FALSE, ANSI_CHARSET, OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, FIXED_PITCH, "SSV_Font_B" ))) throw std::exception( "CreateFont() failed" );
 		return;
 	}
 
@@ -1605,7 +1628,7 @@ namespace vc
 		gdiBlackBrush = NULL;
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::CreateSketchpadObjects()
 	{

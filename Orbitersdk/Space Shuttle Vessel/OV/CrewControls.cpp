@@ -28,47 +28,60 @@ Date         Developer
 ********************************************/
 // not upstream (Orbiter Linux): flight recorder, GLS-SSV/SSV issue #28 (design ssv-flightrec)
 #include "CrewControls.h"
-#include <charconv>
 #include <cmath>
 #include <cstring>
+#include <iomanip>
+#include <locale>
+#include <sstream>
 
 
 namespace
 {
-	// numbers with '.' whatever the locale
+	// numbers with '.' whatever the locale (streams: std::to_chars for double needs VS2019 16.4)
 	void Put( std::string& s, double v )
 	{
-		char cbuf[32];
-		auto r = std::to_chars( cbuf, cbuf + sizeof(cbuf), v, std::chars_format::general, 4 );
+		std::ostringstream os;
+		os.imbue( std::locale::classic() );
+		os << std::setprecision( 4 ) << v;
 		if (!s.empty()) s += ' ';
-		s.append( cbuf, r.ptr );
+		s += os.str();
 	}
 
 	void Put( std::string& s, int v )
 	{
-		char cbuf[16];
-		auto r = std::to_chars( cbuf, cbuf + sizeof(cbuf), v );
+		std::ostringstream os;
+		os.imbue( std::locale::classic() );
+		os << v;
 		if (!s.empty()) s += ' ';
-		s.append( cbuf, r.ptr );
+		s += os.str();
+	}
+
+	template <typename T> bool GetNum( const char*& p, T& v )
+	{
+		while ((*p == ' ') || (*p == '\t')) p++;
+		if (*p == 0) return false;
+		std::istringstream is( p );
+		is.imbue( std::locale::classic() );
+		is >> v;
+		if (is.fail()) return false;
+		if (is.eof()) p += strlen( p );
+		else p += static_cast<size_t>(is.tellg());
+		return true;
 	}
 
 	bool Get( const char*& p, double& v, double lo, double hi )
 	{
-		while ((*p == ' ') || (*p == '\t')) p++;
-		const char* e = p + strlen( p );
-		auto r = std::from_chars( p, e, v );
-		if ((r.ec != std::errc()) || !(v >= lo) || !(v <= hi)) return false;
-		p = r.ptr;
+		const char* q = p;
+		if (!GetNum( q, v ) || !(v >= lo) || !(v <= hi)) return false;
+		p = q;
 		return true;
 	}
 
 	bool Get( const char*& p, int& v, int lo, int hi )
 	{
-		while ((*p == ' ') || (*p == '\t')) p++;
-		const char* e = p + strlen( p );
-		auto r = std::from_chars( p, e, v );
-		if ((r.ec != std::errc()) || (v < lo) || (v > hi)) return false;
-		p = r.ptr;
+		const char* q = p;
+		if (!GetNum( q, v ) || (v < lo) || (v > hi)) return false;
+		p = q;
 		return true;
 	}
 

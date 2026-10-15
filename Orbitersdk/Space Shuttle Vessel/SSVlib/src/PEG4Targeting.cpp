@@ -13,6 +13,7 @@ Date         Developer
 ********************************************/
 #include <PEG4Targeting.h>
 #include <MathSSV.h>
+#include <algorithm>// not upstream: std::max
 
 void LTVC_TSK(double C1, double C2, double EARTH_MU, double EP_TRANSFER, VECTOR3 IY, VECTOR3 RP, VECTOR3 RT, bool &FLAG, VECTOR3 &VD, double &THETA)
 {
@@ -283,7 +284,7 @@ void PEG4Targeting::PREDICTOR(VECTOR3 R_INIT, VECTOR3 V_INIT, double T_INIT, dou
 	int NUMBER_STEPS;
 
 	//Establish the fixed integration STEP_SIZE by dividing the time interval into the smallest number(NUMBER_STEPS) of subintervals consistent with DT_MAX
-	NUMBER_STEPS = (int)(std::max(round(abs(T_FINAL - T_INIT) / DT_MAX), 1.0));// not upstream: windows.h max macro took double and int
+	NUMBER_STEPS = (int)(std::max<double>(round(abs(T_FINAL - T_INIT) / DT_MAX), 1.0));// not upstream: max is a windows.h macro
 	STEP_SIZE = (T_FINAL - T_INIT) / NUMBER_STEPS;
 	T = T_INIT;
 

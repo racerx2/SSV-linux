@@ -92,6 +92,8 @@ namespace vc
 
 		void ConnectInputSignal(DiscreteBundle* pBundle, unsigned short usLine);
 		void ConnectOutputSignal(unsigned short usIndex, DiscreteBundle* pBundle, unsigned short usLine);
+	private:// not upstream: as below
+		void SetOutputs( unsigned short usPos, bool bOutput );// not upstream: the outputs for a position, for OnPositionChange and OnPreStep
 	};
 
 	/**

@@ -42,6 +42,7 @@ namespace dps
 	{
 		for (int s = 0; s < 2; s++) tkPosCount[s][0] = tkPosCount[s][1] = 0;
 		for (int s = 0; s < 2; s++) cmdState[s] = 0;
+		monGrp[0] = monGrp[1] = true;
 		return;
 	}
 
@@ -52,18 +53,16 @@ namespace dps
 
 	void AbortOMSRCSInterconnect::Realize( void )
 	{
-		const char* cmdname[2] = {"OMSRCS_VLV_L_CMD", "OMSRCS_VLV_R_CMD"};
-		const char* indname[2] = {"OMSRCS_VLV_L_IND", "OMSRCS_VLV_R_IND"};
 		for (unsigned int s = 0; s < 2; s++)
 		{
-			DiscreteBundle* pCmd = BundleManager()->CreateBundle( cmdname[s], 16 );
-			DiscreteBundle* pInd = BundleManager()->CreateBundle( indname[s], 16 );
+			DiscreteBundle* pCmd = BundleManager()->CreateBundle( oms::OMSRCS_VLV_CMD_BUNDLE[s], oms::OMSRCS_VLV_BUNDLE_LINES );
+			DiscreteBundle* pInd = BundleManager()->CreateBundle( oms::OMSRCS_VLV_IND_BUNDLE[s], oms::OMSRCS_VLV_BUNDLE_LINES );
 			for (unsigned int v = 0; v < VLV_COUNT; v++)
 			{
-				cmdOpen[s][v].Connect( pCmd, v );
-				cmdClose[s][v].Connect( pCmd, v + VLV_COUNT );
-				indOpen[s][v].Connect( pInd, v );
-				indClosed[s][v].Connect( pInd, v + VLV_COUNT );
+				cmdOpen[s][v].Connect( pCmd, oms::OMSRCS_VLV_CH_OPEN( v ) );
+				cmdClose[s][v].Connect( pCmd, oms::OMSRCS_VLV_CH_CLOSE( v ) );
+				indOpen[s][v].Connect( pInd, oms::OMSRCS_VLV_CH_OPEN( v ) );
+				indClosed[s][v].Connect( pInd, oms::OMSRCS_VLV_CH_CLOSE( v ) );
 			}
 
 			// held valve commands from the scenario
@@ -184,6 +183,7 @@ namespace dps
 		// steps 7 to 8A: a tank isolation valve that loses its closed indication sends that manifold group back to its RCS tanks
 		for (unsigned int g = 0; g < 2; g++)
 		{
+			if (!monGrp[g]) continue;// a group back on its RCS tanks is not watched
 			for (unsigned int s = 0; s < 2; s++)
 			{
 				if (Closed( s, (g == 0) ? TK12 : TK345 )) tkPosCount[s][g] = 0;
@@ -192,6 +192,7 @@ namespace dps
 				if (tkPosCount[s][g] >= IC_MONITOR_PASSES)
 				{
 					monitor = false;
+					monGrp[g] = false;
 					if (g == 0)
 					{
 						xfdIsoFail = true;
@@ -230,6 +231,7 @@ namespace dps
 				icInProgress = true;
 				icFail = 0;
 				for (int s = 0; s < 2; s++) tkPosCount[s][0] = tkPosCount[s][1] = 0;
+				monGrp[0] = monGrp[1] = true;
 				Goto( IC_TK_CLOSE );
 			}
 			else if (rtnCmd && cplt)
@@ -287,7 +289,7 @@ namespace dps
 							Issue( 1, XFD12, true );
 						}
 
-						if (!(Closed( 0, TK345 ) && Closed( 1, TK345 )))
+						if (!(Closed( 0, TK345 ) && Closed( 1, TK345 )) || Open( 0, TK345 ) || Open( 1, TK345 ))
 						{
 							WriteCOMPOOL_IS( SCP_AFT_MANF_345_JET_INH, 1 );
 							icFail++;
@@ -425,7 +427,10 @@ namespace dps
 					}
 					WriteCOMPOOL_IS( SCP_OMS_RCS_ICNCT_CPLT, 1 );
 					SetAllJetInh( false );
-					if ((icFail == 0) && icInProgress)
+					// a single failure leaves the other group on OMS feed, which stays watched
+					if (ReadCOMPOOL_IS( SCP_AFT_MANF_12_JET_INH ) != 0) monGrp[0] = false;
+					if (ReadCOMPOOL_IS( SCP_AFT_MANF_345_JET_INH ) != 0) monGrp[1] = false;
+					if ((icFail <= 1) && icInProgress && (monGrp[0] || monGrp[1]))
 					{
 						icInProgress = false;
 						monitor = true;
@@ -509,7 +514,13 @@ namespace dps
 		{
 			int st = 0, fp = 1, ic = 0, rt = 0, mo = 0, xf = 0, fl = 0, oxa = 0;
 			double tmr = 0.0;
-			sscanf_s( value, "%d %lf %d %d %d %d %d %d %d", &st, &tmr, &fp, &ic, &rt, &mo, &xf, &fl, &oxa );
+			int pc[4] = {0, 0, 0, 0}, mg[2] = {1, 1};
+			double tc = 0.0;
+			sscanf_s( value, "%d %lf %d %d %d %d %d %d %d %d %d %d %d %lf %d %d", &st, &tmr, &fp, &ic, &rt, &mo, &xf, &fl, &oxa, &pc[0], &pc[1], &pc[2], &pc[3], &tc, &mg[0], &mg[1] );
+			for (int i = 0; i < 4; i++) tkPosCount[i / 2][i % 2] = pc[i];
+			tCycle = tc;
+			monGrp[0] = (mg[0] != 0);
+			monGrp[1] = (mg[1] != 0);
 			step = static_cast<STEP>(st);
 			stepTimer = tmr;
 			stepFirstPass = (fp != 0);
@@ -543,7 +554,8 @@ namespace dps
 	void AbortOMSRCSInterconnect::OnSaveState( FILEHANDLE scn ) const
 	{
 		char cbuf[128];
-		sprintf_s( cbuf, 128, "%d %.2f %d %d %d %d %d %d %d", static_cast<int>(step), stepTimer, stepFirstPass, icInProgress, rtnInProgress, monitor, xfdIsoFail, icFail, bOXA );
+		sprintf_s( cbuf, 128, "%d %.2f %d %d %d %d %d %d %d %d %d %d %d %.3f %d %d", static_cast<int>(step), stepTimer, stepFirstPass, icInProgress, rtnInProgress, monitor, xfdIsoFail, icFail, bOXA,
+			tkPosCount[0][0], tkPosCount[0][1], tkPosCount[1][0], tkPosCount[1][1], tCycle, monGrp[0], monGrp[1] );
 		oapiWriteScenario_string( scn, "SEQ", cbuf );
 		sprintf_s( cbuf, 128, "%hu %hu %hu %hu %hu", ReadCOMPOOL_IS( SCP_OMS_RCS_ICNCT_CPLT ), ReadCOMPOOL_IS( SCP_AFT_MANF_12_JET_INH ), ReadCOMPOOL_IS( SCP_AFT_MANF_345_JET_INH ),
 			ReadCOMPOOL_IS( SCP_RCS_12_ALL_JET_INH ), ReadCOMPOOL_IS( SCP_RCS_345_ALL_JET_INH ) );

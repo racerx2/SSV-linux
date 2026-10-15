@@ -23,7 +23,7 @@ Date         Developer
 
 namespace vc
 {
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: Win32 GDI drawing left out; on Linux the MDUs draw with Sketchpad only
 	void MDU::ORBITPFD( HDC hDC )
 	{
 		int MM = STS()->GetGPCMajorMode();
@@ -55,7 +55,7 @@ namespace vc
 		else ADI_ORBIT( hDC, 129, 77, 14 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ORBITPFD( oapi::Sketchpad* skp )
 	{
@@ -89,7 +89,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_STATIC_ORBIT( HDC hDC )
 	{
 		SetTextColor( hDC, CR_LIGHT_GRAY );
@@ -392,7 +392,7 @@ namespace vc
 		LineTo( hDC, 306, 331 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_STATIC_ORBIT( oapi::Sketchpad* skp )
 	{
@@ -631,7 +631,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_ORBIT( HDC hDC, double pitch, double roll, double yaw )
 	{
 		// center (256,223) r = 132
@@ -882,7 +882,7 @@ namespace vc
 		Rectangle( hDC, 224, 222, 288, 224 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_ORBIT( oapi::Sketchpad* skp, double pitch, double roll, double yaw )
 	{
@@ -945,7 +945,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_RATE_ORBIT( HDC hDC, double pitch, double roll, double yaw, int adirate )
 	{
 		int pos_roll;
@@ -1027,7 +1027,7 @@ namespace vc
 		Polygon( hDC, tri, 3 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_RATE_ORBIT( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adirate )
 	{
@@ -1111,7 +1111,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::ADI_ERROR_ORBIT( HDC hDC, double pitch, double roll, double yaw, int adierr )
 	{
 		double pos_pitch;
@@ -1176,7 +1176,7 @@ namespace vc
 		Rectangle( hDC, 255 + Round( pos_yaw ), 258, 257 + Round( pos_yaw ), 223 + Round( sqrt( 15625 - (pos_yaw * pos_yaw) ) ) );// yaw
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::ADI_ERROR_ORBIT( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr )
 	{

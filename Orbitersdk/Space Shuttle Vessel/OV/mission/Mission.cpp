@@ -60,6 +60,7 @@ Date         Developer
 #include "Mission.h"
 #include <OrbiterAPI.h>
 #include <UtilsSSV.h>
+#include <TextFile.h>// not upstream: OrbiterPath
 #include "../ParameterValues.h"
 #include <limits>
 #include <vector>
@@ -222,11 +223,7 @@ namespace mission
 		filename = "Missions\\SSV\\" + strMission + ".json";
 		strFileName = strMission;
 
-#ifdef _WIN32
-		FILE* hF = fopen( filename.c_str(), "r" );
-#else
-		FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
-#endif
+		FILE* hF = fopen( OrbiterPath( filename ).c_str(), "r" );// not upstream: '\' path, any letter case
 		if (hF == NULL)
 		{
 			oapiWriteLogV( "(SSV_OV) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -257,6 +254,13 @@ namespace mission
 		}
 
 		cJSON* version = cJSON_GetObjectItemCaseSensitive( root, "Version" );
+		if (!cJSON_IsNumber( version ))// not upstream: no "Version" number was a NULL dereference
+		{
+			oapiWriteLog( "(SSV_OV) [ERROR] Error parsing mission file version" );
+			cJSON_Delete( root );
+			delete[] missionfilestr;
+			return false;
+		}
 		switch (version->valueint)
 		{
 			case 1:

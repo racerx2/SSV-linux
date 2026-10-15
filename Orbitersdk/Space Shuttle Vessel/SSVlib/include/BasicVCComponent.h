@@ -160,7 +160,7 @@ public:
 	virtual double GetState() const;
 	virtual bool GetStateString(unsigned long ulBufferSize, char* pszBuffer);
 
-	// not upstream: the state a crew action sets, false if none; a change by the mouse is recorded and played back by OnPlaybackEvent (design ssv-flightrec)
+	// not upstream: the state a crew action sets, false if none (design ssv-flightrec)
 	virtual bool GetPlaybackState( string& state ) const;
 
 	/**

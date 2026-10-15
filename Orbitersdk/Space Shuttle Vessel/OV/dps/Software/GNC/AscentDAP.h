@@ -394,6 +394,8 @@ private:
 
 	// not upstream: current MECO targets [m, m/s, rad], nominal or from AOA/ATO targeting
 	double RD_TGT, VD_TGT, GAMD_TGT;
+	VECTOR3 IY_TGT;// not upstream: plane from AOA/ATO targeting [M50]
+	bool bMECOTgtSet, bIYTgtSet;// not upstream: targets and plane from AOA/ATO targeting, saved
 	void NominalMECOTargets( void );
 
 	unsigned short KMAX_NOM;

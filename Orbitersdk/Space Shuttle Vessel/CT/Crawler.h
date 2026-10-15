@@ -132,11 +132,7 @@ using namespace discsignals;
 
 typedef struct
 {
-#ifdef _WIN32
 	HINSTANCE hDll;
-#else
-	void* hDll;// not upstream: the dlopen handle
-#endif
 	SURFHANDLE digits_7seg;
 } GlobalHandles;
 

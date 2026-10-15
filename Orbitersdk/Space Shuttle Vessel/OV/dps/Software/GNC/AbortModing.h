@@ -52,6 +52,7 @@ namespace dps
 			bool tgtItemUsed;// ITEM 35 was used: the switch and OVERRIDE ATO selections are ignored
 			bool logged[2];// TAL, RTLS not available, logged once
 
+			void Reset( void );
 			void DeclareATO( void );
 			void NotAvailable( int k );
 

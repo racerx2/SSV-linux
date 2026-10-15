@@ -89,7 +89,7 @@ namespace vc {
 		void Realize();
 		bool OnVCMouseEvent (int id, int _event, VECTOR3 &p);
 		bool OnVCRedrawEvent (int id, int _event, SURFHANDLE surf);
-		// not upstream: a recorded event to a component of the panel named panel; false if the group has no such panel (design ssv-flightrec)
+		// not upstream: a recorded event to a component of a panel (design ssv-flightrec)
 		bool OnPlaybackEvent( const string& panel, const string& component, double simt, double event_t, const char* event_type, const char* event );
 		void OnPreStep (double simt, double simdt, double mjd);
 		void OnPostStep (double simt, double simdt, double mjd);

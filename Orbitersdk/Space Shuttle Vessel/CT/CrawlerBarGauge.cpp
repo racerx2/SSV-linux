@@ -118,34 +118,29 @@ bool CrawlerBarGauge::OnVCRedrawEvent(int id, int _event, SURFHANDLE surf)
 	DeleteObject(hLitBrush);
 	DeleteObject(hLineBrush);
 #else
-	// not upstream: the same drawing with Sketchpad (no GDI on Linux)
-	oapi::Sketchpad* skp = oapiGetSketchpad(surf);
-	if (!skp) return false;
-	// FillRect: the right and bottom edges excluded, nothing for an empty rectangle; Rectangle without a pen fills to r-1, b-1
-	auto FillRect = [skp](const RECT& r, oapi::Brush* br) { if (r.right > r.left && r.bottom > r.top) { skp->SetBrush(br); skp->Rectangle(r.left, r.top, r.right + 1, r.bottom + 1); } };
-	oapi::Brush* hUnlitBrush = oapiCreateBrush(RGB(70, 76, 88));
-	oapi::Brush* hLitBrush = oapiCreateBrush(RGB(144, 77, 101));
-	oapi::Pen* hLinePen = oapiCreatePen(1, 1, RGB(0, 0, 0));// the DC's default black pen draws the lines
-	skp->SetPen(NULL);
-	FillRect(gaugeRect, hUnlitBrush);
-	FillRect(litRect, hLitBrush);
-	skp->SetBrush(NULL);
-	skp->SetPen(hLinePen);
+	// not upstream: GDI FillRect and LineTo as exact fills (no GDI on Linux): right and bottom edges excluded, clipped to the surface
+	int sw = 0, sh = 0;
+	if (!oapiGetSurfaceSize( surf, &sw, &sh )) return false;
+	auto Fill = [surf, sw, sh]( int l, int t, int r, int b, DWORD c )
+	{
+		l = std::max<int>( l, 0 ); t = std::max<int>( t, 0 );
+		r = std::min<int>( r, sw ); b = std::min<int>( b, sh );
+		if ((r > l) && (b > t)) oapiColourFill( surf, c, l, t, r - l, b - t );// w or h 0 would fill the whole surface
+	};
+	Fill( gaugeRect.left, gaugeRect.top, gaugeRect.right, gaugeRect.bottom, oapiGetColour( 70, 76, 88 ) );
+	Fill( litRect.left, litRect.top, litRect.right, litRect.bottom, oapiGetColour( 144, 77, 101 ) );
+	const DWORD black = oapiGetColour( 0, 0, 0 );
 	int maxPos;
 	if(bVertical) maxPos = usHeight;
 	else maxPos = usWidth;
 	for(int pos=midPos;pos < maxPos;pos+=usBarWidth) {
-		if(bVertical) skp->Line(redrawBase.x, redrawBase.y+pos, redrawBase.x+usWidth, redrawBase.y+pos);
-		else skp->Line(redrawBase.x+pos, redrawBase.y, redrawBase.x+pos, redrawBase.y+usHeight);
+		if(bVertical) Fill( redrawBase.x, redrawBase.y+pos, redrawBase.x+usWidth, redrawBase.y+pos+1, black );
+		else Fill( redrawBase.x+pos, redrawBase.y, redrawBase.x+pos+1, redrawBase.y+usHeight, black );
 	}
 	for(int pos=midPos-usBarWidth;pos >= 0;pos-=usBarWidth) {
-		if(bVertical) skp->Line(redrawBase.x, redrawBase.y+pos, redrawBase.x+usWidth, redrawBase.y+pos);
-		else skp->Line(redrawBase.x+pos, redrawBase.y, redrawBase.x+pos, redrawBase.y+usHeight);
+		if(bVertical) Fill( redrawBase.x, redrawBase.y+pos, redrawBase.x+usWidth, redrawBase.y+pos+1, black );
+		else Fill( redrawBase.x+pos, redrawBase.y, redrawBase.x+pos+1, redrawBase.y+usHeight, black );
 	}
-	oapiReleaseSketchpad(skp);
-	oapiReleaseBrush(hUnlitBrush);
-	oapiReleaseBrush(hLitBrush);
-	oapiReleasePen(hLinePen);
 #endif
 
 	return true;

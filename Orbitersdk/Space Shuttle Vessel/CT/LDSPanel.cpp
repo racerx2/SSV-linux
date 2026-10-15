@@ -320,6 +320,7 @@ namespace vc
 		if((cabID == FWD && id == AID_LDS_AREA) || (cabID == REAR && id==AID_LDS_AREA+AID_REAR_OFFSET))
 		{
 			//sprintf(oapiDebugString(),"%f%s%f",p.x," ",p.y);
+			const auto oldPosition = CabSelectionSwitchPosition;// not upstream: as above
 
 			if(p.x < 0.5) {
 				CabSelectionSwitchPosition = CAB1;
@@ -329,7 +330,7 @@ namespace vc
 				CabSelectionSwitchPosition = CAB3;
 				V()->SetAnimation(CabSelectionSwitchAnim, 1);
 			}
-			V()->FlightRecorder().Record( flightrec::VC, flightrec::Quote( GetIdentifier() ) + " \"CAB SELECT\" " + ((CabSelectionSwitchPosition == CAB1) ? "1" : "3") );// not upstream: as above
+			if (CabSelectionSwitchPosition != oldPosition) V()->FlightRecorder().Record( flightrec::VC, flightrec::Quote( GetIdentifier() ) + " \"CAB SELECT\" " + ((CabSelectionSwitchPosition == CAB1) ? "1" : "3") );// not upstream: as above, on a change
 
 			return true;
 		}

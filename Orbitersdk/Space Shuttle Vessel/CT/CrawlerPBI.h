@@ -41,6 +41,7 @@ Date         Developer
 
 #include <BasicVCComponent.h>
 #include "CrawlerPanelLight.h"
+#include "CrawlerPushButton.h"// not upstream: flight recorder (design ssv-flightrec)
 
 
 class Crawler;
@@ -56,7 +57,7 @@ namespace vc
 			UINT anim_pb;
 			double motionlength;
 			MGROUP_TRANSLATE* pPushDown;
-			bool pressed = false;// not upstream: flight recorder (design ssv-flightrec)
+			MomentaryPlayback playback;// not upstream: flight recorder (design ssv-flightrec)
 		public:
 			CrawlerPBI( Crawler* _v, const string& _ident );
 			~CrawlerPBI();
@@ -67,6 +68,7 @@ namespace vc
 			virtual void OnRelease();
 			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
 			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
+			void OnPreStep( double simt, double simdt, double mjd ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );
@@ -79,7 +81,7 @@ namespace vc
 			UINT anim_pb;
 			double motionlength;
 			MGROUP_TRANSLATE* pPushDown;
-			bool pressed = false;// not upstream: flight recorder (design ssv-flightrec)
+			MomentaryPlayback playback;// not upstream: flight recorder (design ssv-flightrec)
 		public:
 			CrawlerPBI2( Crawler* _v, const string& _ident );
 			~CrawlerPBI2();
@@ -90,6 +92,7 @@ namespace vc
 			virtual void OnRelease();
 			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
 			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
+			void OnPreStep( double simt, double simdt, double mjd ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );

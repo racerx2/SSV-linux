@@ -44,11 +44,7 @@ namespace vc
 		bool bOutput = true;
 		if (bInputConnected) bOutput = inputSignal.IsSet();
 
-		for (unsigned short i = 0; i < usNumPositions; i++)
-		{
-			if ((i == usNewPosition) && bOutput) outputSignals[i].SetLine();
-			else outputSignals[i].ResetLine();
-		}
+		SetOutputs( usNewPosition, bOutput );// not upstream: the loop, shared with OnPreStep
 		return;
 	}
 
@@ -57,10 +53,15 @@ namespace vc
 	{
 		if (!bInputConnected || (usCurrentPosition >= usNumPositions)) return;
 
-		bool bOutput = inputSignal.IsSet();
+		SetOutputs( usCurrentPosition, inputSignal.IsSet() );
+		return;
+	}
+
+	void RotaryDemuxSwitch::SetOutputs( unsigned short usPos, bool bOutput )// not upstream: as declared
+	{
 		for (unsigned short i = 0; i < usNumPositions; i++)
 		{
-			if ((i == usCurrentPosition) && bOutput) outputSignals[i].SetLine();
+			if ((i == usPos) && bOutput) outputSignals[i].SetLine();
 			else outputSignals[i].ResetLine();
 		}
 		return;

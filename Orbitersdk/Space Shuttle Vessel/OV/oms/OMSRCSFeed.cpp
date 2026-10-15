@@ -56,18 +56,16 @@ namespace oms
 
 	void OMSRCSFeed::Realize( void )
 	{
-		const char* cmdname[2] = {"OMSRCS_VLV_L_CMD", "OMSRCS_VLV_R_CMD"};
-		const char* indname[2] = {"OMSRCS_VLV_L_IND", "OMSRCS_VLV_R_IND"};
 		for (unsigned int s = 0; s < 2; s++)
 		{
-			DiscreteBundle* pCmd = BundleManager()->CreateBundle( cmdname[s], 16 );
-			DiscreteBundle* pInd = BundleManager()->CreateBundle( indname[s], 16 );
+			DiscreteBundle* pCmd = BundleManager()->CreateBundle( OMSRCS_VLV_CMD_BUNDLE[s], OMSRCS_VLV_BUNDLE_LINES );
+			DiscreteBundle* pInd = BundleManager()->CreateBundle( OMSRCS_VLV_IND_BUNDLE[s], OMSRCS_VLV_BUNDLE_LINES );
 			for (unsigned int v = 0; v < VLV_COUNT; v++)
 			{
-				cmdOpen[s][v].Connect( pCmd, v );
-				cmdClose[s][v].Connect( pCmd, v + VLV_COUNT );
-				indOpen[s][v].Connect( pInd, v );
-				indClosed[s][v].Connect( pInd, v + VLV_COUNT );
+				cmdOpen[s][v].Connect( pCmd, OMSRCS_VLV_CH_OPEN( v ) );
+				cmdClose[s][v].Connect( pCmd, OMSRCS_VLV_CH_CLOSE( v ) );
+				indOpen[s][v].Connect( pInd, OMSRCS_VLV_CH_OPEN( v ) );
+				indClosed[s][v].Connect( pInd, OMSRCS_VLV_CH_CLOSE( v ) );
 			}
 		}
 
@@ -95,9 +93,16 @@ namespace oms
 	bool OMSRCSFeed::GroupFeedFromOMS( unsigned int side, unsigned int group ) const
 	{
 		assert( (side <= 1) && (group <= 1) && "OMSRCSFeed::GroupFeedFromOMS" );
-		bool oms = IsOpen( side, VLV_OMSXFDA ) || IsOpen( side, VLV_OMSXFDB );
+		// the aft crossfeed line joins both pods, so an open OMS crossfeed valve of either pod feeds it
+		bool oms = IsOpen( 0, VLV_OMSXFDA ) || IsOpen( 0, VLV_OMSXFDB ) || IsOpen( 1, VLV_OMSXFDA ) || IsOpen( 1, VLV_OMSXFDB );
 		if (group == 0) return oms && IsClosed( side, VLV_TK12 ) && IsOpen( side, VLV_XFD12 );
 		else return oms && IsClosed( side, VLV_TK345 ) && IsOpen( side, VLV_XFD345 );
+	}
+
+	bool OMSRCSFeed::GroupIsolated( unsigned int side, unsigned int group ) const
+	{
+		assert( (side <= 1) && (group <= 1) && "OMSRCSFeed::GroupIsolated" );
+		return IsClosed( side, (group == 0) ? VLV_TK12 : VLV_TK345 ) && !GroupFeedFromOMS( side, group );
 	}
 
 	void OMSRCSFeed::OnPreStep( double simt, double simdt, double mjd )
@@ -152,7 +157,7 @@ namespace oms
 		for (unsigned int s = 0; s < 2; s++)
 		{
 			sprintf_s( cbuf, 128, "%.2f %.2f %.2f %.2f %.2f %.2f", pos[s][0], pos[s][1], pos[s][2], pos[s][3], pos[s][4], pos[s][5] );
-			oapiWriteScenario_string( scn, const_cast<char*>(key[s]), cbuf );
+			oapiWriteScenario_string( scn, key[s], cbuf );
 		}
 		return;
 	}

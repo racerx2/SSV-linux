@@ -36,6 +36,7 @@ Date         Developer
 #include <sstream>
 #include <iomanip>
 #include <algorithm>// not upstream: std::find (MSVC brings it in through other headers)
+#include <cctype>// not upstream: toupper
 
 
 using namespace std;

@@ -18,18 +18,12 @@
     <ClInclude Include="..\PadLCCInterface.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\SSVlib\include\FlightRecorder.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="LCC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="LCC_MFD.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

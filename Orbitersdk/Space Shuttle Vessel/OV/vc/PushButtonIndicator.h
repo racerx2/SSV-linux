@@ -82,6 +82,8 @@ namespace vc
 			MGROUP_TRANSLATE* pPushDown;
 			DiscOutPort output;
 			bool bPressed = false;// not upstream: flight recorder (design ssv-flightrec)
+			bool bReleasePending = false;// not upstream: as above, a release in the step of the press waits a step
+			double fPressT = 0.0;// not upstream: as above
 
 		public:
 			PushButtonIndicatorSingleLight( Atlantis* _sts, const string& _ident );
@@ -93,6 +95,7 @@ namespace vc
 			virtual void OnRelease();
 			bool GetPlaybackState( string& state ) const override;// not upstream: as above
 			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
+			void OnPreStep( double simt, double simdt, double mjd ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );
@@ -107,6 +110,8 @@ namespace vc
 			MGROUP_TRANSLATE* pPushDown;
 			DiscOutPort output;
 			bool bPressed = false;// not upstream: flight recorder (design ssv-flightrec)
+			bool bReleasePending = false;// not upstream: as above, a release in the step of the press waits a step
+			double fPressT = 0.0;// not upstream: as above
 
 		public:
 			PushButtonIndicatorDoubleLight( Atlantis* _sts, const string& _ident );
@@ -118,6 +123,7 @@ namespace vc
 			virtual void OnRelease();
 			bool GetPlaybackState( string& state ) const override;// not upstream: as above
 			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
+			void OnPreStep( double simt, double simdt, double mjd ) override;// not upstream: as above
 			void ConnectPushButton( DiscreteBundle* pBundle, unsigned short usLine );
 
 			void SetMotionLength( double _motionlength );

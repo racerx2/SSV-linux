@@ -24,7 +24,7 @@ Date         Developer
 
 namespace vc
 {
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: Win32 GDI drawing left out; on Linux the MDUs draw with Sketchpad only
 	void MDU::OMSMPS( HDC hDC )
 	{
 		unsigned short usNum;
@@ -573,7 +573,7 @@ namespace vc
 		Rectangle( hDC, 430, Round( 466.3895 - (1.4531 * usNum) ), 446, 401 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::OMSMPS( oapi::Sketchpad* skp )
 	{
@@ -1092,7 +1092,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::APUHYD( HDC hDC )
 	{
 		int nPos;
@@ -1398,7 +1398,7 @@ namespace vc
 		}
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::APUHYD( oapi::Sketchpad* skp )
 	{
@@ -1671,7 +1671,7 @@ namespace vc
 		return;
 	}
 
-#ifdef _WIN32
+#ifdef _WIN32// not upstream: as above
 	void MDU::SPI( HDC hDC )// 304, 305, 602, 603, 801, 901
 	{
 		POINT tri[3];
@@ -2180,7 +2180,7 @@ namespace vc
 		Polygon( hDC, tri, 3 );
 		return;
 	}
-#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
+#endif// not upstream: as above
 
 	void MDU::SPI( oapi::Sketchpad* skp )
 	{

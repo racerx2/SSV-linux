@@ -44,6 +44,7 @@ Date         Developer
 #include <MathSSV.h>
 #include <UtilsSSV.h>
 #include <cmath>// not upstream: flight recorder (design ssv-flightrec)
+#include <TextFile.h>// not upstream: OrbiterPath
 
 
 const static char* MESHNAME_STAGE_2 = "SSV\\IUS\\IUS_SRM2";
@@ -557,22 +558,22 @@ int IUS_SRM2::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			// man gimbal
 			if (key == OAPI_KEY_NUMPAD2)
 			{
-				ManRate( manP, -VEHICLE_MAX_RATE_CMD );// not upstream: flight recorder (design ssv-flightrec)
+				ManRateKey( 0, false );// not upstream: flight recorder (design ssv-flightrec)
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD8)
 			{
-				ManRate( manP, VEHICLE_MAX_RATE_CMD );// not upstream: as above
+				ManRateKey( 1, false );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD1)
 			{
-				ManRate( manY, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
+				ManRateKey( 2, false );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD3)
 			{
-				ManRate( manY, VEHICLE_MAX_RATE_CMD );// not upstream: as above
+				ManRateKey( 3, false );// not upstream: as above
 				return 1;
 			}
 			return 0;
@@ -581,22 +582,22 @@ int IUS_SRM2::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 		// man gimbal
 		if (key == OAPI_KEY_NUMPAD2)
 		{
-			ManRate( manP, VEHICLE_MAX_RATE_CMD );// not upstream: as above
+			ManRateKey( 0, true );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD8)
 		{
-			ManRate( manP, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
+			ManRateKey( 1, true );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD1)
 		{
-			ManRate( manY, VEHICLE_MAX_RATE_CMD );// not upstream: as above
+			ManRateKey( 2, true );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD3)
 		{
-			ManRate( manY, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
+			ManRateKey( 3, true );// not upstream: as above
 			return 1;
 		}
 
@@ -701,10 +702,13 @@ bool IUS_SRM2::clbkPlaybackEvent( double simt, double event_t, const char* event
 	}
 }
 
-void IUS_SRM2::ManRate( double& rate, double d )// not upstream: as declared
+void IUS_SRM2::ManRateKey( int k, bool down )// not upstream: as declared
 {
+	if (down && flightrecorder.Locked()) return;
+	manKey[k] = down;
 	if (flightrecorder.Locked()) return;
-	rate += d;
+	manP = (manKey[0] ? VEHICLE_MAX_RATE_CMD : 0.0) - (manKey[1] ? VEHICLE_MAX_RATE_CMD : 0.0);
+	manY = (manKey[2] ? VEHICLE_MAX_RATE_CMD : 0.0) - (manKey[3] ? VEHICLE_MAX_RATE_CMD : 0.0);
 	RecordManRates();
 	return;
 }
@@ -964,11 +968,7 @@ void IUS_SRM2::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
-#ifdef _WIN32
-	FILE* hF = fopen( filename.c_str(), "r" );
-#else
-	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
-#endif
+	FILE* hF = fopen( OrbiterPath( filename ).c_str(), "r" );// not upstream: '\' path, any letter case
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_IUS_SRM2) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -999,6 +999,13 @@ void IUS_SRM2::LoadMissionFile( void )
 	}
 
 	cJSON* version = cJSON_GetObjectItemCaseSensitive( root, "Version" );
+	if (!cJSON_IsNumber( version ))// not upstream: fix, a missing version was dereferenced
+	{// not upstream: as above
+		oapiWriteLog( "(SSV_IUS_SRM2) [ERROR] Error parsing mission file version" );// not upstream: as above
+		cJSON_Delete( root );// not upstream: as above
+		delete[] missionfilestr;// not upstream: as above
+		return;// not upstream: as above
+	}// not upstream: as above
 	switch (version->valueint)
 	{
 		case 1:

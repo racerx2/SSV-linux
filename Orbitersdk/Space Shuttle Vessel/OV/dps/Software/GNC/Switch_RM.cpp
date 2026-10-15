@@ -753,10 +753,7 @@ namespace dps
 		// not upstream: ABORT MODE switch requests (ABORT pushbutton through the rotary), 2 of 3, OPS 1, 3 and 6
 		{
 			unsigned short ops = GetMajorMode() / 100;
-			unsigned short ABT[3] = {
-				ReadCOMPOOL_IS( SCP_FF1_IOM12_CH2_DATA ),
-				ReadCOMPOOL_IS( SCP_FF2_IOM12_CH2_DATA ),
-				ReadCOMPOOL_IS( SCP_FF3_IOM12_CH2_DATA )};
+			unsigned short ABT[3] = {FF1_IOM12_CH2, FF2_IOM12_CH2, FF3_IOM12_CH2};
 			const unsigned int addr[3] = {SCP_ATO_ABORT_REQUEST, SCP_TAL_ABORT_REQUEST, SCP_RTLS_ABORT_REQUEST};
 			for (unsigned int k = 0; k < 3; k++)
 			{

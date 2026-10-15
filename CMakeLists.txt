@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 3.19)
 project(SpaceShuttleVessel LANGUAGES C CXX)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
@@ -19,9 +19,9 @@ set(CMAKE_C_VISIBILITY_PRESET hidden)
 set(CMAKE_VISIBILITY_INLINES_HIDDEN ON)
 set(CMAKE_SHARED_LIBRARY_PREFIX "")
 add_compile_options(-Wformat)
-# Orbiter's run path: Modules, Modules/<sub>'s parent, the Orbiter folder (lua.so), also in the build tree
+# Orbiter's run path: the modules go to Modules/ and link only lua.so from the Orbiter folder, also in the build tree
 set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-set(CMAKE_INSTALL_RPATH "$ORIGIN" "$ORIGIN/.." "$ORIGIN/../..")
+set(CMAKE_INSTALL_RPATH "$ORIGIN/..")
 
 set(ORBITER_ROOT "" CACHE PATH "Orbiter folder (Modules/, Orbitersdk/, lua.so)")
 set(ORBITER_CMAKE_DIR "${ORBITER_ROOT}/cmake" CACHE PATH "folder with Orbiter's rcresources.cmake and rc2cpp.py")
@@ -59,13 +59,11 @@ include(${CMAKE_CURRENT_BINARY_DIR}/projects.cmake)
 # the MSVC secure C library functions (C11 Annex K), force-included into the C++ sources
 add_library(ssv_crt STATIC linux/ssv_crt.cpp)
 target_include_directories(ssv_crt PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/linux)
-set(SSV_CRT_FLAGS "$<$<COMPILE_LANGUAGE:CXX>:SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/linux/ssv_crt.h>")
+set(SSV_CRT_FLAGS "$<$<COMPILE_LANGUAGE:CXX>:SHELL:-include \"${CMAKE_CURRENT_SOURCE_DIR}/linux/ssv_crt.h\">")
 
-# build tools: mesh group headers and the COMPOOL header, as the meshres and COMPOOL projects make them on Windows
+# build tools: mesh group headers and the COMPOOL header, as the meshres and COMPOOL projects make them on Windows (no secure C library calls)
 foreach(tool ssvmeshc HALS2CPP)
 	add_executable(${tool} ${SSV_${tool}_SRC})
-	target_compile_options(${tool} PRIVATE ${SSV_CRT_FLAGS})
-	target_link_libraries(${tool} PRIVATE ssv_crt)
 endforeach()
 set(SSV_GENERATED)
 foreach(cmd ${SSV_GEN_ssvmeshc})

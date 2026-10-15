@@ -39,6 +39,7 @@ Date         Developer
 #include "IUS_SRM1.h"
 #include <MathSSV.h>
 #include <UtilsSSV.h>
+#include <TextFile.h>// not upstream: OrbiterPath
 
 
 const static char* MESHNAME_STAGE_1 = "SSV\\IUS\\IUS_SRM1";
@@ -262,11 +263,7 @@ void IUS_SRM1::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
-#ifdef _WIN32
-	FILE* hF = fopen( filename.c_str(), "r" );
-#else
-	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
-#endif
+	FILE* hF = fopen( OrbiterPath( filename ).c_str(), "r" );// not upstream: '\' path, any letter case
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_IUS_SRM1) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -297,6 +294,13 @@ void IUS_SRM1::LoadMissionFile( void )
 	}
 
 	cJSON* version = cJSON_GetObjectItemCaseSensitive( root, "Version" );
+	if (!cJSON_IsNumber( version ))// not upstream: fix, a missing version was dereferenced
+	{// not upstream: as above
+		oapiWriteLog( "(SSV_IUS_SRM1) [ERROR] Error parsing mission file version" );// not upstream: as above
+		cJSON_Delete( root );// not upstream: as above
+		delete[] missionfilestr;// not upstream: as above
+		return;// not upstream: as above
+	}// not upstream: as above
 	switch (version->valueint)
 	{
 		case 1:

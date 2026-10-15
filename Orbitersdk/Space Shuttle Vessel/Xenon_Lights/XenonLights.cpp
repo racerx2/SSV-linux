@@ -181,7 +181,7 @@ void XenonLights::clbkPreStep(double simT, double simDT, double mjd)
 							MATRIX3 RotMatrix;
 							GetRotationMatrix(RotMatrix);
 							VECTOR3 pos = tmul(RotMatrix, -relPos);
-							pos.y = heightOffset + ((flightrec::Held( heightDraw ) - 0.5) * 50);// not upstream: the aim's draw added here, nominal in a playback (design ssv-flightrec)
+							pos.y = heightOffset + ((flightrec::Held( heightDraw ) - 0.5) * 50);// point within 25m vertically of vehicle center; not upstream: the aim's draw added here, nominal in a playback (design ssv-flightrec)
 							lightDir=pos/length(pos);
 						}
 					}
@@ -376,7 +376,7 @@ bool XenonLights::FindTarget()
 				else {
 					heightOffset = PAD_HEIGHT_OFFSET;
 				}
-				heightDraw = oapiRand();// point within 25m vertically of vehicle center; not upstream: kept, added where the aim is used (design ssv-flightrec)
+				heightDraw = oapiRand();// not upstream: the aim's draw, kept for flightrec::Held (design ssv-flightrec)
 				return true;
 			}
 		}
@@ -470,19 +470,11 @@ void XenonLights::SetLightState(bool on)
 }
 
 //global functions
-#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 }
 
-#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
-#else
-DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
-#endif
 {
 }
 

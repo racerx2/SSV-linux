@@ -1329,6 +1329,9 @@
     <ClInclude Include="oms\OMSRCSFeed.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="oms\OMSRCS_Interface.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="oms\OMS.h">
       <Filter>Header Files</Filter>
     </ClInclude>

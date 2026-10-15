@@ -170,6 +170,8 @@ namespace vc {
 
 	void LockableLever::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
 	{
+		unsigned short pos = 0;
+		if ((sscanf_s( event, " [%hu]", &pos ) != 1) || (pos >= usNumPositions)) return;
 		const bool pull = (strstr( event, "PULL" ) != NULL);
 		if (pull != bIsPulled)
 		{

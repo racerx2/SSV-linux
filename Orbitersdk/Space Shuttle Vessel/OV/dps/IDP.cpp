@@ -87,7 +87,7 @@ namespace dps {
 		pDedicatedDisplay_SOP = dynamic_cast<DedicatedDisplay_SOP*> (pGPC1->FindSoftware( "DedicatedDisplay_SOP" ));
 		assert( (pDedicatedDisplay_SOP != NULL) && "IDP::Realize.pDedicatedDisplay_SOP" );
 		pAbortModing = dynamic_cast<AbortModing*> (pGPC1->FindSoftware( "AbortModing" ));// not upstream
-		assert( (pAbortModing != NULL) && "IDP::Realize.pAbortModing" );
+		assert( (pAbortModing != NULL) && "IDP::Realize.pAbortModing" );// not upstream: as above
 		pADC1 = dynamic_cast<ADC*>(director->GetSubsystemByName( (usIDPID <= 2) ? "ADC1A" : "ADC1B" ));
 		assert( (pADC1 != NULL) && "IDP::Realize.pADC1" );
 		pADC2 = dynamic_cast<ADC*>(director->GetSubsystemByName( (usIDPID <= 2) ? "ADC2A" : "ADC2B" ));

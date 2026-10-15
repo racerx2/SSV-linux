@@ -51,7 +51,7 @@ namespace vc
 	bool RotarySwitchPotentiometer::GetPlaybackState( string& state ) const// not upstream: flight recorder, the position (design ssv-flightrec)
 	{
 		char cbuf[32];
-		sprintf_s( cbuf, sizeof(cbuf), "%.4f", pos );
+		sprintf_s( cbuf, sizeof(cbuf), "%.17g", pos );
 		state = cbuf;
 		return true;
 	}
@@ -59,7 +59,7 @@ namespace vc
 	void RotarySwitchPotentiometer::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
 	{
 		double tmp = -1.0;
-		if ((sscanf_s( event, "%lf", &tmp ) != 1) || (tmp < 0.0) || (tmp > 1.0)) return;
+		if ((sscanf_s( event, "%lf", &tmp ) != 1) || !((tmp >= 0.0) && (tmp <= 1.0))) return;
 		pos = tmp;
 		OnPositionChange();
 		return;
