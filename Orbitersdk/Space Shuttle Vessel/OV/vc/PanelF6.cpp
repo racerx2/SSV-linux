@@ -13,6 +13,7 @@ Date         Developer
 2022/08/27   GLS
 2022/09/29   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "PanelF6.h"
 #include "MDU.h"
@@ -22,6 +23,7 @@ Date         Developer
 #include "StandardSwitchCover.h"
 #include "StandardLight.h"
 #include "RotarySwitchPotentiometer.h"
+#include "StandardRotarySwitch.h"
 #include "../Atlantis.h"
 #include "../meshres_vc.h"
 #include "../ParameterValues.h"
@@ -72,6 +74,13 @@ namespace vc {
 		Add( pRangeSafeArm = new StandardDoubleLight( _sts, "RANGE SAFE ARM" ) );// using double light because of 4 inputs
 
 		Add( pAbort = new PushButtonIndicatorSingleLight( _sts, "ABORT" ) );
+
+		// not upstream: ABORT MODE rotary, positions in counterclockwise order (RTLS, OFF, ATO, TAL clockwise on the panel)
+		Add( pAbortMode = new RotaryDemuxSwitch( _sts, "ABORT MODE", 4 ) );
+		pAbortMode->SetLabel( 0, "TAL" );
+		pAbortMode->SetLabel( 1, "ATO" );
+		pAbortMode->SetLabel( 2, "OFF" );
+		pAbortMode->SetLabel( 3, "RTLS" );
 
 		Add( pHUDMode = new StdSwitch3( _sts, "HUD MODE" ) );
 		Add( pHUDBrightness = new RotarySwitchPotentiometer( _sts, "HUD BRIGHTNESS" ) );
@@ -186,6 +195,15 @@ namespace vc {
 		pAbort->SetMouseRegion( AID_F6, 0.908141f, 0.214696f, 0.939683f, 0.348886f );
 		pAbort->DefineMeshGroup( GetVCMeshIndex(), GRP_A8_S2_F6_VC );
 
+		// not upstream: the mesh models the knob at OFF; detents 28 deg apart, counterclockwise as the position number rises
+		pAbortMode->DefineGroup( GRP_DIAL_F6_VC );
+		pAbortMode->DefineRotationAngle( -84.0f );
+		pAbortMode->SetOffset( 218.0f );
+		pAbortMode->SetInitialAnimState( 2.0 / 3.0 );
+		pAbortMode->SetInitialPosition( 2 );
+		pAbortMode->SetReference( _V( -0.50395, 2.05035, 14.69695 ), -push_dir );
+		pAbortMode->SetMouseRegion( AID_F6, 0.8106f, 0.1090f, 0.8764f, 0.3770f );
+
 		pHUDMode->DefineGroup( GRP_HUDTEST_F6_VC );
 		pHUDMode->SetInitialAnimState( 0.5 );
 		pHUDMode->SetReference( _V( 0.7052, 2.4685, 14.5712 ), _V( 1, 0, 0 ) );
@@ -254,6 +272,13 @@ namespace vc {
 		pLandingGearTB[1]->SetInput( 1, pBundle, 8, TB_DN );
 		pLandingGearTB[2]->SetInput( 0, pBundle, 9, TB_UP );
 		pLandingGearTB[2]->SetInput( 1, pBundle, 10, TB_DN );
+
+		pBundle = STS()->BundleManager()->CreateBundle( "ABORT_MODE", 16 );// not upstream
+		pAbort->ConnectPushButton( pBundle, 0 );
+		pAbortMode->ConnectInputSignal( pBundle, 0 );
+		pAbortMode->ConnectOutputSignal( 1, pBundle, 1 );// ATO ABORT REQUEST
+		pAbortMode->ConnectOutputSignal( 0, pBundle, 2 );// TAL ABORT REQUEST
+		pAbortMode->ConnectOutputSignal( 3, pBundle, 3 );// RTLS ABORT REQUEST
 
 		pBundle = STS()->BundleManager()->CreateBundle( "ACA1_4", 16 );
 		pAbort->ConnectLight( 0, pBundle, 13 );

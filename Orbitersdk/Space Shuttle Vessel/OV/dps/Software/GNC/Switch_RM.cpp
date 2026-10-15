@@ -745,6 +745,26 @@ namespace dps
 		bool AFT_TRANSLATION_Z_HIGH_A = ((FF3_IOM9_CH2 & 0x0080) != 0);
 		bool AFT_TRANSLATION_Z_HIGH_B = ((FF4_IOM9_CH2 & 0x0080) != 0);
 		WriteCOMPOOL_IS( SCP_AFT_TRANSLATION_Z_HIGH, AFT_TRANSLATION_Z_HIGH_A & AFT_TRANSLATION_Z_HIGH_B );
+
+		// not upstream: ABORT MODE switch requests (ABORT pushbutton through the rotary), 2 of 3, OPS 1, 3 and 6
+		{
+			unsigned short ops = GetMajorMode() / 100;
+			unsigned short ABT[3] = {
+				ReadCOMPOOL_IS( SCP_FF1_IOM12_CH2_DATA ),
+				ReadCOMPOOL_IS( SCP_FF2_IOM12_CH2_DATA ),
+				ReadCOMPOOL_IS( SCP_FF3_IOM12_CH2_DATA )};
+			const unsigned int addr[3] = {SCP_ATO_ABORT_REQUEST, SCP_TAL_ABORT_REQUEST, SCP_RTLS_ABORT_REQUEST};
+			for (unsigned int k = 0; k < 3; k++)
+			{
+				unsigned short mask = 0x0008 << k;// bits 3 ATO, 4 TAL, 5 RTLS
+				bool A = ((ABT[0] & mask) != 0);
+				bool B = ((ABT[1] & mask) != 0);
+				bool C = ((ABT[2] & mask) != 0);
+				bool sel = (A & B) | (A & C) | (B & C);
+				if ((ops != 1) && (ops != 3) && (ops != 6)) sel = false;
+				WriteCOMPOOL_IS( addr[k], sel ? 1 : 0 );
+			}
+		}
 		return;
 	}
 

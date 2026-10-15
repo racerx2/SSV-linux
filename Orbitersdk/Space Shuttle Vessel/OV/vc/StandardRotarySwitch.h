@@ -34,6 +34,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2023/02/19   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -87,6 +88,7 @@ namespace vc
 		virtual ~RotaryDemuxSwitch();
 
 		void OnPositionChange(unsigned short usNewPosition) override;
+		void OnPreStep( double simt, double simdt, double mjd ) override;// not upstream: follows a connected input every step
 
 		void ConnectInputSignal(DiscreteBundle* pBundle, unsigned short usLine);
 		void ConnectOutputSignal(unsigned short usIndex, DiscreteBundle* pBundle, unsigned short usLine);

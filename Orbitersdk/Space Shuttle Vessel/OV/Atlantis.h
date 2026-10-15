@@ -511,6 +511,12 @@ class Atlantis: public VESSEL4
 		*/
 		THRUSTER_HANDLE th_att_lin[14];
 
+		// not upstream: aft RCS abort dump jets, 0-3 the +X jets (L1A, L3A, R1A, R3A), 4-23 the 20 null jets in opposing pairs
+		THRUSTER_HANDLE th_rcs_dump[24];
+
+		// not upstream: aft RCS manifold groups fed from the OMS tanks (OMS/RCS interconnect), [pod][0 1/2, 1 3/4/5]
+		bool aftRCSFromOMS[2][2];
+
 		bool bSSMEsDefined, bOMSDefined, bRCSDefined;
 
 		/**
@@ -648,6 +654,9 @@ class Atlantis: public VESSEL4
 		//DiscPorts
 		DiscInPort RotThrusterCommands[4], TransThrusterCommands[3];
 
+		// not upstream: aft RCS dump commands: +X 1/2, +X 3/4/5, null 1/2, null 3/4/5, null pair across the groups
+		DiscInPort AftRCSDump[5];
+
 		// Pan/Tilt PLB cameras (RMS elbow cam in RMS class)
 		// 0=A, 1=B, 2=C, 3=D
 		DiscInPort PLBCamPanLeft[4], PLBCamPanRight[4], PLBCamTiltUp[4], PLBCamTiltDown[4];
@@ -721,6 +730,8 @@ class Atlantis: public VESSEL4
 		void HideMidDeck();
 		//-----------------------------------
 		void CreateAttControls_RCS(VECTOR3 center);
+		void CreateRCSDumpJets( const VECTOR3& center );// not upstream
+		void ApplyAftRCSFeed( void );// not upstream
 
 		/**
 		 * Updates the positions of controllers (RHC, THC, RPTA, SBTC and brakes), based on user input.
@@ -896,6 +907,11 @@ class Atlantis: public VESSEL4
 		//Thruster Control; called from OrbitDAP class
 		void EnableThrusters(const int Thrusters[], int nThrusters);
 		void DisableThrusters(const int Thrusters[], int nThrusters);
+
+		void SetAftRCSFeedFromOMS( unsigned int side, unsigned int group, bool fromOMS );// not upstream: source of a manifold group (0 1/2, 1 3/4/5) of a pod, OMS or RCS tank
+		PROPELLANT_HANDLE AftRCSFeed( unsigned int side ) const;// not upstream: source of the DAP jets of a pod, OMS if either group is interconnected
+		PROPELLANT_HANDLE AftRCSFeed( unsigned int side, unsigned int group ) const;// not upstream: source of a manifold group of a pod
+		double GetOMSPropellantMass( void ) const;// not upstream: OMS propellant in both pods [kg]
 
 		/**
 		 * Wrapper for AddAnimationComponent

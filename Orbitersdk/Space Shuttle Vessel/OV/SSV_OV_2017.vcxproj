@@ -235,6 +235,10 @@
     <ClCompile Include="dps\Software\GNC\MPS_Dump.cpp" />
     <ClCompile Include="dps\Software\GNC\NW_POSN_SOP.cpp" />
     <ClCompile Include="dps\Software\GNC\OMSBurnSoftware.cpp" />
+    <ClCompile Include="dps\Software\GNC\AbortModing.cpp" />
+    <ClCompile Include="dps\Software\GNC\AOA_ATO_TGT.cpp" />
+    <ClCompile Include="dps\Software\GNC\AbortControlSequence.cpp" />
+    <ClCompile Include="dps\Software\GNC\AbortOMSRCSInterconnect.cpp" />
     <ClCompile Include="dps\Software\GNC\OMS_TVC_Command_SOP.cpp" />
     <ClCompile Include="dps\Software\GNC\OMS_TVC_Feedback_SOP.cpp" />
     <ClCompile Include="dps\Software\GNC\OrbitDAP.cpp" />
@@ -313,6 +317,7 @@
     <ClCompile Include="mps\VehicleInterfaceElectronics_BLOCK_II.cpp" />
     <ClCompile Include="oms\OMS.cpp" />
     <ClCompile Include="oms\OMS_TVC.cpp" />
+    <ClCompile Include="oms\OMSRCSFeed.cpp" />
     <ClCompile Include="PayloadBay.cpp" />
     <ClCompile Include="RemoteVideoSwitcher.cpp" />
     <ClCompile Include="RHC.cpp" />
@@ -508,6 +513,10 @@
     <ClInclude Include="dps\Software\GNC\MPS_Dump.h" />
     <ClInclude Include="dps\Software\GNC\NW_POSN_SOP.h" />
     <ClInclude Include="dps\Software\GNC\OMSBurnSoftware.h" />
+    <ClInclude Include="dps\Software\GNC\AbortModing.h" />
+    <ClInclude Include="dps\Software\GNC\AOA_ATO_TGT.h" />
+    <ClInclude Include="dps\Software\GNC\AbortControlSequence.h" />
+    <ClInclude Include="dps\Software\GNC\AbortOMSRCSInterconnect.h" />
     <ClInclude Include="dps\Software\GNC\OMS_TVC_Command_SOP.h" />
     <ClInclude Include="dps\Software\GNC\OMS_TVC_Feedback_SOP.h" />
     <ClInclude Include="dps\Software\GNC\OrbitDAP.h" />
@@ -645,6 +654,7 @@
     <ClInclude Include="mps\VehicleInterfaceElectronics_BLOCK_II.h" />
     <ClInclude Include="oms\OMS.h" />
     <ClInclude Include="oms\OMS_TVC.h" />
+    <ClInclude Include="oms\OMSRCSFeed.h" />
     <ClInclude Include="PayloadBay.h" />
     <ClInclude Include="PRLA_defs.h" />
     <ClInclude Include="RemoteVideoSwitcher.h" />

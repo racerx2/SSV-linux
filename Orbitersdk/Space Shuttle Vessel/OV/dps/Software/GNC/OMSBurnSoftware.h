@@ -42,6 +42,7 @@ Date         Developer
 2022/12/28   GLS
 2023/02/08   indy91
 2023/02/10   indy91
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -159,6 +160,13 @@ class OMSBurnSoftware : public SimpleGPCSoftware
 	float C1_OMS[3], C2_OMS[3]; //Target intercept and slope in fps and ND
 	float DTIG_OMS[3]; //Time from ET separation to ignition in seconds
 
+	// not upstream: abort target in the third slot: propellant to deplete, OPS 3 format (AOA OMS-2: height above the ellipsoid, theta from TIG)
+	float PROP_DEP_ABORT;
+	bool bAbortTgtOPS3;
+	bool bDispOPS3Fmt;// the displayed target is in OPS 3 format
+	bool bAutoLoad;// load the carried AOA target on the first MM 301 pass
+	double THETA_LSS;// launch site to OMS-1 TIG angle of the last OMS-1 load [rad], 0 if none
+
 	DiscOutPort omsEngineCommand[2];
 
 	OrbitDAP* pOrbitDAP;
@@ -191,6 +199,11 @@ public:
 	 */
 	void SetManeuverData(double maneuverTIG, const VECTOR3& maneuverDV);
 
+	// not upstream: AOA/ATO targeting interface
+	void SetAbortTarget( double HTGT, double THETA, double C1, double C2, double DTIG, double PROP_DEP, bool OPS3 );
+	bool BurnEnabled( void ) const { return EXEC_CMD; };
+	double GetTHETA_LSS( void ) const { return THETA_LSS; };
+
 	VECTOR3 GetAttitudeCommandErrors() const;
 
 private:
@@ -199,6 +212,7 @@ private:
 
 	//Display initialization tasks
 	void OPS1_INIT(int mm);
+	void OPS1_DISP_INIT(int mm);// not upstream
 	void OPS2_INIT();
 	void OPS3_INIT(int mm);
 

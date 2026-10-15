@@ -139,6 +139,8 @@ private:
 	 */
 	bool IsValidMajorModeTransition( unsigned short newMajorMode ) const;
 
+	bool IsModeRecall( unsigned short newMajorMode ) const;// not upstream: OPS entry of the current major mode is a recall
+
 public:
 	SimpleGPCSystem( AtlantisSubsystemDirector* _director, const string& _ident, bool _GNC );
 	virtual ~SimpleGPCSystem();

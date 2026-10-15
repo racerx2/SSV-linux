@@ -114,6 +114,7 @@ public:
 	static bool GetValILOAD( const std::string& name, const std::map<std::string,std::string>& ILOADs, unsigned short count, double* var );
 	static bool GetValILOAD( const std::string& name, const std::map<std::string,std::string>& ILOADs, unsigned short count, int* var );
 	static bool GetValILOAD( const std::string& name, const std::map<std::string,std::string>& ILOADs, unsigned short count, unsigned short* var );
+	static bool HasILOAD( const std::string& name, const std::map<std::string,std::string>& ILOADs ) { return ILOADs.find( name ) != ILOADs.end(); };// not upstream: optional I-loads, no missing I-load error
 
 protected:
 	/**

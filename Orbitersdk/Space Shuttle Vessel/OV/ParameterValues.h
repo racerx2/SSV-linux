@@ -79,6 +79,7 @@ Date         Developer
 2022/11/25   GLS
 2023/02/06   GLS
 2024/02/01   GLS
+2026/10/15   racerx2
 ********************************************/
 #ifndef _PARAMETERVALUES_H_
 #define _PARAMETERVALUES_H_
@@ -133,6 +134,10 @@ inline constexpr double OMS_ISP1 = OMS_ISP0*0.75;
 inline constexpr double RCS_ISP0 = OMS_ISP0;
 inline constexpr double RCS_ISP1 = RCS_ISP0*0.75;
 // Vacuum and sea-level fuel-specific impulse for Reaction Control System [m/s]
+
+inline constexpr double RCS_DUMP_JET_THRUST = 3870.0;
+inline constexpr double RCS_DUMP_JET_ISP0 = 289.0*9.80665;
+// not upstream: one aft RCS primary jet of the abort dump (870 lbf, Isp 289 s) [N], [m/s]
 
 inline constexpr double ORBITER_PITCH_TORQUE = 239900.00;
 inline constexpr double ORBITER_YAW_TORQUE = 239900.00;

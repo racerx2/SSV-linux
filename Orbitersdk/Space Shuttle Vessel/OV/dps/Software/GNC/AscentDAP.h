@@ -46,6 +46,7 @@ Date         Developer
 2025/12/27   indy91
 2026/01/06   indy91
 2026/01/24   indy91
+2026/10/15   racerx2
 ********************************************/
 #ifndef _dps_ASCENTDAP_H_
 #define _dps_ASCENTDAP_H_
@@ -84,6 +85,8 @@ public:
 	VECTOR3 GetIYVector() const;
 	// Get desired insertion velocity
 	double GetVDMAG() const;
+	// not upstream: new MECO targets (metric) and, if given, a new target plane (M50), from AOA/ATO targeting
+	void SetTargets(double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50);
 private:
 
 	void AscentGuidanceTask();
@@ -324,6 +327,15 @@ public:
 	double GetCrossTrack(void) const;
 	double GetDeltaInclination(void) const;
 
+	// not upstream: AOA/ATO targeting interface; MECO targets in m, m/s, rad, plane in M50
+	void SetMECOTargets( double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50 );
+	void GetMECOTargets( double& r_D, double& v_D, double& gamma_D ) const;
+	double GetMECOTargetVelocity( void ) const { return VD_TGT; };
+	int GetNSSME( void ) const { return NSSME; };
+	bool GetFineCount( void ) const { return finecount; };
+	VECTOR3 GetIY( void ) const { return guid.GetIYVector(); };
+	double GetTargetInclination( void ) const { return INCL_TGT; };
+
 private:
 	/**
 	 * First stage auto guidance
@@ -380,14 +392,16 @@ private:
 	// Velocity at cutoff (does not include tailoff)
 	double TgtSpd;
 
+	// not upstream: current MECO targets [m, m/s, rad], nominal or from AOA/ATO targeting
+	double RD_TGT, VD_TGT, GAMD_TGT;
+	void NominalMECOTargets( void );
+
 	unsigned short KMAX_NOM;
 	unsigned short KMAX_ABORT;
 	unsigned short KMAX_SECONDARY;
 	unsigned short K_CO_MAX;
 	double VREF_ADJUST;
 	double TREF_ADJUST;
-	unsigned short OMSASS;
-	double NOMTM;
 	double MASS_LOW_LEVEL;
 	double ALIM_1;
 	double ALIM_2;
@@ -408,8 +422,7 @@ private:
 	bool RAUTO_BFLAMP;
 	bool RMNL_BFLAMP;
 
-	// ports for commanding thrusters
-	discsignals::DiscOutPort OMSCommand[2];
+	// ports for commanding thrusters (not upstream: the OMS commands moved to AbortControlSequence)
 	discsignals::DiscOutPort SERC;
 
 	/**
@@ -475,6 +488,8 @@ private:
 	double XTRK;
 	// Delta inclination [RAD]
 	double MEDS_D_INCL;
+	// not upstream: target inclination [RAD]
+	double INCL_TGT;
 
 	AscentGuidance guid;
 };
