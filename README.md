@@ -17,6 +17,20 @@ Install: extract `SSV-1.16-linux-1.0-x64.zip` into the Orbiter folder, then run 
 
 Build (CMake 3.19+, Ninja, GCC, Qt 6): `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder> -DORBITER_CMAKE_DIR=<Orbiter source>/cmake`, then `cmake --build out/build`. The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip.
 
+## Screenshots
+In the Orbiter Linux Vulkan client: plumes, entry heating, the OPS 1 aborts this port adds, the HUD.
+
+| | |
+|---|---|
+| ![STS-26R liftoff from LC-39B, SRB and SSME plumes](linux/screenshots/launch-39b.jpg)<br>STS-26R liftoff from LC-39B, SRB and SSME plumes | ![Clearing the tower](linux/screenshots/launch-plumes.jpg)<br>Clearing the tower |
+| ![T+35 s: satin paint on the SRBs](linux/screenshots/srb-paint.jpg)<br>T+35 s: satin paint on the SRBs | ![T+110 s, plumes spreading in thin air](linux/screenshots/ascent.jpg)<br>T+110 s, plumes spreading in thin air |
+| ![SRB separation](linux/screenshots/srb-separation.jpg)<br>SRB separation | ![OPS 1 abort to orbit: ATO TRAJ 2, MM 103 ATO](linux/screenshots/ops-ato-traj.jpg)<br>OPS 1 abort to orbit: ATO TRAJ 2, MM 103 ATO |
+| ![ATO 1 MNVR EXEC, the abort OMS-1 target loaded](linux/screenshots/ops-ato-oms1.jpg)<br>ATO 1 MNVR EXEC, the abort OMS-1 target loaded | ![Abort once around: AOA MNVR TRANS, OPS 301 flashing](linux/screenshots/ops-aoa-ops301.jpg)<br>Abort once around: AOA MNVR TRANS, OPS 301 flashing |
+| ![Entry heating, STS-107 entry interface](linux/screenshots/reentry-heating.jpg)<br>Entry heating, STS-107 entry interface | ![The nose cap and belly at peak heating](linux/screenshots/reentry-nose.jpg)<br>The nose cap and belly at peak heating |
+| ![Entry over land in daylight](linux/screenshots/reentry-day.jpg)<br>Entry over land in daylight | ![KSC 15 approach, HUD on (MM 305)](linux/screenshots/hud-approach.jpg)<br>KSC 15 approach, HUD on (MM 305) |
+| ![The HUD combiners glow through the windshield while HUD POWER is on](linux/screenshots/hud-glass-glow.jpg)<br>The HUD combiners glow through the windshield while HUD POWER is on |  |
+
+
 # Installation
 1. Install Orbiter 2024.
 
