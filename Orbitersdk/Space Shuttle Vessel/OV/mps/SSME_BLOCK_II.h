@@ -86,8 +86,8 @@ namespace mps
 			double posMOV;
 			double posMFV;
 
-			double IMSLHeDraw;// not upstream: the random part of the IMSL He usage, [0,1) (design ssv-flightrec)
-			double IMSLHeUsage( void ) const;// not upstream: as above, nominal in a playback
+			flightrec::Draw IMSLHeDraw{ 0.5 };// not upstream: the random part of the IMSL He usage, [0,1) (design ssv-flightrec rev 4)
+			double IMSLHeUsage( void ) const;// not upstream: as above
 
 			Sensor Sensor_Press[22];
 			Sensor Sensor_Temp[16];

@@ -32,6 +32,28 @@ Date         Developer
 #include <cstdlib>
 #include <cctype>
 #include <set>
+#include <vector>
+#include <algorithm>
+
+
+namespace
+{
+	// this module's kept draws, live ones in construction order; never freed, so no exit order (design ssv-flightrec rev 4)
+	std::vector<flightrec::Draw*>& Slots( void )
+	{
+		static std::vector<flightrec::Draw*>* slots = new std::vector<flightrec::Draw*>;
+		return *slots;
+	}
+
+	// LIVE: no playback; WAIT: until the recording's draws arrived; DRAWN: they did; NOMINAL: other draws or format 1
+	enum class Mode { LIVE, WAIT, DRAWN, NOMINAL };
+	Mode mode = Mode::LIVE;
+
+	// recorders of this module playing back
+	int playbacks = 0;
+
+	constexpr size_t DRAWS_LINE = 16;// values in an SSV_DRAWS line, under Orbiter's 1024 characters
+}
 
 
 namespace flightrec
@@ -44,9 +66,47 @@ namespace flightrec
 		return nominal ? 0.5 : oapiRand();
 	}
 
-	double Held( double u )
+	Draw::Draw( double u ):u(u)
 	{
-		return nominal ? 0.5 : u;
+		Slots().push_back( this );
+	}
+
+	Draw::Draw( const Draw& d ):u(d.u)
+	{
+		Slots().push_back( this );
+	}
+
+	Draw& Draw::operator=( const Draw& d )
+	{
+		u = d.u;
+		return *this;
+	}
+
+	Draw::~Draw( void )
+	{
+		std::vector<Draw*>& slots = Slots();
+		const auto it = std::find( slots.begin(), slots.end(), this );
+		if (it != slots.end()) slots.erase( it );
+	}
+
+	double Draw::Get( void ) const
+	{
+		return ((mode == Mode::WAIT) || (mode == Mode::NOMINAL)) ? 0.5 : u;
+	}
+
+	void Draw::Redraw( const Recorder& r )
+	{
+		if (r.PlayingBack()) return;
+		u = oapiRand();
+		if (r.Recording())
+		{
+			const std::vector<Draw*>& slots = Slots();
+			const size_t i = std::find( slots.begin(), slots.end(), this ) - slots.begin();
+			char cbuf[64];
+			snprintf( cbuf, sizeof cbuf, "%zu %.17g", i, u );
+			r.Record( DRAW, cbuf );
+		}
+		return;
 	}
 
 	std::string Quote( const std::string& s )
@@ -99,13 +159,27 @@ namespace flightrec
 	}
 
 
-	Recorder::Recorder( VESSEL* v ):v(v), steps(0), started(false), locked(false)
+	Recorder::Recorder( VESSEL* v ):v(v), steps(0), started(false), locked(false), playing(false)
 	{
 	}
 
 	Recorder::~Recorder( void )
 	{
 		if (locked) nominal--;
+		if (playing && (--playbacks == 0)) mode = Mode::LIVE;
+	}
+
+	void Recorder::Track( void )
+	{
+		const bool pb = v->Playback();
+		if (pb == playing) return;
+		playing = pb;
+		if (pb)
+		{
+			if (playbacks++ == 0) mode = Mode::WAIT;
+		}
+		else if (--playbacks == 0) mode = Mode::LIVE;
+		return;
 	}
 
 	void Recorder::Step( void )
@@ -118,8 +192,23 @@ namespace flightrec
 			char cbuf[16];
 			snprintf( cbuf, sizeof cbuf, "%d", FORMAT );
 			v->RecordEvent( NOMINAL, cbuf );
+
+			const std::vector<Draw*>& slots = Slots();
+			size_t i = 0;
+			do
+			{
+				std::string line = std::to_string( slots.size() ) + " " + std::to_string( i );
+				for (size_t n = 0; (n < DRAWS_LINE) && (i < slots.size()); n++, i++)
+				{
+					char vbuf[32];
+					snprintf( vbuf, sizeof vbuf, " %.17g", slots[i]->u );
+					line += vbuf;
+				}
+				v->RecordEvent( DRAWS, line.c_str() );
+			} while (i < slots.size());
 		}
 
+		Track();
 		if (locked && !v->Playback())
 		{
 			locked = false;
@@ -131,22 +220,61 @@ namespace flightrec
 
 	bool Recorder::OnPlaybackEvent( const char* type, const char* event )
 	{
+		Track();
+		if (!event) event = "";
 		if (!_stricmp( type, NOMINAL ))
 		{
 			if (!locked && v->Playback())
 			{
-				const int format = atoi( event ? event : "" );
-				if (format != FORMAT)
+				const int format = atoi( event );
+				if ((format != 1) && (format != FORMAT))
 				{
 					static std::set<std::string> logged;
 					if (logged.insert( v->GetName() ).second)
-						oapiWriteLogV( "(SSV) [WARNING] Flight recorder: %s recorded in format %d, not %d: not played back nominal", v->GetName(), format, FORMAT );
+						oapiWriteLogV( "(SSV) [WARNING] Flight recorder: %s recorded in format %d, not 1 or %d: not played back nominal", v->GetName(), format, FORMAT );
 					return true;
 				}
 				locked = true;
 				nominal++;
-				oapiWriteLogV( "(SSV) [INFO] Flight recorder: %s plays back nominal (format %d)", v->GetName(), format );
+				if ((format == 1) && (mode != Mode::LIVE)) mode = Mode::NOMINAL;
+				oapiWriteLogV( "(SSV) [INFO] Flight recorder: %s plays back nominal%s (format %d)", v->GetName(), (format == 1) ? "" : ", the recorded draws kept", format );
 			}
+			return true;
+		}
+		if (!_stricmp( type, DRAWS ))
+		{
+			if (!locked || (mode == Mode::NOMINAL) || (mode == Mode::LIVE)) return true;
+			std::vector<Draw*>& slots = Slots();
+			char* e = nullptr;
+			const long count = strtol( event, &e, 10 );
+			const char* p = e;
+			long i = strtol( p, &e, 10 );
+			if ((e == p) || (count < 0) || (i < 0)) return true;
+			if (count != static_cast<long>(slots.size()))
+			{
+				mode = Mode::NOMINAL;
+				oapiWriteLogV( "(SSV) [WARNING] Flight recorder: %s recorded %ld kept draws, %zu now: played back nominal", v->GetName(), count, slots.size() );
+				return true;
+			}
+			if (i > count) return true;
+			for (p = e; i < count; i++, p = e)
+			{
+				const double u = strtod( p, &e );
+				if (e == p) break;
+				slots[i]->u = u;
+			}
+			if ((i >= count) && (mode == Mode::WAIT)) mode = Mode::DRAWN;
+			return true;
+		}
+		if (!_stricmp( type, DRAW ))
+		{
+			if (!locked || (mode == Mode::NOMINAL) || (mode == Mode::LIVE)) return true;
+			std::vector<Draw*>& slots = Slots();
+			char* e = nullptr;
+			const long i = strtol( event, &e, 10 );
+			const char* p = e;
+			const double u = strtod( p, &e );
+			if ((e != p) && (i >= 0) && (i < static_cast<long>(slots.size()))) slots[i]->u = u;
 			return true;
 		}
 		return !_stricmp( type, EVENT ) || !_stricmp( type, CW ) || !_stricmp( type, MA );
@@ -155,6 +283,11 @@ namespace flightrec
 	bool Recorder::Recording( void ) const
 	{
 		return v->Recording();
+	}
+
+	bool Recorder::PlayingBack( void ) const
+	{
+		return v->Playback();
 	}
 
 	void Recorder::Record( const char* type, const std::string& text ) const

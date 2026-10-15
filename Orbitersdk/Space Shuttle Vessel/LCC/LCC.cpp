@@ -75,8 +75,8 @@ LCC::LCC(OBJHANDLE hVessel, int flightmodel)
 
 	MPSHeSupply = true;
 	MPSHeSupplyPressure1 = 2000;
-	MPSHeSupplyDraw = oapiRand();// not upstream: kept for flightrec::Held (design ssv-flightrec)
-	MPSHeSupplyPressure2 = 4150 + (300 * MPSHeSupplyDraw);// 4150 - 4450 (give 50 psi leeway to LCC redlines); not upstream: the draw above
+	MPSHeSupplyDraw = flightrec::Draw( oapiRand() );// not upstream: the value only, kept draw (design ssv-flightrec rev 4)
+	MPSHeSupplyPressure2 = 4150 + (300 * MPSHeSupplyDraw.Get());// 4150 - 4450 (give 50 psi leeway to LCC redlines); not upstream: the draw above
 
 	MPSTVCProfile = false;
 
@@ -170,7 +170,7 @@ void LCC::clbkPreStep(double simt, double simdt, double mjd)
 		}
 
 		/////////// MPS He Supply ///////////
-		const double press2 = 4150 + (300 * flightrec::Held( MPSHeSupplyDraw ));// not upstream: MPSHeSupplyPressure2, nominal in a playback (design ssv-flightrec)
+		const double press2 = 4150 + (300 * MPSHeSupplyDraw.Get());// not upstream: MPSHeSupplyPressure2, the recording's in a playback (design ssv-flightrec rev 4)
 		if (MPSHeSupply == true)
 		{
 			if (CountdownTime >= -12000.0)// T-3h20m

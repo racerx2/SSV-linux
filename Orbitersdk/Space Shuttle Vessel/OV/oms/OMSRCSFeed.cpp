@@ -45,7 +45,7 @@ namespace oms
 			pos[s][VLV_XFD345] = 0.0;
 			pos[s][VLV_OMSXFDA] = 0.0;
 			pos[s][VLV_OMSXFDB] = 0.0;
-			fromOMS[s][0] = fromOMS[s][1] = false;
+			feed[s][0] = feed[s][1] = AFTFEED_RCS;
 		}
 		return;
 	}
@@ -73,8 +73,8 @@ namespace oms
 		{
 			for (unsigned int g = 0; g < 2; g++)
 			{
-				fromOMS[s][g] = GroupFeedFromOMS( s, g );
-				STS()->SetAftRCSFeedFromOMS( s, g, fromOMS[s][g] );
+				feed[s][g] = GroupFeed( s, g );
+				STS()->SetAftRCSFeed( s, g, feed[s][g] );
 			}
 		}
 		return;
@@ -99,10 +99,33 @@ namespace oms
 		else return oms && IsClosed( side, VLV_TK345 ) && IsOpen( side, VLV_XFD345 );
 	}
 
+	int OMSRCSFeed::CrossfeedTank( unsigned int side, unsigned int group ) const
+	{
+		assert( (side <= 1) && (group <= 1) && "OMSRCSFeed::CrossfeedTank" );
+		const OMSRCS_VLV tk[2] = {VLV_TK12, VLV_TK345};
+		const OMSRCS_VLV xfd[2] = {VLV_XFD12, VLV_XFD345};
+		if (!IsOpen( side, xfd[group] )) return -1;
+		// the crossfeed line joins the crossfeed valves of both groups of both pods
+		const unsigned int other[3][2] = {{side, 1 - group}, {1 - side, 0}, {1 - side, 1}};
+		for (const auto& o : other)
+		{
+			if (!IsClosed( o[0], tk[o[1]] ) && IsOpen( o[0], xfd[o[1]] )) return static_cast<int>(o[0]);
+		}
+		return -1;
+	}
+
 	bool OMSRCSFeed::GroupIsolated( unsigned int side, unsigned int group ) const
 	{
 		assert( (side <= 1) && (group <= 1) && "OMSRCSFeed::GroupIsolated" );
-		return IsClosed( side, (group == 0) ? VLV_TK12 : VLV_TK345 ) && !GroupFeedFromOMS( side, group );
+		return IsClosed( side, (group == 0) ? VLV_TK12 : VLV_TK345 ) && !GroupFeedFromOMS( side, group ) && (CrossfeedTank( side, group ) < 0);
+	}
+
+	AFTFEED OMSRCSFeed::GroupFeed( unsigned int side, unsigned int group ) const
+	{
+		if (GroupFeedFromOMS( side, group )) return AFTFEED_OMS;
+		else if (GroupIsolated( side, group )) return AFTFEED_NONE;
+		else if (!IsClosed( side, (group == 0) ? VLV_TK12 : VLV_TK345 )) return AFTFEED_RCS;
+		else return (CrossfeedTank( side, group ) == static_cast<int>(side)) ? AFTFEED_RCS : AFTFEED_XRCS;
 	}
 
 	void OMSRCSFeed::OnPreStep( double simt, double simdt, double mjd )
@@ -124,11 +147,11 @@ namespace oms
 
 			for (unsigned int g = 0; g < 2; g++)
 			{
-				bool feed = GroupFeedFromOMS( s, g );
-				if (feed != fromOMS[s][g])
+				AFTFEED f = GroupFeed( s, g );
+				if (f != feed[s][g])
 				{
-					fromOMS[s][g] = feed;
-					STS()->SetAftRCSFeedFromOMS( s, g, feed );
+					feed[s][g] = f;
+					STS()->SetAftRCSFeed( s, g, f );
 				}
 			}
 		}

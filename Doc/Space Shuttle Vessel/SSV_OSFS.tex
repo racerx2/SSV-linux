@@ -176,7 +176,11 @@ Unlike the real world, there is no weather forecast in Orbiter, so during landin
   \begin{tabularx}{470pt}{>{\centering\arraybackslash}p{75pt} | >{\centering\arraybackslash}p{100pt} | >{\centering\arraybackslash}p{150pt} | >{\centering\arraybackslash}p{95pt}}
     \textbf{Event} & \textbf{Text} & \textbf{Written by} & \textbf{On playback} \\
     \hline
-	SSV\_NOMINAL & format (1) & every SSV vessel, at the start of a recording & nominal values, user input locked\\
+	SSV\_NOMINAL & format (2) & every SSV vessel, at the start of a recording & nominal noise, user input locked\\
+	\hline\rule{0pt}{2ex}
+	SSV\_DRAWS & count, first index, values & every SSV vessel, after SSV\_NOMINAL & the kept draws are set\\
+	\hline\rule{0pt}{2ex}
+	SSV\_DRAW & index, value & a kept draw made again (Xenon light aim) & the draw is set\\
 	\hline\rule{0pt}{2ex}
 	SSV\_VC & "panel" "component" state & VC switches, breakers, rotaries, wheels, pushbuttons, keyboards, MDUs, CTVM & the component is set\\
 	\hline\rule{0pt}{2ex}
@@ -198,7 +202,7 @@ SSV uses the Orbiter flight recorder (Ctrl+C) to record a mission and play it ba
 Orbiter records the trajectory, attitude, thrust levels, attachments and its own events. SSV adds the crew's actions: the VC controls, the hand controllers, pedals and brakes, the keyboard commands, the pad dialogs, the crawler and OTS controls and the LCC MFD. Mission events, C\&W messages and the master alarm are written as notes, which can be read in the vessel's .atc file in "<Orbiter installation>\textbackslash Flights".\\
 \\
 \textbf{Playback}\\
-During a playback the SSV systems run live on the recorded trajectory and inputs. Random variation (sensor errors, APU and SRB noise, ET boil-off, MPS helium supply pressure, SSME helium usage, MLP igniter time, Xenon light aim) is set to its nominal value, so nothing random can cause a hold or a C\&W that the recording did not have. A playback repeats the inputs and states of the recording, not every frame of it.\\
+During a playback the SSV systems run live on the recorded trajectory and inputs. Random values kept for the flight (sensor errors, MPS helium supply pressure, SSME helium usage, MLP igniter time, Xenon light aim) are played back as recorded (format 2), so the recording's holds and C\&W happen again; random noise drawn every step (APU, SRB, ET boil-off) is at its nominal value. A format 1 recording plays back all of them at nominal. A playback repeats the inputs and states of the recording, not every frame of it.\\
 \\
 \textbf{Input lock}\\
 While a vessel plays back, its VC, keyboard commands, dialogs and MFD commands ignore the user, as the recorded crew is in control. Camera and view keys still work. The lock ends with the playback.\\

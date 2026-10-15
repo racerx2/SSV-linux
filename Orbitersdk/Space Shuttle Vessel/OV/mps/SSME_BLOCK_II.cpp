@@ -121,7 +121,7 @@ namespace mps
 		posMFV = 0;
 		posMOV = 0;
 
-		IMSLHeDraw = oapiRand();// not upstream: the draw, IMSLHeUsage() applies it (design ssv-flightrec)
+		IMSLHeDraw = flightrec::Draw( oapiRand() );// not upstream: the value only, IMSLHeUsage() applies it (design ssv-flightrec rev 4)
 
 		Sensor_Press[SSME_BLOCK_II_FPB_PP] = Sensor( 0, 5000 );
 		Sensor_Press[SSME_BLOCK_II_OPB_PP] = Sensor( 0, 5000 );
@@ -181,9 +181,9 @@ namespace mps
 		return;
 	}
 
-	double SSME_BLOCK_II::IMSLHeUsage( void ) const// not upstream: 20.8 to 21.3, IMSL max 21.31884; nominal in a playback (design ssv-flightrec)
+	double SSME_BLOCK_II::IMSLHeUsage( void ) const// not upstream: 20.8 to 21.3, IMSL max 21.31884; the recording's in a playback (design ssv-flightrec rev 4)
 	{
-		return 20.8 + (0.5 * flightrec::Held( IMSLHeDraw ));
+		return 20.8 + (0.5 * IMSLHeDraw.Get());
 	}
 
 	void SSME_BLOCK_II::OnSaveState( FILEHANDLE scn ) const

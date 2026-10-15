@@ -130,7 +130,8 @@ private:
 
 	bool IsT0UmbilicalConnected( void ) const;
 
-	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the HBOI time nominal in a playback (design ssv-flightrec)
+	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder (design ssv-flightrec)
+	flightrec::Draw HBOIDraw{ oapiRand() };// not upstream: as above, the HBOI time's draw, kept (rev 4)
 };
 
 #endif// _SSVMLP_H_

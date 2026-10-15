@@ -158,6 +158,7 @@ Date         Developer
 #include <EngConst.h>
 #include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 #include "CrewControls.h"// not upstream: as above
+#include "oms/OMSRCS_Interface.h"// not upstream: OMS/RCS interconnect
 
 
 typedef struct {
@@ -468,6 +469,7 @@ class Atlantis: public VESSEL4
 		PROPELLANT_HANDLE ph_frcs;
 		PROPELLANT_HANDLE ph_lrcs;
 		PROPELLANT_HANDLE ph_rrcs;
+		PROPELLANT_HANDLE ph_aftmanf_dry[2];// not upstream: dry aft RCS manifold of the left and right pod, no propellant
 		THRUSTER_HANDLE th_ssme[3];                // handles for SSME
 		THRUSTER_HANDLE th_oms[2];               // handles for OMS engines
 		THRUSTER_HANDLE th_srb[2];                 // handles for SRB engines
@@ -516,8 +518,9 @@ class Atlantis: public VESSEL4
 		// not upstream: aft RCS abort dump jets, 0-3 the +X jets (L1A, L3A, R1A, R3A), 4-23 the 20 null jets in opposing pairs
 		THRUSTER_HANDLE th_rcs_dump[24];
 
-		// not upstream: aft RCS manifold groups fed from the OMS tanks (OMS/RCS interconnect), [pod][0 1/2, 1 3/4/5]
-		bool aftRCSFromOMS[2][2];
+		// not upstream: source of the aft RCS manifold groups (OMS/RCS interconnect, tank isolation), [pod][0 1/2, 1 3/4/5]
+		oms::AFTFEED aftRCSSource[2][2];
+		int aftJetPod[17 + 14];// not upstream: pod of th_att_rcs and th_att_lin as created (0 left, 1 right, -1 forward), as crossfeed may give a jet the other pod's tank
 
 		bool bSSMEsDefined, bOMSDefined, bRCSDefined;
 
@@ -923,8 +926,8 @@ class Atlantis: public VESSEL4
 		void EnableThrusters(const int Thrusters[], int nThrusters);
 		void DisableThrusters(const int Thrusters[], int nThrusters);
 
-		void SetAftRCSFeedFromOMS( unsigned int side, unsigned int group, bool fromOMS );// not upstream: source of a manifold group (0 1/2, 1 3/4/5) of a pod, OMS or RCS tank
-		PROPELLANT_HANDLE AftRCSFeed( unsigned int side ) const;// not upstream: source of the DAP jets of a pod, OMS if either group is interconnected
+		void SetAftRCSFeed( unsigned int side, unsigned int group, oms::AFTFEED feed );// not upstream: source of a manifold group (0 1/2, 1 3/4/5) of a pod, RCS tank, OMS, none or the other pod's RCS tank
+		PROPELLANT_HANDLE AftRCSFeed( unsigned int side ) const;// not upstream: source of the DAP jets of a pod: OMS, else its RCS tank, else the other pod's, else dry
 		PROPELLANT_HANDLE AftRCSFeed( unsigned int side, unsigned int group ) const;// not upstream: source of a manifold group of a pod
 		double GetOMSPropellantMass( void ) const;// not upstream: OMS propellant in both pods [kg]
 
