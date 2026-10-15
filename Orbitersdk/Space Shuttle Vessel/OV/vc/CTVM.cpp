@@ -183,6 +183,7 @@ namespace vc
 				// on
 				if (_event & PANEL_MOUSE_LBDOWN)
 				{
+					RecordInput( "PWR ON" );// not upstream: flight recorder (design ssv-flightrec)
 					OnPowerOn();
 					SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
 					return true;
@@ -193,6 +194,7 @@ namespace vc
 				// off
 				if (_event & PANEL_MOUSE_LBDOWN)
 				{
+					RecordInput( "PWR OFF" );// not upstream: as above
 					OnPowerOff();
 					SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
 					return true;
@@ -206,12 +208,14 @@ namespace vc
 			{
 				if (_event & PANEL_MOUSE_LBDOWN)
 				{
+					RecordInput( "SEL 1" );// not upstream: as above
 					OnSelectPress();
 					SoundPlay( STS()->GetSound(), KEY_PRESS_SOUND );
 					return true;
 				}
 				else if (_event & PANEL_MOUSE_LBUP)
 				{
+					RecordInput( "SEL 0" );// not upstream: as above
 					OnSelectDepress();
 					return true;
 				}
@@ -224,12 +228,14 @@ namespace vc
 			{
 				if (_event & PANEL_MOUSE_LBDOWN)
 				{
+					RecordInput( "FN L" );// not upstream: as above
 					OnFunctionLeft();
 					SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
 					return true;
 				}
 				else if (_event & PANEL_MOUSE_LBUP)
 				{
+					RecordInput( "FN C" );// not upstream: as above
 					OnFunctionCenter();
 					SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
 					return true;
@@ -239,12 +245,14 @@ namespace vc
 			{
 				if (_event & PANEL_MOUSE_LBDOWN)
 				{
+					RecordInput( "FN R" );// not upstream: as above
 					OnFunctionRight();
 					SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
 					return true;
 				}
 				else if (_event & PANEL_MOUSE_LBUP)
 				{
+					RecordInput( "FN C" );// not upstream: as above
 					OnFunctionCenter();
 					SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
 					return true;
@@ -252,6 +260,38 @@ namespace vc
 			}
 		}
 		return false;
+	}
+
+	void CTVM::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: flight recorder, the recorded action with its sound (design ssv-flightrec)
+	{
+		const char* p = event;
+		std::string act, arg;
+		if (!flightrec::NextToken( p, act ) || !flightrec::NextToken( p, arg )) return;
+		if (act == "PWR")
+		{
+			if (arg == "ON") OnPowerOn();
+			else if (arg == "OFF") OnPowerOff();
+			else return;
+			SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
+		}
+		else if (act == "SEL")
+		{
+			if (arg == "1")
+			{
+				OnSelectPress();
+				SoundPlay( STS()->GetSound(), KEY_PRESS_SOUND );
+			}
+			else if (arg == "0") OnSelectDepress();
+		}
+		else if (act == "FN")
+		{
+			if (arg == "L") OnFunctionLeft();
+			else if (arg == "R") OnFunctionRight();
+			else if (arg == "C") OnFunctionCenter();
+			else return;
+			SoundPlay( STS()->GetSound(), SWITCH_THROW_SOUND );
+		}
+		return;
 	}
 
 	void CTVM::OnPowerOn( void )

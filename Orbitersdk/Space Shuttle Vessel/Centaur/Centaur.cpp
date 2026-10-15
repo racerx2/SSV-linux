@@ -38,6 +38,7 @@ Date         Developer
 #include "meshres_Centaur_GPrime.h"
 #include <MathSSV.h>
 #include <UtilsSSV.h>
+#include <cmath>// not upstream: flight recorder (design ssv-flightrec)
 
 
 const static char* MESHNAME_G = "SSV\\Centaur\\CentaurG";
@@ -441,6 +442,9 @@ void Centaur::clbkPreStep( double simt, double simdt, double mjd )
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+		if (flightrecorder.JustStarted()) RecordManRates();// not upstream: as above
+
 		if ((!ACS_ENA) && (timer_ACS_ENA != -1.0))
 		{
 			timer_ACS_ENA += simdt;
@@ -611,32 +615,32 @@ int Centaur::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			// man gimbal
 			if (key == OAPI_KEY_NUMPAD2)
 			{
-				manP -= VEHICLE_MAX_RATE_CMD;
+				ManRate( manP, -VEHICLE_MAX_RATE_CMD );// not upstream: flight recorder (design ssv-flightrec)
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD8)
 			{
-				manP -= -VEHICLE_MAX_RATE_CMD;
+				ManRate( manP, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD1)
 			{
-				manY -= VEHICLE_MAX_RATE_CMD;
+				ManRate( manY, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD3)
 			{
-				manY -= -VEHICLE_MAX_RATE_CMD;
+				ManRate( manY, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD6)
 			{
-				manR -= VEHICLE_MAX_RATE_CMD;
+				ManRate( manR, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD4)
 			{
-				manR -= -VEHICLE_MAX_RATE_CMD;
+				ManRate( manR, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			return 0;
@@ -645,32 +649,32 @@ int Centaur::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 		// man gimbal
 		if (key == OAPI_KEY_NUMPAD2)
 		{
-			manP += VEHICLE_MAX_RATE_CMD;
+			ManRate( manP, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD8)
 		{
-			manP += -VEHICLE_MAX_RATE_CMD;
+			ManRate( manP, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD1)
 		{
-			manY += VEHICLE_MAX_RATE_CMD;
+			ManRate( manY, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD3)
 		{
-			manY += -VEHICLE_MAX_RATE_CMD;
+			ManRate( manY, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD6)
 		{
-			manR += VEHICLE_MAX_RATE_CMD;
+			ManRate( manR, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD4)
 		{
-			manR += -VEHICLE_MAX_RATE_CMD;
+			ManRate( manR, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 
@@ -680,27 +684,12 @@ int Centaur::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 
 			if (key == OAPI_KEY_J)
 			{
-				// remove payload mass from centaur dry mass
-				OBJHANDLE ohPL = GetAttachmentStatus( ahToPayload );
-				if (ohPL)
-				{
-					VECTOR3 cg;
-					double mass = GetMassAndCoGOfAttachedObject( this, ahToPayload, cg );
-					SetEmptyMass( GetEmptyMass() - mass );
-				}
-				// separate payload
-				DetachChild( ahToPayload, 0.3 );
+				CrewCommand( "PLSEP" );// not upstream: flight recorder, the body is in ApplyCrewCommand (design ssv-flightrec)
 				return 1;
 			}
 			else if ((key >= OAPI_KEY_1) && (key <= OAPI_KEY_8))
 			{
-				OBJHANDLE ohPL = GetAttachmentStatus( ahToPayload );
-				if (ohPL)
-				{
-					VESSEL* vPL = oapiGetVesselInterface( ohPL );
-					if (vPL->Version() >= 2)
-						((VESSEL3*)vPL)->clbkGeneric( VMSG_USER + 0x0101, key - 1, NULL );
-				}
+				CrewCommand( "PL " + std::to_string( key - 1 ) );// not upstream: as above
 				return 1;
 			}
 		}
@@ -711,12 +700,7 @@ int Centaur::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			{
 				if (!RL10_startseq && RL10_ENA && (GetPropellantMass( phTank ) != 0.0))
 				{
-					timer_RL10_startseq = 0.0;
-					RL10_startseq = true;
-					// start prop settling
-					SetThrusterGroupLevel( THGROUP_ATT_FORWARD, 1.0 );
-					// start chilldown
-					RL10_chill = 1.0;
+					CrewCommand( "RL10 START" );// not upstream: as above
 					return 1;
 				}
 			}
@@ -724,16 +708,7 @@ int Centaur::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			{
 				if (RL10_startseq)
 				{
-					timer_RL10_startseq = -1.0;
-					RL10_startseq = false;
-					// stop engines
-					SetThrusterLevel( thRL10[0], 0.0 );
-					SetThrusterLevel( thRL10[1], 0.0 );
-					RL10light[0]->Activate( false );
-					RL10light[1]->Activate( false );
-					SetThrusterGroupLevel( THGROUP_ATT_FORWARD, 0.0 );
-					RL10_chill = 0.0;
-					EnablePitchYawRollACS();
+					CrewCommand( "RL10 STOP" );// not upstream: as above
 					return 1;
 				}
 			}
@@ -750,6 +725,139 @@ int Centaur::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 		oapiWriteLog( "(SSV_Centaur) [FATAL ERROR] Exception in Centaur::clbkConsumeBufferedKey" );
 		abort();
 	}
+}
+
+bool Centaur::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	try
+	{
+		if (!event) event = "";
+		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
+
+		if (!_stricmp( event_type, flightrec::CTRL ))
+		{
+			double r[3];
+			if ((sscanf_s( event, "%lf %lf %lf", &r[0], &r[1], &r[2] ) == 3) && std::isfinite( r[0] ) && std::isfinite( r[1] ) && std::isfinite( r[2] ))
+			{
+				manP = r[0];
+				manY = r[1];
+				manR = r[2];
+			}
+			else flightrec::LogUnknown( "SSV_Centaur", event_type, "(bad line)" );
+			return true;
+		}
+
+		if (!_stricmp( event_type, flightrec::CMD ))
+		{
+			if (!ApplyCrewCommand( event ))
+			{
+				const char* p = event;
+				std::string word;
+				flightrec::NextToken( p, word );
+				flightrec::LogUnknown( "SSV_Centaur", event_type, word );
+			}
+			return true;
+		}
+		return false;
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(SSV_Centaur) [FATAL ERROR] Exception in Centaur::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(SSV_Centaur) [FATAL ERROR] Exception in Centaur::clbkPlaybackEvent" );
+		abort();
+	}
+}
+
+void Centaur::ManRate( double& rate, double d )// not upstream: as declared
+{
+	if (flightrecorder.Locked()) return;
+	rate += d;
+	RecordManRates();
+	return;
+}
+
+void Centaur::RecordManRates( void ) const// not upstream: as declared
+{
+	if (!flightrecorder.Recording()) return;
+	char cbuf[128];
+	sprintf_s( cbuf, sizeof(cbuf), "%.6f %.6f %.6f", manP, manY, manR );
+	flightrecorder.Record( flightrec::CTRL, cbuf );
+	return;
+}
+
+void Centaur::CrewCommand( const std::string& cmd )// not upstream: as declared
+{
+	if (flightrecorder.Locked()) return;
+	flightrecorder.Record( flightrec::CMD, cmd );
+	ApplyCrewCommand( cmd.c_str() );
+	return;
+}
+
+bool Centaur::ApplyCrewCommand( const char* cmd )// not upstream: as declared, the bodies of the keys
+{
+	const char* p = cmd;
+	std::string word, arg;
+	if (!flightrec::NextToken( p, word )) return false;
+
+	if (word == "PLSEP")
+	{
+		// remove payload mass from centaur dry mass
+		OBJHANDLE ohPL = GetAttachmentStatus( ahToPayload );
+		if (ohPL)
+		{
+			VECTOR3 cg;
+			double mass = GetMassAndCoGOfAttachedObject( this, ahToPayload, cg );
+			SetEmptyMass( GetEmptyMass() - mass );
+		}
+		// separate payload
+		DetachChild( ahToPayload, 0.3 );
+		return true;
+	}
+	if (word == "PL")
+	{
+		int n = 0;
+		if ((sscanf_s( p, "%d", &n ) != 1) || (n < 1) || (n > 8)) return false;
+		OBJHANDLE ohPL = GetAttachmentStatus( ahToPayload );
+		if (ohPL)
+		{
+			VESSEL* vPL = oapiGetVesselInterface( ohPL );
+			if (vPL->Version() >= 2)
+				((VESSEL3*)vPL)->clbkGeneric( VMSG_USER + 0x0101, n, NULL );
+		}
+		return true;
+	}
+	if ((word == "RL10") && flightrec::NextToken( p, arg ))
+	{
+		if (arg == "START")
+		{
+			timer_RL10_startseq = 0.0;
+			RL10_startseq = true;
+			// start prop settling
+			SetThrusterGroupLevel( THGROUP_ATT_FORWARD, 1.0 );
+			// start chilldown
+			RL10_chill = 1.0;
+			return true;
+		}
+		if (arg == "STOP")
+		{
+			timer_RL10_startseq = -1.0;
+			RL10_startseq = false;
+			// stop engines
+			SetThrusterLevel( thRL10[0], 0.0 );
+			SetThrusterLevel( thRL10[1], 0.0 );
+			RL10light[0]->Activate( false );
+			RL10light[1]->Activate( false );
+			SetThrusterGroupLevel( THGROUP_ATT_FORWARD, 0.0 );
+			RL10_chill = 0.0;
+			EnablePitchYawRollACS();
+			return true;
+		}
+	}
+	return false;
 }
 
 void Centaur::clbkVisualCreated( VISHANDLE vis, int refcount )

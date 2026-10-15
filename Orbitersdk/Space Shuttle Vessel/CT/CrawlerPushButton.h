@@ -33,6 +33,7 @@ Date         Developer
 2021/12/25   GLS
 2022/09/29   GLS
 2025/01/04   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef CRAWLERPUSHBUTTON_H_
@@ -67,10 +68,14 @@ namespace vc
 			virtual void Realize() override;
 			virtual void OnPress();
 			virtual void OnDepress();
+			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder, 1 pressed or 0 (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 
 			void SetMotionLength( double _motionlength );
 
 			DiscOutPort output;
+		private:
+			bool pressed = false;// not upstream: as above
 	};
 }
 

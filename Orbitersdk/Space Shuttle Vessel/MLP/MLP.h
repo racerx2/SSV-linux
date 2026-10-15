@@ -38,6 +38,7 @@ Date         Developer
 2022/01/09   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef _SSVMLP_H_
@@ -45,6 +46,7 @@ Date         Developer
 
 
 #include <Orbitersdk.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 #include "../PadMLPInterface.h"
 #include "../T0UmbilicalMLPInterface.h"
 
@@ -65,6 +67,7 @@ public:
 	void clbkLoadStateEx(FILEHANDLE scn, void* status) override;
 	void clbkSaveState(FILEHANDLE scn) override;
 	void clbkPreStep(double simt, double simdt, double mjd) override;
+	bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 	void clbkVisualCreated( VISHANDLE vis, int refcount ) override;
 	void clbkVisualDestroyed( VISHANDLE vis, int refcount ) override;
 
@@ -126,6 +129,8 @@ private:
 	void HideSRBWaterBags( VISHANDLE vis );
 
 	bool IsT0UmbilicalConnected( void ) const;
+
+	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the HBOI time nominal in a playback (design ssv-flightrec)
 };
 
 #endif// _SSVMLP_H_

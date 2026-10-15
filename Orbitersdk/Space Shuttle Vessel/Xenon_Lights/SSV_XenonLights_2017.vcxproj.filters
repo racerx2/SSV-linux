@@ -12,12 +12,18 @@
     <ClCompile Include="XenonLights.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="meshres_xenon.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="XenonLights.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\SSVlib\include\FlightRecorder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -15,12 +15,14 @@ Date         Developer
 2022/01/15   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #define ORBITER_MODULE
 
 
 #include "OTS.h"
 #include <SurfaceRoving.h>
+#include <cmath>// not upstream: flight recorder (design ssv-flightrec)
 
 
 const static char* MESHNAME_OTS = "SSV\\OTS\\OTS";
@@ -146,6 +148,9 @@ void OTS::clbkPreStep( double simt, double simdt, double mjd )
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+		if (flightrecorder.JustStarted()) RecordDrive();// not upstream: as above
+
 		if (aftsteer != 0.0) surfaceroving->Move_Crab( simdt, -aftsteer );
 		else surfaceroving->Move( simdt, drive, fwdsteer, 0.0/*aftsteer*/ );
 
@@ -191,32 +196,32 @@ int OTS::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			// man gimbal
 			if (key == OAPI_KEY_NUMPAD7)
 			{
-				fwdsteer -= 2.0;
+				Drive( fwdsteer, -2.0 );// not upstream: flight recorder (design ssv-flightrec)
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD9)
 			{
-				fwdsteer += 2.0;
+				Drive( fwdsteer, 2.0 );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD1)
 			{
-				aftsteer += 2.0;
+				Drive( aftsteer, 2.0 );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD3)
 			{
-				aftsteer -= 2.0;
+				Drive( aftsteer, -2.0 );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD8)
 			{
-				drive += 1.0;
+				Drive( drive, 1.0 );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD2)
 			{
-				drive -= 1.0;
+				Drive( drive, -1.0 );// not upstream: as above
 				return 1;
 			}
 			return 0;
@@ -233,6 +238,56 @@ int OTS::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 		oapiWriteLog( "(SSV_OTS) [FATAL ERROR] Exception in OTS::clbkConsumeBufferedKey" );
 		abort();
 	}
+}
+
+bool OTS::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	try
+	{
+		if (!event) event = "";
+		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
+
+		if (!_stricmp( event_type, flightrec::CTRL ))
+		{
+			double c[3];
+			if ((sscanf_s( event, "%lf %lf %lf", &c[0], &c[1], &c[2] ) == 3) && std::isfinite( c[0] ) && std::isfinite( c[1] ) && std::isfinite( c[2] ))
+			{
+				fwdsteer = c[0];
+				aftsteer = c[1];
+				drive = c[2];
+			}
+			else flightrec::LogUnknown( "SSV_OTS", event_type, "(bad line)" );
+			return true;
+		}
+		return false;
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(SSV_OTS) [FATAL ERROR] Exception in OTS::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(SSV_OTS) [FATAL ERROR] Exception in OTS::clbkPlaybackEvent" );
+		abort();
+	}
+}
+
+void OTS::Drive( double& value, double d )// not upstream: as declared
+{
+	if (flightrecorder.Locked()) return;
+	value += d;
+	RecordDrive();
+	return;
+}
+
+void OTS::RecordDrive( void ) const// not upstream: as declared
+{
+	if (!flightrecorder.Recording()) return;
+	char cbuf[128];
+	sprintf_s( cbuf, sizeof(cbuf), "%.6f %.6f %.6f", fwdsteer, aftsteer, drive );
+	flightrecorder.Record( flightrec::CTRL, cbuf );
+	return;
 }
 
 void OTS::clbkVisualCreated( VISHANDLE vis, int refcount )

@@ -35,6 +35,7 @@ Date         Developer
 2022/06/13   GLS
 2022/09/29   GLS
 2022/10/04   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -82,6 +83,7 @@ namespace vc
 		double motionlength;
 		MGROUP_TRANSLATE* pPushDown;
 		DiscOutPort output;
+		bool bPressed = false;// not upstream: flight recorder (design ssv-flightrec)
 
 	public:
 		PushButton( Atlantis* _sts, const std::string& _name );
@@ -92,6 +94,8 @@ namespace vc
 		bool OnMouseEvent(int _event, float x, float y) override;
 		virtual void OnPress();
 		virtual void OnDepress();
+		bool GetPlaybackState( string& state ) const override;// not upstream: as above
+		void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 
 		void SetMotionLength( double _motionlength );
 		void Connect( DiscreteBundle* pBundle, unsigned short usLine );

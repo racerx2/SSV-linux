@@ -58,6 +58,7 @@ Date         Developer
 ********************************************/
 #include <cassert>
 #include "SimpleGPCSystem.h"
+#include "../Atlantis.h"// not upstream: flight recorder note (design ssv-flightrec)
 #include "Software/SimpleGPCSoftware.h"
 #include "SimpleShuttleBus.h"
 #include "Software/GNC/SimpleFCOS_IO_GNC.h"
@@ -759,6 +760,7 @@ void SimpleGPCSystem::OnPreStep(double simt, double simdt, double mjd)
 		// reset commfault indications and counters on OPS change
 		if (((ReadCOMPOOL_IS( SCP_NEW_MM ) / 100) != (ReadCOMPOOL_IS( SCP_MM ) / 100)) && (ReadCOMPOOL_IS( SCP_MM ) != 0)) IORESET();
 
+		STS()->FlightRecorder().Record( flightrec::EVENT, GetIdentifier() + " MM " + std::to_string( ReadCOMPOOL_IS( SCP_NEW_MM ) ) );// not upstream: flight recorder note (design ssv-flightrec)
 		WriteCOMPOOL_IS( SCP_MM, ReadCOMPOOL_IS( SCP_NEW_MM ) );
 		WriteCOMPOOL_IS( SCP_NEW_MM, static_cast<unsigned short>(-1) );
 	}

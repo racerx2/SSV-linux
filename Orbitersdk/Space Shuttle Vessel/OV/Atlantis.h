@@ -156,6 +156,8 @@ Date         Developer
 #include <discsignals.h>
 #include <Sensor.h>
 #include <EngConst.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
+#include "CrewControls.h"// not upstream: as above
 
 
 typedef struct {
@@ -647,6 +649,9 @@ class Atlantis: public VESSEL4
 		// sound
 		XRSound* pXRSound;
 
+		flightrec::Recorder flightrecorder;// not upstream: flight recorder (design ssv-flightrec)
+		CrewControls crewctrl_rec;// not upstream: the controller positions last recorded
+
 		bool bPLBCamPanLeft_Man, bPLBCamPanRight_Man, bPLBCamTiltUp_Man, bPLBCamTiltDown_Man;
 
 		// used to trigger RCS sounds
@@ -740,6 +745,15 @@ class Atlantis: public VESSEL4
 		 */
 		void UpdateControllers( double dt );
 
+		// not upstream: flight recorder, in AtlantisFlightRecorder.cpp (design ssv-flightrec)
+		bool FlightRecorderPlayback( double simt, double event_t, const char* event_type, const char* event );
+		void CrewCommand( const std::string& cmd );
+		bool ApplyCrewCommand( const char* cmd );
+		std::string PLBCamCommand( int idx, bool on ) const;
+		CrewControls GetCrewControls( void ) const;
+		void SetCrewControls( const CrewControls& c );
+		void RecordCrewControls( void );
+
 		/**
 		 * Calculates direction in which SSMEs/SRBs must thrust to point through CoG
 		 */
@@ -821,6 +835,7 @@ class Atlantis: public VESSEL4
 		virtual DiscreteBundleManager* BundleManager() const;
 		mission::Mission* GetMissionData() const;
 		SSVOptions* GetOptions( void ) const;
+		const flightrec::Recorder& FlightRecorder( void ) const { return flightrecorder; }// not upstream: flight recorder (design ssv-flightrec)
 
 
 		virtual short GetETPropellant() const;

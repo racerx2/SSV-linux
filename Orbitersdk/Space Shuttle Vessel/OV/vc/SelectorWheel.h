@@ -78,6 +78,8 @@ namespace vc
 
 			void SetBounds( unsigned short lower, unsigned short upper );
 			void DefineOutputs( unsigned short idx, unsigned short val );
+			bool GetPlaybackState( string& state ) const override;// not upstream: flight recorder (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 	};
 }
 

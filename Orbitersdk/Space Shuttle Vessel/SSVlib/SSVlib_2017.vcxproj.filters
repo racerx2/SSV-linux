@@ -40,6 +40,9 @@
     <ClCompile Include="src\Sensor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\FlightRecorder.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\SolenoidValve.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -103,6 +106,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\Sensor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\FlightRecorder.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\SubsystemDirector.h">

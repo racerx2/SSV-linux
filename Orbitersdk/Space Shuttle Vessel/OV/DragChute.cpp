@@ -19,6 +19,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2022/10/07   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "DragChute.h"
 #include "Atlantis.h"
@@ -132,6 +133,7 @@ void DragChute::OnPreStep( double simt, double simdt, double mjd )
 				DragChuteDPY2LT[1].SetLine();
 
 				DragChuteState = DEPLOYING;
+				STS()->FlightRecorder().Record( flightrec::EVENT, "CHUTE DEPLOY" );// not upstream: flight recorder note (design ssv-flightrec)
 			}
 			break;
 		case DEPLOYING:
@@ -155,6 +157,7 @@ void DragChute::OnPreStep( double simt, double simdt, double mjd )
 
 				DragChuteState = JETTISONED;
 				DragChuteSize = 0.0;
+				STS()->FlightRecorder().Record( flightrec::EVENT, "CHUTE JETTISON" );// not upstream: flight recorder note (design ssv-flightrec)
 
 				//add chute vessel
 				VESSELSTATUS2 vs;

@@ -47,6 +47,7 @@ Date         Developer
 2022/05/07   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -80,6 +81,7 @@ Date         Developer
 #include <Orbitersdk.h>
 #include <PIDControl.h>
 #include <cJSON.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 
 
 inline constexpr double RCS_ENA_DELAY = 600.0;// s
@@ -158,6 +160,12 @@ class IUS_SRM2:public VESSEL4
 
 		void AddPayloadAdapter( void );
 
+		flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the crew's keys (design ssv-flightrec)
+		void ManRate( double& rate, double d );// not upstream: as above, a manual gimbal rate key, nothing while locked
+		void RecordManRates( void ) const;// not upstream: as above, SSV_CTRL <manP> <manY>
+		void CrewCommand( const std::string& cmd );// not upstream: as above, records and applies a command, nothing while locked
+		bool ApplyCrewCommand( const char* cmd );// not upstream: as above
+
 	public:
 		explicit IUS_SRM2( OBJHANDLE hObj );
 		~IUS_SRM2( void );
@@ -167,6 +175,7 @@ class IUS_SRM2:public VESSEL4
 		void clbkPostStep( double simt, double simdt, double mjd ) override;
 		void DefineAnimations(void);
 		int clbkConsumeBufferedKey(DWORD key, bool down, char *kstate) override;
+		bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 		void clbkVisualCreated(VISHANDLE vis, int refcount) override;
 		void clbkLoadStateEx(FILEHANDLE scn, void *status) override;
 		void clbkSaveState(FILEHANDLE scn) override;

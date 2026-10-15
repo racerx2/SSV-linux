@@ -29,6 +29,7 @@ Date         Developer
 2021/07/03   GLS
 2021/08/24   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -79,6 +80,8 @@ namespace vc
 			UINT keyGrp[32];
 			MGROUP_TRANSLATE* pKEY[32];
 
+			char heldkey = 0;// not upstream: the key held down, 0 none (design ssv-flightrec)
+
 			void OnKeyPress( char key );
 			void OnKeyRelease( char key );
 
@@ -91,6 +94,8 @@ namespace vc
 			void DefineGroup( UINT* _grpIndex );
 			virtual void DefineVCAnimations( UINT vc_idx ) override;
 			virtual bool OnMouseEvent( int _event, float x, float y ) override;
+			bool GetPlaybackState( std::string& state ) const override;// not upstream: flight recorder (design ssv-flightrec)
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: as above
 	};
 }
 

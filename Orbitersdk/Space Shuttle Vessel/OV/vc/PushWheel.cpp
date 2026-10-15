@@ -98,6 +98,24 @@ namespace vc
 		return false;
 	}
 
+	bool PushWheel::GetPlaybackState( string& state ) const// not upstream: flight recorder, the digit and U or D while a piston is in (design ssv-flightrec)
+	{
+		SelectorWheel::GetPlaybackState( state );
+		if (tgtpistonup) state += " U";
+		if (tgtpistondn) state += " D";
+		return true;
+	}
+
+	void PushWheel::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		const char* s = flightrec::SkipBlanks( event );
+		while ((*s >= '0') && (*s <= '9')) s++;
+		tgtpistonup = (strchr( s, 'U' ) != NULL) ? 1 : 0;
+		tgtpistondn = (strchr( s, 'D' ) != NULL) ? 1 : 0;
+		SelectorWheel::OnPlaybackEvent( simt, fEventT, event_t, event );
+		return;
+	}
+
 	void PushWheel::OnPostStep( double simt, double simdt, double mjd )
 	{
 		// set animations

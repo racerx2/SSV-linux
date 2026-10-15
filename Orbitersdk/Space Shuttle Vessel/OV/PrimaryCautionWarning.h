@@ -148,6 +148,8 @@ class PrimaryCautionWarning:public AtlantisSubsystem
 		bool oldBU;
 		bool oldSM;
 
+		bool lastMasterAlarm = false;// not upstream: the master alarm last noted for the flight recorder (design ssv-flightrec)
+
 	public:
 		explicit PrimaryCautionWarning( AtlantisSubsystemDirector* _director  );
 		~PrimaryCautionWarning( void );

@@ -121,7 +121,7 @@ namespace mps
 		posMFV = 0;
 		posMOV = 0;
 
-		IMSLHeUsage = 20.8 + (0.5 * oapiRand());// IMSL max 21.31884
+		IMSLHeDraw = oapiRand();// not upstream: the draw, IMSLHeUsage() applies it (design ssv-flightrec)
 
 		Sensor_Press[SSME_BLOCK_II_FPB_PP] = Sensor( 0, 5000 );
 		Sensor_Press[SSME_BLOCK_II_OPB_PP] = Sensor( 0, 5000 );
@@ -179,6 +179,11 @@ namespace mps
 	SSME_BLOCK_II::~SSME_BLOCK_II( void )
 	{
 		return;
+	}
+
+	double SSME_BLOCK_II::IMSLHeUsage( void ) const// not upstream: 20.8 to 21.3, IMSL max 21.31884; nominal in a playback (design ssv-flightrec)
+	{
+		return 20.8 + (0.5 * flightrec::Held( IMSLHeDraw ));
 	}
 
 	void SSME_BLOCK_II::OnSaveState( FILEHANDLE scn ) const
@@ -296,7 +301,7 @@ namespace mps
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B1].SetValue( 0 );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_A2].SetValue( 0 );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B2].SetValue( 0 );
-		temp = PCA->UseHPOTPISPurge( IMSLHeUsage );
+		temp = PCA->UseHPOTPISPurge( IMSLHeUsage() );// not upstream: as above
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_A].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_B].SetValue( temp );
 		temp = PCA->GetPressEmergencyShutdown();
@@ -368,7 +373,7 @@ namespace mps
 		Sensor_Press[SSME_BLOCK_II_MCC_P_A2].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B1].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B2].SetValue( temp );
-		temp = PCA->UseHPOTPISPurge( IMSLHeUsage );
+		temp = PCA->UseHPOTPISPurge( IMSLHeUsage() );// not upstream: as above
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_A].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_B].SetValue( temp );
 		temp = PCA->GetPressEmergencyShutdown();
@@ -476,7 +481,7 @@ namespace mps
 		Sensor_Press[SSME_BLOCK_II_MCC_P_A2].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B1].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B2].SetValue( temp );
-		temp = PCA->UseHPOTPISPurge( IMSLHeUsage );
+		temp = PCA->UseHPOTPISPurge( IMSLHeUsage() );// not upstream: as above
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_A].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_B].SetValue( temp );
 		temp = PCA->GetPressEmergencyShutdown();
@@ -548,7 +553,7 @@ namespace mps
 		Sensor_Press[SSME_BLOCK_II_MCC_P_A2].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B1].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B2].SetValue( temp );
-		temp = PCA->UseHPOTPISPurge( IMSLHeUsage );
+		temp = PCA->UseHPOTPISPurge( IMSLHeUsage() );// not upstream: as above
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_A].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_B].SetValue( temp );
 		temp = PCA->GetPressEmergencyShutdown();
@@ -627,7 +632,7 @@ namespace mps
 		Sensor_Press[SSME_BLOCK_II_MCC_P_A2].SetValue( 0 );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B1].SetValue( 0 );
 		Sensor_Press[SSME_BLOCK_II_MCC_P_B2].SetValue( 0 );
-		temp = PCA->UseHPOTPISPurge( IMSLHeUsage );
+		temp = PCA->UseHPOTPISPurge( IMSLHeUsage() );// not upstream: as above
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_A].SetValue( temp );
 		Sensor_Press[SSME_BLOCK_II_HPOTP_IS_B].SetValue( temp );
 		temp = PCA->GetPressEmergencyShutdown();

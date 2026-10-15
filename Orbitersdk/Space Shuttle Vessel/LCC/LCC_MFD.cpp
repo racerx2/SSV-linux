@@ -231,16 +231,13 @@ bool LCC_MFD::ConsumeKeyBuffered( DWORD key )
 		switch (key)
 		{
 			case OAPI_KEY_1:
-				if (pLCC->pPad->GetFirexState( 1 )) pLCC->pPad->DeactivateFirex( 1 );
-				else pLCC->pPad->ActivateFirex( 1 );
+				pLCC->CrewCommand( pLCC->pPad->GetFirexState( 1 ) ? "FIREX 1 0" : "FIREX 1 1" );// not upstream: flight recorder, the resulting state (design ssv-flightrec)
 				return true;
 			case OAPI_KEY_2:
-				if (pLCC->pPad->GetFirexState( 2 )) pLCC->pPad->DeactivateFirex( 2 );
-				else pLCC->pPad->ActivateFirex( 2 );
+				pLCC->CrewCommand( pLCC->pPad->GetFirexState( 2 ) ? "FIREX 2 0" : "FIREX 2 1" );// not upstream: as above
 				return true;
 			case OAPI_KEY_3:
-				if (pLCC->pPad->GetFirexState( 3 )) pLCC->pPad->DeactivateFirex( 3 );
-				else pLCC->pPad->ActivateFirex( 3 );
+				pLCC->CrewCommand( pLCC->pPad->GetFirexState( 3 ) ? "FIREX 3 0" : "FIREX 3 1" );// not upstream: as above
 				return true;
 		}
 		return false;
@@ -266,44 +263,32 @@ bool LCC_MFD::ConsumeButton( int bt, int event )
 		switch (bt)
 		{
 			case 0:// resume
-				if (pLCC->LPSCountdownHold && !pLCC->resuming && !pLCC->cutoff) pLCC->resumecmd = true;
+				if (pLCC->LPSCountdownHold && !pLCC->resuming && !pLCC->cutoff) pLCC->CrewCommand( "RESUME" );// not upstream: flight recorder (design ssv-flightrec)
 				return true;
 			case 1:// recycle
 				// TODO
 				//if (pLCC->LPSCountdownHold && !pLCC->resuming)
 				return true;
 			case 5:// cutoff
-				if ((pLCC->CountdownTime > -31.0) && (pLCC->CountdownTime < 0.0)) pLCC->IssueCutoff();
+				if ((pLCC->CountdownTime > -31.0) && (pLCC->CountdownTime < 0.0)) pLCC->CrewCommand( "CUTOFF" );// not upstream: as above
 				return true;
 			case 6:
-				if (pLCC->CountdownTime < -450.0) pLCC->hold0730 = !pLCC->hold0730;
+				if (pLCC->CountdownTime < -450.0) pLCC->CrewCommand( pLCC->hold0730 ? "HOLD 0730 0" : "HOLD 0730 1" );// not upstream: as above, the resulting state
 				return true;
 			case 7:
-				if (pLCC->CountdownTime < -300.0)
-				{
-					pLCC->hold0500 = !pLCC->hold0500;
-					pLCC->requestautohold = false;
-				}
+				if (pLCC->CountdownTime < -300.0) pLCC->CrewCommand( pLCC->hold0500 ? "HOLD 0500 0" : "HOLD 0500 1" );// not upstream: as above, also clears requestautohold
 				return true;
 			case 8:
-				if (pLCC->CountdownTime < -240.0)
-				{
-					pLCC->hold0400 = !pLCC->hold0400;
-					pLCC->requestautohold = false;
-				}
+				if (pLCC->CountdownTime < -240.0) pLCC->CrewCommand( pLCC->hold0400 ? "HOLD 0400 0" : "HOLD 0400 1" );// not upstream: as above
 				return true;
 			case 9:
-				if (pLCC->CountdownTime < -175.0) pLCC->hold0255 = !pLCC->hold0255;
+				if (pLCC->CountdownTime < -175.0) pLCC->CrewCommand( pLCC->hold0255 ? "HOLD 0255 0" : "HOLD 0255 1" );// not upstream: as above
 				return true;
 			case 10:
-				if (pLCC->CountdownTime < -117.0) pLCC->hold0157 = !pLCC->hold0157;
+				if (pLCC->CountdownTime < -117.0) pLCC->CrewCommand( pLCC->hold0157 ? "HOLD 0157 0" : "HOLD 0157 1" );// not upstream: as above
 				return true;
 			case 11:
-				if (pLCC->CountdownTime < -31.0)
-				{
-					pLCC->hold0031 = !pLCC->hold0031;
-					pLCC->requestautohold = false;
-				}
+				if (pLCC->CountdownTime < -31.0) pLCC->CrewCommand( pLCC->hold0031 ? "HOLD 0031 0" : "HOLD 0031 1" );// not upstream: as above, also clears requestautohold
 				return true;
 		}
 

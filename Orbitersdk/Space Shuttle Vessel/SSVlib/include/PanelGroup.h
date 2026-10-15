@@ -34,6 +34,7 @@ Date         Developer
 2022/08/08   GLS
 2022/09/29   GLS
 2023/02/19   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -88,6 +89,8 @@ namespace vc {
 		void Realize();
 		bool OnVCMouseEvent (int id, int _event, VECTOR3 &p);
 		bool OnVCRedrawEvent (int id, int _event, SURFHANDLE surf);
+		// not upstream: a recorded event to a component of the panel named panel; false if the group has no such panel (design ssv-flightrec)
+		bool OnPlaybackEvent( const string& panel, const string& component, double simt, double event_t, const char* event_type, const char* event );
 		void OnPreStep (double simt, double simdt, double mjd);
 		void OnPostStep (double simt, double simdt, double mjd);
 		void OnPropagate(double simt, double simdt, double mjd);
@@ -235,6 +238,16 @@ namespace vc {
 		bool r = false;
 		for (const auto& x : panels) r |= x->OnVCRedrawEvent( id, _event, surf );
 		return r;
+	}
+
+	template <class TVessel>
+	bool PanelGroup<TVessel>::OnPlaybackEvent( const string& panel, const string& component, double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+	{
+		for (const auto& x : panels)
+		{
+			if (x->GetIdentifier() == panel) return x->OnPlaybackEvent( component, simt, event_t, event_type, event );
+		}
+		return false;
 	}
 
 	template <class TVessel>

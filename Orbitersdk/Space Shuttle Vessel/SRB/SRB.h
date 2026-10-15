@@ -57,6 +57,7 @@ Date         Developer
 #include <Orbitersdk.h>
 #include <cJSON.h>
 #include <EngConst.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 
 
 inline constexpr double SPM_MAX_PROPELLANT_MASS = 1110136.0 * LBM2KG;// HACK using same as HPM
@@ -165,6 +166,7 @@ public:
 	void clbkVisualDestroyed(VISHANDLE vis, int refcount) override;
 	void clbkSetClassCaps (FILEHANDLE cfg) override;
 	void clbkPostStep (double simt, double simdt, double mjd) override;
+	bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 	void clbkPostCreation () override;
 
 	void clbkLoadStateEx(FILEHANDLE scn, void* status) override;
@@ -222,6 +224,8 @@ private:
 	ATTACHMENTHANDLE ahToOrbiter;
 
 	LightEmitter* SRBLight;
+
+	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, nominal thrust in a playback (design ssv-flightrec)
 };
 
 #endif// _SRB_H

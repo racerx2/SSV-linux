@@ -40,6 +40,7 @@ Date         Developer
 2022/09/29   GLS
 2025/01/23   GLS
 2025/05/10   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef _BASESSVPAD_H_
@@ -47,6 +48,7 @@ Date         Developer
 
 
 #include <Orbitersdk.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 #include <vector>
 
 /**
@@ -116,6 +118,8 @@ protected:
 
 	bool PCRlights;
 
+	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the crew's pad commands (design ssv-flightrec)
+
 	BaseSSVPad(OBJHANDLE hVessel, int flightmodel, double WaterTankCap, double PreLOWaterFlowRate, double PostLOWaterFlowRate );
 	virtual ~BaseSSVPad();
 
@@ -172,6 +176,10 @@ protected:
 	int clbkConsumeBufferedKey(DWORD key, bool down, char* keystate) override;
 	void SaveState( FILEHANDLE scn );
 	bool LoadState( const char* line );
+
+	void PadCommand( const char* cmd );// not upstream: flight recorder, records and applies a crew command, nothing while locked (design ssv-flightrec)
+	virtual bool ApplyPadCommand( const char* cmd );// not upstream: as above, LC39 and SLC6 add theirs
+	bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: as above
 
 	virtual void CalculateSteamProduction( double simt, double simdt ) = 0;
 

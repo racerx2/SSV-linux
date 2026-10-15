@@ -287,11 +287,18 @@ void ET::clbkSetClassCaps (FILEHANDLE cfg)
 	}
 }
 
+bool ET::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: flight recorder (design ssv-flightrec)
+{
+	return flightrecorder.OnPlaybackEvent( event_type, event );
+}
+
 // Simulation time step
 void ET::clbkPostStep (double simt, double simdt, double mjd)
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+
 		if (sensorsconnected == false)
 		{
 			// connect sensors
@@ -474,7 +481,7 @@ void ET::clbkPostStep (double simt, double simdt, double mjd)
 			}
 
 			// "vaporize" 0.6Kg/s LOX mass remaining and 0.9Kg/s LH2
-			double tmp = 0.6 * oapiRand() * simdt;
+			double tmp = 0.6 * flightrec::Rand() * simdt;// not upstream: nominal in a playback (design ssv-flightrec)
 			if ((LOXmass - tmp) < 0)
 			{
 				GOXmass += LOXmass * 1000;
@@ -486,7 +493,7 @@ void ET::clbkPostStep (double simt, double simdt, double mjd)
 				LOXmass -= tmp;
 			}
 
-			tmp = 0.9 * oapiRand() * simdt;
+			tmp = 0.9 * flightrec::Rand() * simdt;// not upstream: as above
 			if ((LH2mass - tmp) < 0)
 			{
 				GH2mass += LH2mass * 1000;

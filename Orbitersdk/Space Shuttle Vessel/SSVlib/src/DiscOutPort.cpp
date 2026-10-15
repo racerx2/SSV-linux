@@ -7,6 +7,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2022/09/30   GLS
+2026/10/15   racerx2
 ********************************************/
 // DiscOutPort.cpp: Implementierung der Klasse DiscOutPort.
 //
@@ -45,6 +46,12 @@ void DiscOutPort::SetLine( float fVoltage )
 		pBundle->SetDiscrete( usLine, fVoltage );
 	}
 	else initval = fVoltage;
+}
+
+float DiscOutPort::GetVoltage() const// not upstream: as declared
+{
+	if (pBundle != NULL) return pBundle->GetVoltage( usLine );
+	return initval;
 }
 
 void DiscOutPort::ResetLine()

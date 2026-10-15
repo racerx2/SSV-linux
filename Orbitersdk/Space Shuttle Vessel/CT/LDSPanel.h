@@ -33,6 +33,7 @@ Date         Developer
 2021/12/25   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #include <Orbitersdk.h>
@@ -67,6 +68,7 @@ namespace vc
 
 		void DefineVCAnimations(UINT vcidx) override;
 		bool OnVCMouseEvent(int id, int _event, VECTOR3 &p) override;
+		bool OnPlaybackEvent( const std::string& component, double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder, the cab select switch (design ssv-flightrec)
 	private:
 		ATTACHMENTHANDLE FindNearestAttachment(VESSEL** pV) const;
 		double CalculateDistanceBetweenAttachments();

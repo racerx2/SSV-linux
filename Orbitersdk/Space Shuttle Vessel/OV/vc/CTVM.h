@@ -92,6 +92,7 @@ namespace vc
 
 			virtual void DefineVCAnimations( UINT vc_idx ) override;
 			virtual bool OnMouseEvent( int _event, float x, float y ) override;
+			void OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 			virtual bool OnReadState( FILEHANDLE scn ) override;
 			virtual void OnSaveState( FILEHANDLE scn ) const override;
 			virtual bool IsMultiLineSaveState( void ) const override { return true; };

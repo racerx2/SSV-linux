@@ -58,6 +58,7 @@ Date         Developer
 #include <discsignals.h>
 #include <Sensor.h>
 #include <cJSON.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 
 
 using namespace discsignals;
@@ -84,6 +85,7 @@ public:
 	void clbkVisualDestroyed(VISHANDLE vis, int refcount) override;
 	void clbkSetClassCaps (FILEHANDLE cfg) override;
 	void clbkPostStep (double simt, double simdt, double mjd) override;
+	bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 	void clbkLoadStateEx(FILEHANDLE scn, void* status) override;
 	void clbkSaveState (FILEHANDLE scn) override;
 	void clbkPostCreation( void ) override;
@@ -203,6 +205,8 @@ private:
 	THRUSTER_HANDLE thGOXventNE;
 	THRUSTER_HANDLE thGOXventSW;
 	THRUSTER_HANDLE thGH2vent;
+
+	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, nominal boil-off and sensors in a playback (design ssv-flightrec)
 };
 
 #endif// _ET_H

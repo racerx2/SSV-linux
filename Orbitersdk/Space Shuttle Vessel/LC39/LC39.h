@@ -92,6 +92,7 @@ public:
 	void MoveRBUS(AnimState::Action action);
 	void MoveEastSRBSFD( AnimState::Action action );
 	void MoveWestSRBSFD( AnimState::Action action );
+	bool ApplyPadCommand( const char* cmd ) override;// not upstream: flight recorder, the commands of LC39 (design ssv-flightrec)
 
 	//// LCCPadInterface ////
 	void RetractOrbiterAccessArm( void ) override;

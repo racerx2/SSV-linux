@@ -316,85 +316,85 @@ BOOL LC39_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not 
 					oapiCloseDialog(hWnd);
 					return TRUE;
 				case IDC_RSS_OPEN:
-					pad->MoveRSS(AnimState::OPENING);
+					pad->PadCommand( "RSS OPEN" );// not upstream: flight recorder, each button a pad command (design ssv-flightrec)
 					return TRUE;
 				case IDC_RSS_STOP:
-					pad->MoveRSS(AnimState::STOPPED);
+					pad->PadCommand( "RSS STOP" );// not upstream: as above
 					return TRUE;
 				case IDC_RSS_CLOSE:
-					pad->MoveRSS(AnimState::CLOSING);
+					pad->PadCommand( "RSS CLOSE" );// not upstream: as above
 					return TRUE;
 				case IDC_FSSOWP_OPEN:
-					pad->MoveFSS_OWP(AnimState::OPENING);
+					pad->PadCommand( "FSSOWP OPEN" );// not upstream: as above
 					return TRUE;
 				case IDC_FSSOWP_CLOSE:
-					pad->MoveFSS_OWP(AnimState::CLOSING);
+					pad->PadCommand( "FSSOWP CLOSE" );// not upstream: as above
 					return TRUE;
 				case IDC_RSSOWP_OPEN:
-					pad->MoveRSS_OWP(AnimState::OPENING);
+					pad->PadCommand( "RSSOWP OPEN" );// not upstream: as above
 					return TRUE;
 				case IDC_RSSOWP_CLOSE:
-					pad->MoveRSS_OWP(AnimState::CLOSING);
+					pad->PadCommand( "RSSOWP CLOSE" );// not upstream: as above
 					return TRUE;
 				case IDC_IAA_DEPLOY:
-					pad->DeployIAA();
+					pad->PadCommand( "IAA DEPLOY" );// not upstream: as above
 					return TRUE;
 				case IDC_IAA_HALT:
-					pad->HaltIAA();
+					pad->PadCommand( "IAA HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_IAA_RETRACT:
-					pad->RetractIAA();
+					pad->PadCommand( "IAA RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_CREWARM_EXTEND:
-					pad->ExtendOAA( OAA_RATE_NORMAL );
+					pad->PadCommand( "OAA EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_CREWARM_RETRACT:
-					pad->RetractOAA();
+					pad->PadCommand( "OAA RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_CREWARM_STOP:
-					pad->HaltOAA();
+					pad->PadCommand( "OAA HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_GH2_EXTEND:
-					pad->AttachETVAS();
+					pad->PadCommand( "ETVAS ATTACH" );// not upstream: as above
 					return TRUE;
 				case IDC_GH2_RETRACT:
-					pad->DetachETVAS();
+					pad->PadCommand( "ETVAS DETACH" );// not upstream: as above
 					return TRUE;
 				case IDC_VHOOD_DEPLOY:
-					pad->LowerGOXVentHood();
+					pad->PadCommand( "HOOD LOWER" );// not upstream: as above
 					return TRUE;
 				case IDC_VHOOD_RETRACT:
-					pad->RaiseGOXVentHood();
+					pad->PadCommand( "HOOD RAISE" );// not upstream: as above
 					return TRUE;
 				case IDC_VHOOD_HALT:
-					pad->HaltGOXVentHood();
+					pad->PadCommand( "HOOD HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_VARM_EXTEND:
-					pad->ExtendGVA();
+					pad->PadCommand( "GVA EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_VARM_RETRACT:
-					pad->RetractGVA();
+					pad->PadCommand( "GVA RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_VARM_HALT:
-					pad->HaltGVA();
+					pad->PadCommand( "GVA HALT" );// not upstream: as above
 					return TRUE;
 				case IDC_RBUS_EXTEND:
-					pad->MoveRBUS(AnimState::OPENING);
+					pad->PadCommand( "RBUS EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_RBUS_RETRACT:
-					pad->MoveRBUS(AnimState::CLOSING);
+					pad->PadCommand( "RBUS RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_SRBEAST_EXTEND:
-					pad->MoveEastSRBSFD( AnimState::OPENING );
+					pad->PadCommand( "SRBSFD EAST EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_SRBEAST_RETRACT:
-					pad->MoveEastSRBSFD( AnimState::CLOSING );
+					pad->PadCommand( "SRBSFD EAST RETRACT" );// not upstream: as above
 					return TRUE;
 				case IDC_SRBWEST_EXTEND:
-					pad->MoveWestSRBSFD( AnimState::OPENING );
+					pad->PadCommand( "SRBSFD WEST EXTEND" );// not upstream: as above
 					return TRUE;
 				case IDC_SRBWEST_RETRACT:
-					pad->MoveWestSRBSFD( AnimState::CLOSING );
+					pad->PadCommand( "SRBSFD WEST RETRACT" );// not upstream: as above
 					return TRUE;
 			}
 		}
@@ -933,6 +933,58 @@ void LC39::MoveWestSRBSFD( AnimState::Action action )
 	return;
 }
 
+bool LC39::ApplyPadCommand( const char* cmd )// not upstream: as declared
+{
+	const char* p = cmd;
+	std::string part, action, arg;
+	if (!flightrec::NextToken( p, part ) || !flightrec::NextToken( p, action )) return false;
+
+	if (part == "RSS")
+	{
+		if (action == "OPEN") MoveRSS( AnimState::OPENING );
+		else if (action == "STOP") MoveRSS( AnimState::STOPPED );
+		else if (action == "CLOSE") MoveRSS( AnimState::CLOSING );
+		else if (action == "SET")
+		{
+			if (!flightrec::NextToken( p, arg )) return false;
+			if (arg == "OPEN") RSS_State.action = AnimState::OPENING;
+			else if (arg == "CLOSE") RSS_State.action = AnimState::CLOSING;
+			else return false;
+		}
+		else return false;
+		return true;
+	}
+	if ((part == "RSSOWP") || (part == "FSSOWP"))
+	{
+		AnimState::Action a;
+		if (action == "OPEN") a = AnimState::OPENING;
+		else if (action == "CLOSE") a = AnimState::CLOSING;
+		else return false;
+		if (part == "RSSOWP") MoveRSS_OWP( a );
+		else MoveFSS_OWP( a );
+		return true;
+	}
+	if (part == "RBUS")
+	{
+		if (action == "EXTEND") MoveRBUS( AnimState::OPENING );
+		else if (action == "RETRACT") MoveRBUS( AnimState::CLOSING );
+		else return false;
+		return true;
+	}
+	if ((part == "SRBSFD") && flightrec::NextToken( p, arg ))
+	{
+		AnimState::Action a;
+		if (arg == "EXTEND") a = AnimState::OPENING;
+		else if (arg == "RETRACT") a = AnimState::CLOSING;
+		else return false;
+		if (action == "EAST") MoveEastSRBSFD( a );
+		else if (action == "WEST") MoveWestSRBSFD( a );
+		else return false;
+		return true;
+	}
+	return BaseSSVPad::ApplyPadCommand( cmd );
+}
+
 void LC39::AnimateFSSOWPStrut()
 {
 	double angle = PI05 * (std::min<double>(FSS_OWP_State.pos, FSS_OWP_ROTATION_INTERVAL_END) / FSS_OWP_ROTATION_INTERVAL_END);// not upstream: windows.h min macro
@@ -1236,20 +1288,15 @@ int LC39::clbkConsumeBufferedKey(DWORD key, bool down, char *keystate)
 #endif
 					return 1;
 				case OAPI_KEY_K:
-					if(RSS_State.Closing() || RSS_State.Closed()) RSS_State.action=AnimState::OPENING;
-					else RSS_State.action=AnimState::CLOSING;
+					PadCommand( (RSS_State.Closing() || RSS_State.Closed()) ? "RSS SET OPEN" : "RSS SET CLOSE" );// not upstream: flight recorder, the resulting command (design ssv-flightrec)
 					return 1;
 				case OAPI_KEY_X:
 					if (padtype <= _1985) return 0;// OWP only from 1986 pad onwards
-					if(RSS_State.Open()) {
-						if(RSS_OWP_State.Closing() || RSS_OWP_State.Closed()) RSS_OWP_State.action=AnimState::OPENING;
-						else RSS_OWP_State.action=AnimState::CLOSING;
-					}
+					if(RSS_State.Open()) PadCommand( (RSS_OWP_State.Closing() || RSS_OWP_State.Closed()) ? "RSSOWP OPEN" : "RSSOWP CLOSE" );// not upstream: as above
 					return 1;
 				case OAPI_KEY_Y:
 					if (padtype <= _1985) return 0;// OWP only from 1986 pad onwards
-					if(FSS_OWP_State.Closing() || FSS_OWP_State.Closed()) FSS_OWP_State.action=AnimState::OPENING;
-					else FSS_OWP_State.action=AnimState::CLOSING;
+					PadCommand( (FSS_OWP_State.Closing() || FSS_OWP_State.Closed()) ? "FSSOWP OPEN" : "FSSOWP CLOSE" );// not upstream: as above
 					return 1;
 			}
 		}

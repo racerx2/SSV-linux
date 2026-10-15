@@ -39,6 +39,7 @@ Date         Developer
 2022/01/09   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef __SSVLCC_H
@@ -46,6 +47,7 @@ Date         Developer
 
 
 #include <Orbitersdk.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 #include "../PadLCCInterface.h"
 
 
@@ -63,6 +65,7 @@ public:
 	void clbkPreStep(double simt, double simdt, double mjd) override;
 	void clbkSaveState(FILEHANDLE scn) override;
 	void clbkLoadStateEx(FILEHANDLE scn, void *status) override;
+	bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 
 private:
 	double launch_mjd;// GMTLO
@@ -107,6 +110,11 @@ private:
 	void Commands( void );
 
 	void IssueCutoff( void );
+
+	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the MFD's commands (design ssv-flightrec)
+	double MPSHeSupplyDraw;// not upstream: as above, the draw of MPSHeSupplyPressure2, nominal in a playback
+	void CrewCommand( const std::string& cmd );// not upstream: as above, records and applies a command, nothing while locked
+	bool ApplyCrewCommand( const char* cmd );// not upstream: as above
 };
 
 #endif //__SSVLCC_H

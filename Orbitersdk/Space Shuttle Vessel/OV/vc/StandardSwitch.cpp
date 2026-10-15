@@ -16,6 +16,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2023/02/19   GLS
+2026/10/15   racerx2
 ********************************************/
 // StandardSwitch.cpp: Implementierung der Klasse StandardSwitch.
 //
@@ -158,6 +159,26 @@ namespace vc {
 	{
 		// set animations and DiscPorts
 		OnPositionChange(usCurrentPosition);
+	}
+
+	bool LockableLever::GetPlaybackState( string& state ) const// not upstream: flight recorder, the position and PULL while lifted (design ssv-flightrec)
+	{
+		BasicSwitch::GetPlaybackState( state );
+		if (bIsPulled) state += " PULL";
+		return true;
+	}
+
+	void LockableLever::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		const bool pull = (strstr( event, "PULL" ) != NULL);
+		if (pull != bIsPulled)
+		{
+			bIsPulled = pull;
+			if (pull) OnPull();
+			else OnRelease();
+		}
+		BasicSwitch::OnPlaybackEvent( simt, fEventT, event_t, event );
+		return;
 	}
 
 	LockableLever2::LockableLever2(Atlantis* _sts, const std::string& _ident)

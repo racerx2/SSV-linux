@@ -167,6 +167,8 @@ Date         Developer
 #include "Crawler_defs.h"
 #include <EngConst.h>
 #include <SurfaceRoving.h>
+#include <algorithm>// not upstream: flight recorder (design ssv-flightrec)
+#include <cmath>// not upstream: as above
 
 
 GlobalHandles g_Resources;
@@ -269,7 +271,7 @@ DLLCLBK void ovcExit(VESSEL *vessel)
 
 Crawler::Crawler(OBJHANDLE hObj, int fmodel)
 : VESSEL4 (hObj, fmodel),
-pXRSound(NULL)
+pXRSound(NULL), flightrecorder( this ), recCtrl{}// not upstream: flight recorder (design ssv-flightrec)
 {
 	pBundleManager = new DiscreteBundleManager();
 	psubsystems = new SubsystemDirector<Crawler>(this);
@@ -692,6 +694,8 @@ void Crawler::clbkPreStep(double simt, double simdt, double mjd)
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder, before anything records (design ssv-flightrec)
+
 		if (!firstTimestepDone) DoFirstTimestep();
 
 		psubsystems->PreStep(simt, simdt, mjd);
@@ -905,6 +909,8 @@ void Crawler::clbkPreStep(double simt, double simdt, double mjd)
 		keyLeft = false;
 		keyRight = false;
 		keyCenter = false;
+
+		RecordControls();// not upstream: flight recorder (design ssv-flightrec)
 
 		steeringWheelFwd.SetLine( static_cast<float>(steeringWheel[0]) );
 		steeringWheelAft.SetLine( static_cast<float>(steeringWheel[1]) );
@@ -1222,19 +1228,19 @@ int Crawler::clbkConsumeDirectKey(char *kstate)
 		}
 
 		if (KEYDOWN(kstate, OAPI_KEY_NUMPAD1)) {
-			keyLeft = true;
+			keyLeft = !flightrecorder.Locked();// not upstream: the recorded crew drives during playback (design ssv-flightrec)
 			RESETKEY(kstate, OAPI_KEY_NUMPAD1);
 		}
 		if (KEYDOWN(kstate, OAPI_KEY_NUMPAD2)) {
-			keyCenter = true;
+			keyCenter = !flightrecorder.Locked();// not upstream: as above
 			RESETKEY(kstate, OAPI_KEY_NUMPAD2);
 		}
 		if (KEYDOWN(kstate, OAPI_KEY_NUMPAD3)) {
-			keyRight = true;
+			keyRight = !flightrecorder.Locked();// not upstream: as above
 			RESETKEY(kstate, OAPI_KEY_NUMPAD3);
 		}
 		if (KEYDOWN(kstate, OAPI_KEY_NUMPAD5)) {
-			keyCenter = true;
+			keyCenter = !flightrecorder.Locked();// not upstream: as above
 			RESETKEY(kstate, OAPI_KEY_NUMPAD5);
 		}
 		return 0;
@@ -1265,11 +1271,11 @@ int Crawler::clbkConsumeBufferedKey(DWORD key, bool down, char *kstate)
 				return 1;
 			}
 			else if(!down && key == OAPI_KEY_J) {
-				targetJackHeightIndex = min(targetJackHeightIndex+1, JACK_HEIGHT_COUNT-1);
+				if (!flightrecorder.Locked()) targetJackHeightIndex = min(targetJackHeightIndex+1, JACK_HEIGHT_COUNT-1);// not upstream: the recorded crew drives during playback (design ssv-flightrec)
 				return 1;
 			}
 			else if(!down && key == OAPI_KEY_K) {
-				targetJackHeightIndex = max(targetJackHeightIndex-1, 0);
+				if (!flightrecorder.Locked()) targetJackHeightIndex = max(targetJackHeightIndex-1, 0);// not upstream: as above
 				return 1;
 			}
 			else return 0;
@@ -1280,18 +1286,21 @@ int Crawler::clbkConsumeBufferedKey(DWORD key, bool down, char *kstate)
 		}
 
 		if (key == OAPI_KEY_ADD) {
+			if (flightrecorder.Locked()) return 1;// not upstream: as above
 			//pEngine->IncreaseTgtSpeed(down);
 			increaseTgtSpeed = down;
 			decreaseTgtSpeed = false;
 			return 1;
 		}
 		else if (key == OAPI_KEY_SUBTRACT) {
+			if (flightrecorder.Locked()) return 1;// not upstream: as above
 			//pEngine->DecreaseTgtSpeed(down);
 			decreaseTgtSpeed = down;
 			increaseTgtSpeed = false;
 			return 1;
 		}
 		else if (key == OAPI_KEY_B) {
+			if (flightrecorder.Locked()) return 1;// not upstream: as above
 			if(down) PedalBrakeOn = true;
 			else PedalBrakeOn = false;
 			return 1;
@@ -1299,6 +1308,7 @@ int Crawler::clbkConsumeBufferedKey(DWORD key, bool down, char *kstate)
 
 		if(down) {
 			if (key == OAPI_KEY_J) {
+				if (flightrecorder.Locked()) return 1;// not upstream: as above, Orbiter replays the recorded attachment
 				if (IsAttached())
 					Detach();
 				else
@@ -1845,6 +1855,80 @@ UINT Crawler::GetVCMeshIdx( vc::CRAWLER_CAB cab ) const
 {
 	if (cab == vc::FWD) return fwdVCIdx;
 	else return rearVCIdx;
+}
+
+bool Crawler::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	try
+	{
+		if (!event) event = "";
+		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
+
+		if (!_stricmp( event_type, flightrec::VC ))
+		{
+			const char* p = event;
+			std::string panel, component;
+			if (flightrec::NextToken( p, panel ) && flightrec::NextToken( p, component ))
+			{
+				const char* state = flightrec::SkipBlanks( p );
+				if (pgFwdCab->OnPlaybackEvent( panel, component, simt, event_t, event_type, state )) return true;
+				if (pgRearCab->OnPlaybackEvent( panel, component, simt, event_t, event_type, state )) return true;
+				flightrec::LogUnknown( "SSV_CT", event_type, flightrec::Quote( panel ) + " " + flightrec::Quote( component ) );
+			}
+			else flightrec::LogUnknown( "SSV_CT", event_type, event );
+			return true;
+		}
+
+		if (!_stricmp( event_type, flightrec::CTRL ))
+		{
+			if (!ApplyControls( event )) flightrec::LogUnknown( "SSV_CT", event_type, "(bad line)" );
+			return true;
+		}
+		return false;
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(SSV_CT) [FATAL ERROR] Exception in Crawler::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(SSV_CT) [FATAL ERROR] Exception in Crawler::clbkPlaybackEvent" );
+		abort();
+	}
+}
+
+void Crawler::RecordControls( void )// not upstream: as declared
+{
+	if (!flightrecorder.Recording()) return;
+	const double c[6] = {targetSpeed[0], targetSpeed[1], steeringWheel[0], steeringWheel[1], PedalBrakeOn ? 1.0 : 0.0, static_cast<double>(targetJackHeightIndex)};
+	bool changed = flightrecorder.JustStarted();
+	for (int i = 0; i < 6; i++) changed = changed || (c[i] != recCtrl[i]);
+	if (!changed) return;
+	char cbuf[128];
+	sprintf_s( cbuf, sizeof(cbuf), "%.6f %.6f %.6f %.6f %d %d", c[0], c[1], c[2], c[3], PedalBrakeOn ? 1 : 0, targetJackHeightIndex );
+	flightrecorder.Record( flightrec::CTRL, cbuf );
+	for (int i = 0; i < 6; i++) recCtrl[i] = c[i];
+	return;
+}
+
+bool Crawler::ApplyControls( const char* text )// not upstream: as declared
+{
+	double ts[2], sw[2];
+	int brake = 0, jack = 0;
+	if (sscanf_s( text, "%lf %lf %lf %lf %d %d", &ts[0], &ts[1], &sw[0], &sw[1], &brake, &jack ) != 6) return false;
+	for (int i = 0; i < 2; i++)
+	{
+		if (!std::isfinite( ts[i] ) || !std::isfinite( sw[i] )) return false;
+	}
+	for (int i = 0; i < 2; i++)
+	{
+		targetSpeed[i] = std::clamp( ts[i], 0.0, MAX_UNLOADED_SPEED );
+		steeringWheel[i] = std::clamp( sw[i], -1.0, 1.0 );
+	}
+	PedalBrakeOn = (brake != 0);
+	targetJackHeightIndex = std::clamp( jack, 0, JACK_HEIGHT_COUNT - 1 );
+	return true;
 }
 
 double Crawler::CalcRampHeight(double dist) const

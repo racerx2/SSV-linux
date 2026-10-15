@@ -13,6 +13,7 @@ Date         Developer
 2022/10/09   GLS
 2022/10/21   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "APU.h"
 #include "Atlantis.h"
@@ -137,7 +138,7 @@ void APU::OnPreStep(double simt, double simdt, double mjd)
 
 			if(State==START) {
 				if(APUSpeed[1]>=95.0) {
-					APUSpeed[1]=103.0+(oapiRand()-0.5);
+					APUSpeed[1]=103.0+(flightrec::Rand()-0.5);// not upstream: nominal in a playback (design ssv-flightrec)
 					State=ON;
 				}
 				else {
@@ -147,7 +148,7 @@ void APU::OnPreStep(double simt, double simdt, double mjd)
 				APU_ReadyToStart.SetLine(); //in START sequence, RTS talkback is still gray
 			}
 			else {
-				APUSpeed[1]+=0.75*(oapiRand()-0.5);
+				APUSpeed[1]+=0.75*(flightrec::Rand()-0.5);// not upstream: as above
 
 				APU_ReadyToStart.ResetLine(); //if APU is on, RTS talkback displays barberpole
 			}
@@ -155,31 +156,31 @@ void APU::OnPreStep(double simt, double simdt, double mjd)
 			if(FuelPress[1]<1400) FuelPress[1]+=200*simdt;
 			else if(FuelPress[1]>1500) FuelPress[1]-=200*simdt;
 			else if(FuelPress[1]<1425 || FuelPress[1]>1480)
-				FuelPress[1]=1455 - 10.0 * oapiRand();
-			else FuelPress[1] += (2.0 * oapiRand() - 1.0);
+				FuelPress[1]=1455 - 10.0 * flightrec::Rand();// not upstream: as above
+			else FuelPress[1] += (2.0 * flightrec::Rand() - 1.0);// not upstream: as above
 
 			if(APU_HydPumpPress) {
 				if(HydraulicPressure[1]<2950) {
 					if(HydraulicPressure[1]>2900)
-						HydraulicPressure[1]=3000-(10*oapiRand());
+						HydraulicPressure[1]=3000-(10*flightrec::Rand());// not upstream: as above
 					else
 						HydraulicPressure[1]+=200*simdt;
 				}
 				else if(HydraulicPressure[1]>3050)
 					HydraulicPressure[1]-=200*simdt;
 				else
-					HydraulicPressure[1]+=2.0 * oapiRand() - 1.0;
+					HydraulicPressure[1]+=2.0 * flightrec::Rand() - 1.0;// not upstream: as above
 			}
 			else {
 				if(HydraulicPressure[1]<850) {
 					if(HydraulicPressure[1]>800)
-						HydraulicPressure[1]=900-10*oapiRand();
+						HydraulicPressure[1]=900-10*flightrec::Rand();// not upstream: as above
 					else HydraulicPressure[1]+=200*simdt;
 				}
 				else if(HydraulicPressure[1]>950)
 					HydraulicPressure[1]-=200*simdt;
 				else {
-					HydraulicPressure[1]+=(2.0*oapiRand() - 1.0);
+					HydraulicPressure[1]+=(2.0*flightrec::Rand() - 1.0);// not upstream: as above
 				}
 			}
 

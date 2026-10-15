@@ -132,11 +132,13 @@
   <ItemGroup>
     <ClCompile Include="LCC.cpp" />
     <ClCompile Include="LCC_MFD.cpp" />
+    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="LCC.h" />
     <ClInclude Include="LCC_MFD.h" />
     <ClInclude Include="..\PadLCCInterface.h" />
+    <ClInclude Include="..\SSVlib\include\FlightRecorder.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

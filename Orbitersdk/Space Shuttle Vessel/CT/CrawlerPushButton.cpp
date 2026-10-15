@@ -9,6 +9,7 @@ Date         Developer
 2022/06/13   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "CrawlerPushButton.h"
 #include "Crawler.h"
@@ -78,6 +79,7 @@ namespace vc
 		}
 		output.SetLine();
 		//PlayVesselWave( STS()->GetSoundID(), KEY_PRESS_SOUND );
+		pressed = true;// not upstream: flight recorder (design ssv-flightrec)
 	}
 
 	void CrawlerPushButton::OnDepress() {
@@ -86,6 +88,23 @@ namespace vc
 			SetAnimation(anim_pb, 0.0);
 		}
 		output.ResetLine();
+		pressed = false;// not upstream: as above
+	}
+
+	bool CrawlerPushButton::GetPlaybackState( string& state ) const// not upstream: as declared
+	{
+		state = pressed ? "1" : "0";
+		return true;
+	}
+
+	void CrawlerPushButton::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as declared
+	{
+		const char* s = flightrec::SkipBlanks( event );
+		if ((*s != '0') && (*s != '1')) return;
+		if ((*s == '1') == pressed) return;
+		if (*s == '1') OnPress();
+		else OnDepress();
+		return;
 	}
 
 	void CrawlerPushButton::SetMotionLength( double _motionlength )

@@ -38,6 +38,7 @@ Date         Developer
 2021/12/25   GLS
 2022/01/09   GLS
 2025/11/16   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef __XENONLIGHTS_H_
@@ -45,6 +46,7 @@ Date         Developer
 
 
 #include <Orbitersdk.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 #include <vector>
 
 
@@ -58,6 +60,7 @@ public:
 
 	void clbkPreStep(double simT, double simDT, double mjd) override;
 	int clbkConsumeBufferedKey( DWORD key, bool down, char* kstate ) override;
+	bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
 
 	void clbkLoadStateEx( FILEHANDLE scn, void *status ) override;
 	void clbkSaveState( FILEHANDLE scn ) override;
@@ -98,6 +101,10 @@ private:
 	double updateClock; // if <0, update position of target and light state
 
 	bool locked;
+
+	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the power key and a nominal aim (design ssv-flightrec)
+	double heightDraw = 0.5;// not upstream: as above, the aim's draw, kept for flightrec::Held
+	void SetPower( bool on );// not upstream: as above, the power key's action
 };
 
 #endif// __XENONLIGHTS_H_

@@ -120,6 +120,7 @@ Date         Developer
 #include <discsignals.h>
 #include <PanelGroup.h>
 #include <SubsystemDirector.h>
+#include <FlightRecorder.h>// not upstream: flight recorder (design ssv-flightrec)
 #include "meshres_drivetruck.h"
 #include "Crawler_vc_defs.h"
 
@@ -172,10 +173,14 @@ public:
 	XRSound* GetSound( void ) const;
 	MESHHANDLE GetVCMesh(vc::CRAWLER_CAB cab) const;
 	UINT GetVCMeshIdx( vc::CRAWLER_CAB cab ) const;
+	bool clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event ) override;// not upstream: flight recorder (design ssv-flightrec)
+	const flightrec::Recorder& FlightRecorder( void ) const { return flightrecorder; }// not upstream: as above
 
 
 private:
 	void DoFirstTimestep();
+	void RecordControls( void );// not upstream: flight recorder, the drive controls each step they change (design ssv-flightrec)
+	bool ApplyControls( const char* text );// not upstream: as above, played back
 	/**
 	 * Populates vector with all launchpads in scenario
 	 **/
@@ -348,6 +353,9 @@ private:
 
 	OBJHANDLE hEarth;
 	std::vector<OBJHANDLE> vhLC39;
+
+	flightrec::Recorder flightrecorder;// not upstream: flight recorder (design ssv-flightrec)
+	double recCtrl[6];// not upstream: as above, the drive controls last recorded
 };
 
 #endif //_CRAWLER_H

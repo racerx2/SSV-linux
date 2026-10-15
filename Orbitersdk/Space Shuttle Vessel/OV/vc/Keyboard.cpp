@@ -10,6 +10,7 @@ Date         Developer
 2021/08/24   GLS
 2022/09/29   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "Keyboard.h"
 #include "../Atlantis.h"
@@ -572,12 +573,30 @@ namespace vc
 		if (pIDP[0] != NULL) pIDP[0]->PutKey( ID, key );
 		if (pIDP[1] != NULL) pIDP[1]->PutKey( ID, key );
 		SoundPlay( STS()->GetSound(), KEY_PRESS_SOUND );
+		heldkey = key;// not upstream: flight recorder (design ssv-flightrec)
 		return;
 	}
 
 	void Keyboard::OnKeyRelease( char key )
 	{
 		if (bHasAnimations) SetAnimation( anim_key[key - 1], 0.0 );
+		heldkey = 0;// not upstream: as above
+		return;
+	}
+
+	bool Keyboard::GetPlaybackState( std::string& state ) const// not upstream: flight recorder, the key held down, 0 none (design ssv-flightrec)
+	{
+		state = std::to_string( static_cast<int>(heldkey) );
+		return true;
+	}
+
+	void Keyboard::OnPlaybackEvent( double simt, double fEventT, const char* event_t, const char* event )// not upstream: as above
+	{
+		int key = -1;
+		if ((sscanf_s( event, "%d", &key ) != 1) || (key < 0) || (key > 32)) return;
+		if (key == heldkey) return;
+		if (heldkey != 0) OnKeyRelease( heldkey );
+		if (key != 0) OnKeyPress( static_cast<char>(key) );
 		return;
 	}
 }

@@ -43,6 +43,7 @@ Date         Developer
 #include "meshres_IUS_SRM2.h"
 #include <MathSSV.h>
 #include <UtilsSSV.h>
+#include <cmath>// not upstream: flight recorder (design ssv-flightrec)
 
 
 const static char* MESHNAME_STAGE_2 = "SSV\\IUS\\IUS_SRM2";
@@ -373,6 +374,9 @@ void IUS_SRM2::clbkPostStep( double simt, double simdt, double mjd )
 {
 	try
 	{
+		flightrecorder.Step();// not upstream: flight recorder (design ssv-flightrec)
+		if (flightrecorder.JustStarted()) RecordManRates();// not upstream: as above
+
 		if ((!RCS_ENA) && (timer_RCS_ENA != -1))
 		{
 			timer_RCS_ENA += simdt;
@@ -553,22 +557,22 @@ int IUS_SRM2::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 			// man gimbal
 			if (key == OAPI_KEY_NUMPAD2)
 			{
-				manP -= VEHICLE_MAX_RATE_CMD;
+				ManRate( manP, -VEHICLE_MAX_RATE_CMD );// not upstream: flight recorder (design ssv-flightrec)
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD8)
 			{
-				manP -= -VEHICLE_MAX_RATE_CMD;
+				ManRate( manP, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD1)
 			{
-				manY -= VEHICLE_MAX_RATE_CMD;
+				ManRate( manY, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			else if (key == OAPI_KEY_NUMPAD3)
 			{
-				manY -= -VEHICLE_MAX_RATE_CMD;
+				ManRate( manY, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 				return 1;
 			}
 			return 0;
@@ -577,22 +581,22 @@ int IUS_SRM2::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 		// man gimbal
 		if (key == OAPI_KEY_NUMPAD2)
 		{
-			manP += VEHICLE_MAX_RATE_CMD;
+			ManRate( manP, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD8)
 		{
-			manP += -VEHICLE_MAX_RATE_CMD;
+			ManRate( manP, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD1)
 		{
-			manY += VEHICLE_MAX_RATE_CMD;
+			ManRate( manY, VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 		else if (key == OAPI_KEY_NUMPAD3)
 		{
-			manY += -VEHICLE_MAX_RATE_CMD;
+			ManRate( manY, -VEHICLE_MAX_RATE_CMD );// not upstream: as above
 			return 1;
 		}
 
@@ -602,42 +606,20 @@ int IUS_SRM2::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 
 			if (key == OAPI_KEY_J)
 			{
-				// remove payload mass from IUS dry mass
-				OBJHANDLE ohPL = GetAttachmentStatus( ahPayload );
-				if (ohPL)
-				{
-					VECTOR3 cg;
-					double mass = GetMassAndCoGOfAttachedObject( this, ahPayload, cg );
-					SetEmptyMass( GetEmptyMass() - mass );
-				}
-				// separate payload
-				DetachChild( ahPayload, 0.3 );
+				CrewCommand( "PLSEP" );// not upstream: flight recorder, the body is in ApplyCrewCommand (design ssv-flightrec)
 				return 1;
 			}
 			else if (key == OAPI_KEY_G)
 			{
 				if (GetAttachmentStatus( ahSRM1 ) != NULL)
 				{
-					// detach stage 1
-					DetachChild( ahSRM1, 0.2 );
-
-					// update vehicle defs
-					SetStage2Config();
-
-					// start EEC deployment
-					asEXTENDNOZZLE.action = AnimState::OPENING;
+					CrewCommand( "STAGE" );// not upstream: as above
 					return 1;
 				}
 			}
 			else if ((key >= OAPI_KEY_1) && (key <= OAPI_KEY_8))
 			{
-				OBJHANDLE ohPL = GetAttachmentStatus( ahPayload );
-				if (ohPL)
-				{
-					VESSEL* vPL = oapiGetVesselInterface( ohPL );
-					if (vPL->Version() >= 2)
-						((VESSEL3*)vPL)->clbkGeneric( VMSG_USER + 0x0101, key - 1, NULL );
-				}
+				CrewCommand( "PL " + std::to_string( key - 1 ) );// not upstream: as above
 				return 1;
 			}
 		}
@@ -650,18 +632,12 @@ int IUS_SRM2::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 				{
 					if (GetAttachmentStatus( ahSRM1 ) != NULL)
 					{
-						SetThrusterLevel( th_main[0], 1 );
-						SRMlight[0]->Activate( true );
-						rollRCSonly = true;
-						InhibitPitchYawRCS();
+						CrewCommand( "SRM START 1" );// not upstream: as above, the stage decided when pressed
 						return 1;
 					}
 					else if (asEXTENDNOZZLE.Open())
 					{
-						SetThrusterLevel( th_main[1], 1 );
-						SRMlight[1]->Activate( true );
-						rollRCSonly = true;
-						InhibitPitchYawRCS();
+						CrewCommand( "SRM START 2" );// not upstream: as above
 						return 1;
 					}
 				}
@@ -679,6 +655,133 @@ int IUS_SRM2::clbkConsumeBufferedKey( DWORD key, bool down, char* kstate )
 		oapiWriteLog( "(SSV_IUS_SRM2) [FATAL ERROR] Exception in IUS_SRM2::clbkConsumeBufferedKey" );
 		abort();
 	}
+}
+
+bool IUS_SRM2::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
+{
+	try
+	{
+		if (!event) event = "";
+		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
+
+		if (!_stricmp( event_type, flightrec::CTRL ))
+		{
+			double r[2];
+			if ((sscanf_s( event, "%lf %lf", &r[0], &r[1] ) == 2) && std::isfinite( r[0] ) && std::isfinite( r[1] ))
+			{
+				manP = r[0];
+				manY = r[1];
+			}
+			else flightrec::LogUnknown( "SSV_IUS_SRM2", event_type, "(bad line)" );
+			return true;
+		}
+
+		if (!_stricmp( event_type, flightrec::CMD ))
+		{
+			if (!ApplyCrewCommand( event ))
+			{
+				const char* p = event;
+				std::string word;
+				flightrec::NextToken( p, word );
+				flightrec::LogUnknown( "SSV_IUS_SRM2", event_type, word );
+			}
+			return true;
+		}
+		return false;
+	}
+	catch (std::exception &e)
+	{
+		oapiWriteLogV( "(SSV_IUS_SRM2) [FATAL ERROR] Exception in IUS_SRM2::clbkPlaybackEvent: %s", e.what() );
+		abort();
+	}
+	catch (...)
+	{
+		oapiWriteLog( "(SSV_IUS_SRM2) [FATAL ERROR] Exception in IUS_SRM2::clbkPlaybackEvent" );
+		abort();
+	}
+}
+
+void IUS_SRM2::ManRate( double& rate, double d )// not upstream: as declared
+{
+	if (flightrecorder.Locked()) return;
+	rate += d;
+	RecordManRates();
+	return;
+}
+
+void IUS_SRM2::RecordManRates( void ) const// not upstream: as declared
+{
+	if (!flightrecorder.Recording()) return;
+	char cbuf[96];
+	sprintf_s( cbuf, sizeof(cbuf), "%.6f %.6f", manP, manY );
+	flightrecorder.Record( flightrec::CTRL, cbuf );
+	return;
+}
+
+void IUS_SRM2::CrewCommand( const std::string& cmd )// not upstream: as declared
+{
+	if (flightrecorder.Locked()) return;
+	flightrecorder.Record( flightrec::CMD, cmd );
+	ApplyCrewCommand( cmd.c_str() );
+	return;
+}
+
+bool IUS_SRM2::ApplyCrewCommand( const char* cmd )// not upstream: as declared, the bodies of the keys
+{
+	const char* p = cmd;
+	std::string word, arg;
+	if (!flightrec::NextToken( p, word )) return false;
+
+	if (word == "PLSEP")
+	{
+		// remove payload mass from IUS dry mass
+		OBJHANDLE ohPL = GetAttachmentStatus( ahPayload );
+		if (ohPL)
+		{
+			VECTOR3 cg;
+			double mass = GetMassAndCoGOfAttachedObject( this, ahPayload, cg );
+			SetEmptyMass( GetEmptyMass() - mass );
+		}
+		// separate payload
+		DetachChild( ahPayload, 0.3 );
+		return true;
+	}
+	if (word == "STAGE")
+	{
+		// detach stage 1
+		DetachChild( ahSRM1, 0.2 );
+
+		// update vehicle defs
+		SetStage2Config();
+
+		// start EEC deployment
+		asEXTENDNOZZLE.action = AnimState::OPENING;
+		return true;
+	}
+	if (word == "PL")
+	{
+		int n = 0;
+		if ((sscanf_s( p, "%d", &n ) != 1) || (n < 1) || (n > 8)) return false;
+		OBJHANDLE ohPL = GetAttachmentStatus( ahPayload );
+		if (ohPL)
+		{
+			VESSEL* vPL = oapiGetVesselInterface( ohPL );
+			if (vPL->Version() >= 2)
+				((VESSEL3*)vPL)->clbkGeneric( VMSG_USER + 0x0101, n, NULL );
+		}
+		return true;
+	}
+	if ((word == "SRM") && flightrec::NextToken( p, arg ) && (arg == "START"))
+	{
+		int stage = 0;
+		if ((sscanf_s( p, "%d", &stage ) != 1) || ((stage != 1) && (stage != 2))) return false;
+		SetThrusterLevel( th_main[stage - 1], 1 );
+		SRMlight[stage - 1]->Activate( true );
+		rollRCSonly = true;
+		InhibitPitchYawRCS();
+		return true;
+	}
+	return false;
 }
 
 void IUS_SRM2::clbkVisualCreated( VISHANDLE vis, int refcount )

@@ -12,10 +12,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="XenonLights.cpp" />
+    <ClCompile Include="..\SSVlib\src\FlightRecorder.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="meshres_xenon.h" />
     <ClInclude Include="XenonLights.h" />
+    <ClInclude Include="..\SSVlib\include\FlightRecorder.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{396E345C-7D91-4ECD-B912-6178511A25EA}</ProjectGuid>

@@ -260,6 +260,7 @@ namespace dps
 		}
 		lastmsgtime = msgtime;
 		oapiWriteLogV( "(SSV_OV) [INFO] CW msg: %s", msg );
+		STS()->FlightRecorder().Record( flightrec::CW, msg );// not upstream: flight recorder note (design ssv-flightrec)
 
 		// shift existing msgs
 		for (unsigned int i = std::min<int>(j, 14); i != 0; i--)// not upstream: windows.h min macro took mixed types

@@ -168,6 +168,65 @@ Unlike the real world, there is no weather forecast in Orbiter, so during landin
 \newpage
 
 
+\subsection{Flight recorder}
+\label{sec:flight-recorder}
+\begin{table}[b!]
+  \centering
+  \begin{tabularx}{470pt}{>{\centering\arraybackslash}p{75pt} | >{\centering\arraybackslash}p{100pt} | >{\centering\arraybackslash}p{150pt} | >{\centering\arraybackslash}p{95pt}}
+    \textbf{Event} & \textbf{Text} & \textbf{Written by} & \textbf{On playback} \\
+    \hline
+	SSV\_NOMINAL & format (1) & every SSV vessel, at the start of a recording & nominal values, user input locked\\
+	\hline\rule{0pt}{2ex}
+	SSV\_VC & "panel" "component" state & VC switches, breakers, rotaries, wheels, pushbuttons, keyboards, MDUs, CTVM & the component is set\\
+	\hline\rule{0pt}{2ex}
+	SSV\_CTRL & numbers & OV hand controllers, RPTA, SBTC, brakes and RMS controllers; crawler and OTS drive; Centaur and IUS manual gimbal & the controls are set\\
+	\hline\rule{0pt}{2ex}
+	SSV\_CMD & command and arguments & keyboard commands, pad dialogs, LCC MFD & the vessel runs the command\\
+	\hline\rule{0pt}{2ex}
+	SSV\_EVENT, SSV\_CW, SSV\_MA & text & mission events, C\&W messages, master alarm & nothing (notes)
+	\end{tabularx}
+  \caption{Flight recorder events}
+  \label{tab:FlightRecorderEvents}
+\end{table}
+
+\begin{multicols*}{2}
+\noindent
+SSV uses the Orbiter flight recorder (Ctrl+C) to record a mission and play it back.\\
+\\
+\textbf{What is recorded}\\
+Orbiter records the trajectory, attitude, thrust levels, attachments and its own events. SSV adds the crew's actions: the VC controls, the hand controllers, pedals and brakes, the keyboard commands, the pad dialogs, the crawler and OTS controls and the LCC MFD. Mission events, C\&W messages and the master alarm are written as notes, which can be read in the vessel's .atc file in "<Orbiter installation>\textbackslash Flights".\\
+\\
+\textbf{Playback}\\
+During a playback the SSV systems run live on the recorded trajectory and inputs. Random variation (sensor errors, APU and SRB noise, ET boil-off, MPS helium supply pressure, SSME helium usage, MLP igniter time, Xenon light aim) is set to its nominal value, so nothing random can cause a hold or a C\&W that the recording did not have. A playback repeats the inputs and states of the recording, not every frame of it.\\
+\\
+\textbf{Input lock}\\
+While a vessel plays back, its VC, keyboard commands, dialogs and MFD commands ignore the user, as the recorded crew is in control. Camera and view keys still work. The lock ends with the playback.\\
+\\
+\textbf{Limits}\\
+Recorded events play back one or two frames after their recorded time. Vessels created during a recording are not recorded (Orbiter's limit). A recording made with an SSV version without this support plays back without the nominal values and the lock.\\
+\\
+\textbf{Events}\\
+Table \ref{tab:FlightRecorderEvents} lists the events SSV writes, for add-on authors who read or write .atc files. Each line is "<time> <event> <text>". Names in the text are in double quotes, as in the scenario file.\\
+\\
+\textbf{SSV\_CTRL values}\\
+OV: 35 values, RHC (left, right, aft: pitch, roll, yaw), THC (left, aft: X, Y, Z), trims (left, right: pitch, roll), RPTA, SBTC position and takeover (left, right), brakes (CDR, PLT: left, right), RMS RHC, RMS THC, RMS single joint drive.\\
+Crawler: target speed (front, rear cab), steering (front, rear cab), brake, jack height index.\\
+OTS: front steering, rear steering, drive.\\
+Centaur: pitch, yaw and roll rate commands. IUS: pitch and yaw rate commands.\\
+\\
+\textbf{SSV\_CMD commands}\\
+OV: GEAR ARM/DOWN, SSMEPB, RMS 0/1, RMSEE GRAPPLE/RELEASE/OFF, RMSRATE 0/1, PLBCAM <left> <right> <up> <down>.\\
+LCC: RESUME, CUTOFF, HOLD <0730/0500/0400/0255/0157/0031> 0/1, FIREX <1-3> 0/1.\\
+LC-39 and SLC-6: OAA EXTEND/RETRACT/HALT, GVA EXTEND/RETRACT/HALT, HOOD LOWER/RAISE/HALT, GVAHOOD EXTEND/RETRACT, ETVAS ATTACH/DETACH, IAA DEPLOY/HALT/RETRACT.\\
+LC-39: RSS OPEN/STOP/CLOSE, RSS SET OPEN/CLOSE (Ctrl+K), RSSOWP OPEN/CLOSE, FSSOWP OPEN/CLOSE, RBUS EXTEND/RETRACT, SRBSFD EAST/WEST EXTEND/RETRACT.\\
+SLC-6: PCR, SAB and MST EXTEND/HALT/RETRACT, SABDOOR OPEN/HALT/CLOSE, EAA DEPLOY/HALT/RETRACT, SDWW LOWER/RAISE.\\
+Xenon Lights: POWER 0/1.\\
+Centaur: PLSEP, PL <1-8>, RL10 START/STOP.\\
+IUS: PLSEP, STAGE, PL <1-8>, SRM START 1/2.
+\end{multicols*}
+\newpage
+
+
 \subsection{Options}
 \begin{table}[b!]
   \centering
