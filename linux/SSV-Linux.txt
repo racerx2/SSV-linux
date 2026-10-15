@@ -41,6 +41,19 @@ Differences from the Windows release
   streamed 3D buildings and trees stay off them. The pad and MLP umbilicals that let go of the
   vehicle at liftoff do not collide (the .col files next to their meshes in Meshes/SSV).
 
+Additions in this build
+- OPS 1 aborts: ATO and AOA (ABORT MODE rotary and ABORT push button, SPEC 51 OVERRIDE), the abort
+  propellant dumps and the OMS/RCS interconnect.
+- The shuttle-era pads LC-39A, LC-39B and SLC-6 are kept clear of streamed buildings and trees, so
+  today's towers in the map data do not show (BEGIN_CLEARZONES in Config/Earth/SSV/Canaveral.cfg and
+  Vandenberg.cfg, for every SSV scenario; FixedStructureClear in the pads' Config/Vessels files).
+- Materials (Config/GC/SSV_OV.cfg and SSV_SRB.cfg, written by linux/ssv_materials.py): glass shine on
+  the MDU screens and the windshield; the HUD combiners glow green while their HUD POWER switch is on
+  and with its brightness, seen through the windshield from outside; a satin sheen on the SRB paint
+  (Orbiter Linux client).
+- The cockpit textures stsvc01-03.dds are repaired: the purple DXT1 specks on dark surfaces such as
+  the window posts are gone (linux/ssv_texfix.py).
+
 Settings
 - Launchpad > Visual effects > Local light sources: on (the SSV lights need them).
 - MFD texture size 512 (the default).
