@@ -5,6 +5,7 @@ Date         Developer
 2022/01/10   GLS
 2022/02/17   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "7SegDisp_RCSOMS_PRPLT_QTY.h"
 #include "../Atlantis.h"
@@ -39,33 +40,33 @@ namespace vc
 
 		if (pRCSOMS_PRPLT_QTY_RCSOXID.IsSet())
 		{
-			qtyL = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_lrcs )) );
-			qtyF = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_frcs )) );
-			qtyR = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_rrcs )) );
+			qtyL = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_lrcs )) );// not upstream: windows.h min macro took mixed types
+			qtyF = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_frcs )) );// not upstream: windows.h min macro took mixed types
+			qtyR = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_rrcs )) );// not upstream: windows.h min macro took mixed types
 		}
 		else if (pRCSOMS_PRPLT_QTY_RCSFUEL.IsSet())
 		{
-			qtyL = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_lrcs )) );
-			qtyF = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_frcs )) );
-			qtyR = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_rrcs )) );
+			qtyL = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_lrcs )) );// not upstream: windows.h min macro took mixed types
+			qtyF = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_frcs )) );// not upstream: windows.h min macro took mixed types
+			qtyR = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_rrcs )) );// not upstream: windows.h min macro took mixed types
 		}
 		else if (pRCSOMS_PRPLT_QTY_LOWEST.IsSet())
 		{
-			qtyL = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_lrcs )) );
-			qtyF = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_frcs )) );
-			qtyR = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_rrcs )) );
+			qtyL = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_lrcs )) );// not upstream: windows.h min macro took mixed types
+			qtyF = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_frcs )) );// not upstream: windows.h min macro took mixed types
+			qtyR = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_rrcs )) );// not upstream: windows.h min macro took mixed types
 		}
 		else if (pRCSOMS_PRPLT_QTY_OMSOXID.IsSet())
 		{
-			qtyL = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_loms )) );
-			qtyF = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_koms )) );
-			qtyR = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_roms )) );
+			qtyL = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_loms )) );// not upstream: windows.h min macro took mixed types
+			qtyF = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_koms )) );// not upstream: windows.h min macro took mixed types
+			qtyR = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_roms )) );// not upstream: windows.h min macro took mixed types
 		}
 		else if (pRCSOMS_PRPLT_QTY_OMSFUEL.IsSet())
 		{
-			qtyL = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_loms )) );
-			qtyF = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_koms )) );
-			qtyR = min( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_roms )) );
+			qtyL = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_loms )) );// not upstream: windows.h min macro took mixed types
+			qtyF = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_koms )) );// not upstream: windows.h min macro took mixed types
+			qtyR = std::min<int>( 99, static_cast<short>(STS()->GetPropellantLevel( STS()->ph_roms )) );// not upstream: windows.h min macro took mixed types
 		}
 
 		next_state[5] = qtyL / 10;

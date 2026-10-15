@@ -9,6 +9,7 @@ Date         Developer
 2022/09/30   GLS
 2022/12/21   indy91
 2023/02/10   indy91
+2026/10/15   racerx2
 ********************************************/
 #include <PEG4Targeting.h>
 #include <MathSSV.h>
@@ -282,7 +283,7 @@ void PEG4Targeting::PREDICTOR(VECTOR3 R_INIT, VECTOR3 V_INIT, double T_INIT, dou
 	int NUMBER_STEPS;
 
 	//Establish the fixed integration STEP_SIZE by dividing the time interval into the smallest number(NUMBER_STEPS) of subintervals consistent with DT_MAX
-	NUMBER_STEPS = (int)(max(round(abs(T_FINAL - T_INIT) / DT_MAX), 1));
+	NUMBER_STEPS = (int)(std::max(round(abs(T_FINAL - T_INIT) / DT_MAX), 1.0));// not upstream: windows.h max macro took double and int
 	STEP_SIZE = (T_FINAL - T_INIT) / NUMBER_STEPS;
 	T = T_INIT;
 

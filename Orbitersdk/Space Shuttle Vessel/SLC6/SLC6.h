@@ -38,6 +38,7 @@ Date         Developer
 2022/09/29   GLS
 2024/12/30   GLS
 2025/05/10   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef _SLC6_H_
@@ -58,7 +59,11 @@ class XRSound;
 
 class SLC6 : public BaseSSVPad, public LCCPadInterface, public T0UmbilicalMLPInterface
 {
+#ifdef _WIN32
 	friend BOOL CALLBACK SLC6_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+#else
+	friend BOOL SLC6_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);// not upstream: fed by SLC6_DlgInit
+#endif
 
 	MESHHANDLE hPadSurfaceMesh;
 	MESHHANDLE hLaunchMountMesh;

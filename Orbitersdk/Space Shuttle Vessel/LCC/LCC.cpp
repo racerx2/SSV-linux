@@ -19,6 +19,7 @@ Date         Developer
 2022/08/20   GLS
 2022/09/29   GLS
 2022/10/26   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "LCC.h"
 #include "LCC_MFD.h"
@@ -680,11 +681,19 @@ void LCC::clbkLoadStateEx( FILEHANDLE scn, void* status )
 	}
 }
 
+#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 }
 
+#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 }
 

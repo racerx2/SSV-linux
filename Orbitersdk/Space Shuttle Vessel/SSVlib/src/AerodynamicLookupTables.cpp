@@ -7,8 +7,12 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2022/09/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include <fstream>
+#ifndef _WIN32
+#include <ssv_textfile.h>// not upstream: text files as in Windows text mode
+#endif
 #include <string>
 #include <sstream>
 #include <cassert>
@@ -125,14 +129,18 @@ ThreeDLookup::~ThreeDLookup()
 
 void ThreeDLookup::Init(const char* dataFile, bool isHorizontalData)
 {
+#ifdef _WIN32
 	std::ifstream dataIn(dataFile);
+#else
+	TextFileIn dataIn(dataFile);// not upstream: resolved path, CRLF read as LF
+#endif
 	oapiWriteLogV( "Loading aerodynamic data from file: %s", (char*)dataFile );
 	if(!dataIn.fail()) { // file was opened; read data
 		Init(dataIn, isHorizontalData);
 		dataIn.close();
 	}
 	else {
-		throw std::exception( "Could not find aerodynamic data file" );
+		throw std::runtime_error( "Could not find aerodynamic data file" );// not upstream: std::exception has no text constructor outside MSVC
 	}
 
 	/*for(unsigned int i=0;i<lookupTables[0].liftLookupTable.size();i++) {
@@ -283,7 +291,11 @@ FourDLookup::~FourDLookup()
 
 void FourDLookup::Init(const char* dataFile, bool isHorizontalData)
 {
+#ifdef _WIN32
 	std::ifstream data(dataFile);
+#else
+	TextFileIn data(dataFile);// not upstream: resolved path, CRLF read as LF (blank lines end the tables)
+#endif
 	if(!data.fail()) { // file was opened; read data
 		oapiWriteLogV( "Loading aerodynamic data from file: %s", (char*)dataFile );
 		//Init(dataIn, isHorizontalData);

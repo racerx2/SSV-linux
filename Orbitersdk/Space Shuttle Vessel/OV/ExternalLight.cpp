@@ -1,3 +1,7 @@
+/******* SSV File Modification Notice *******
+Date         Developer
+2026/10/15   racerx2
+********************************************/
 #include "ExternalLight.h"
 #include "Atlantis.h"
 #include <Orbitersdk.h>
@@ -64,7 +68,7 @@ void ExternalLight::TimeStep( const double dt )
 
 		if (curlevel != statelevel[0])
 		{
-			float tmp = (type == HG_VAPOR) ? static_cast<float>(min(curlevel + (dt * LIGHT_RISE_RATE),statelevel[0])) : statelevel[0];
+			float tmp = (type == HG_VAPOR) ? static_cast<float>(std::min<double>(curlevel + (dt * LIGHT_RISE_RATE),statelevel[0])) : statelevel[0];// not upstream: windows.h min macro took mixed types
 			Light->SetIntensity( tmp );
 			curlevel = tmp;
 		}
@@ -75,7 +79,7 @@ void ExternalLight::TimeStep( const double dt )
 
 		if (curlevel != statelevel[1])
 		{
-			float tmp = (type == HG_VAPOR) ? static_cast<float>(min(curlevel + (dt * LIGHT_RISE_RATE),statelevel[1])) : statelevel[1];
+			float tmp = (type == HG_VAPOR) ? static_cast<float>(std::min<double>(curlevel + (dt * LIGHT_RISE_RATE),statelevel[1])) : statelevel[1];// not upstream: windows.h min macro took mixed types
 			Light->SetIntensity( tmp );
 			curlevel = tmp;
 		}

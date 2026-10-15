@@ -17,6 +17,7 @@ Date         Developer
 2023/02/09   GLS
 2023/02/13   GLS
 2026/02/25   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "VideoControlUnit.h"
 #include "Atlantis.h"
@@ -51,11 +52,11 @@ VideoControlUnit::VideoControlUnit( AtlantisSubsystemDirector* _director ):Atlan
 
 	if (STS()->D3D9())
 	{
-		if (!(hSurfMon[0][0] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::exception( "oapiCreateSurfaceEx() failed" );
-		if (!(hSurfMon[0][1] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::exception( "oapiCreateSurfaceEx() failed" );
-		if (!(hSurfMon[1][0] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::exception( "oapiCreateSurfaceEx() failed" );
-		if (!(hSurfMon[1][1] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::exception( "oapiCreateSurfaceEx() failed" );
-		if (!(hSurfBlack = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::exception( "oapiCreateSurfaceEx() failed" );
+		if (!(hSurfMon[0][0] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::runtime_error( "oapiCreateSurfaceEx() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(hSurfMon[0][1] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::runtime_error( "oapiCreateSurfaceEx() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(hSurfMon[1][0] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::runtime_error( "oapiCreateSurfaceEx() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(hSurfMon[1][1] = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::runtime_error( "oapiCreateSurfaceEx() failed" );// not upstream: std::exception has no text constructor outside MSVC
+		if (!(hSurfBlack = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::runtime_error( "oapiCreateSurfaceEx() failed" );// not upstream: std::exception has no text constructor outside MSVC
 	}
 	else
 	{

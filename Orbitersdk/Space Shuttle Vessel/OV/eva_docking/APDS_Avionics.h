@@ -22,11 +22,15 @@
   file SSV-LICENSE.txt for more details.
 
   **************************************************************************/
+/******* SSV File Modification Notice *******
+Date         Developer
+2026/10/15   racerx2
+********************************************/
 #ifndef _APDS_AVIONICS_H_
 #define _APDS_AVIONICS_H_
 
 
-#include <orbitersdk.h>
+#include <Orbitersdk.h>// not upstream: file name case
 
 
 namespace eva_docking

@@ -32,6 +32,7 @@ Date         Developer
 2022/12/29   GLS
 2024/12/30   GLS
 2025/03/20   GLS
+2026/10/15   racerx2
 ********************************************/
 #define ORBITER_MODULE
 #include "LC39.h"
@@ -44,13 +45,24 @@ Date         Developer
 #include "../PadMLPInterface.h"
 #include "../PadLCCInterface.h"
 #include <DlgCtrl.h>
+#ifndef _WIN32
+#include <OrbiterResource.h>// not upstream: the Qt dialog functions
+#include <QWidget>
+constexpr UINT WM_COMMAND = 0x0111;// not upstream: winuser.h values of the messages the dialog procedure takes
+constexpr UINT WM_SHOWWINDOW = 0x0018;
+static void LC39_DlgInit( QWidget* hWnd, void* context );// not upstream: below the dialog procedure
+#endif
 #include "../SSVSound.h"
 #include <UtilsSSV.h>
 #include <cJSON.h>
 
 
 //global dll handle
+#ifdef _WIN32
 HINSTANCE hPad_DLL;
+#else
+void* hPad_DLL;// not upstream: the dlopen handle
+#endif
 
 
 //#define DEBUG_DISPLAY_OWP_STRUT_ANIMATION_VALUES
@@ -168,7 +180,11 @@ const double PCR_LIGHT_PENUMBRA = 100.0 * RAD;
 
 
 //global functions
+#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 	try
 	{
@@ -187,7 +203,11 @@ DLLCLBK void InitModule(HINSTANCE hDLL)
 	}
 }
 
+#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 	try
 	{
@@ -241,6 +261,7 @@ DLLCLBK void ovcExit(VESSEL* vessel)
 	}
 }
 
+#ifdef _WIN32
 void DisableRBUSbuttons( HWND hWnd )
 {
 	EnableWindow( GetDlgItem(hWnd, IDC_RBUS_EXTEND), FALSE );
@@ -256,8 +277,35 @@ void DisableOWPbuttons( HWND hWnd )
 	EnableWindow( GetDlgItem(hWnd, IDC_FSSOWP_CLOSE), FALSE );
 	return;
 }
+#else
+// not upstream: EnableWindow( GetDlgItem(...), FALSE ) on the Qt controls
+static void DisableDlgItem( QWidget* hWnd, int id )
+{
+	if (QWidget* w = oapiResDlgItem( hWnd, id )) w->setEnabled( false );
+}
 
+void DisableRBUSbuttons( QWidget* hWnd )
+{
+	DisableDlgItem( hWnd, IDC_RBUS_EXTEND );
+	DisableDlgItem( hWnd, IDC_RBUS_RETRACT );
+	return;
+}
+
+void DisableOWPbuttons( QWidget* hWnd )
+{
+	DisableDlgItem( hWnd, IDC_RSSOWP_OPEN );
+	DisableDlgItem( hWnd, IDC_RSSOWP_CLOSE );
+	DisableDlgItem( hWnd, IDC_FSSOWP_OPEN );
+	DisableDlgItem( hWnd, IDC_FSSOWP_CLOSE );
+	return;
+}
+#endif
+
+#ifdef _WIN32
 BOOL CALLBACK LC39_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+#else
+BOOL LC39_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not upstream: as on Windows, messages from LC39_DlgInit
+#endif
 {
 	try
 	{
@@ -372,11 +420,19 @@ BOOL CALLBACK LC39_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 					break;
 			}
 			// let Orbiter perform default actions
+#ifdef _WIN32
 			return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
+#else
+			return FALSE;// not upstream: as below
+#endif
 		}
 
 		//if message has not been handled in this function, perform default action
+#ifdef _WIN32
 		return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
+#else
+		return FALSE;// not upstream: the Qt dialog does the default actions itself
+#endif
 	}
 	catch (std::exception &e)
 	{
@@ -389,6 +445,15 @@ BOOL CALLBACK LC39_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		abort();
 	}
 }
+
+#ifndef _WIN32
+// not upstream: WM_INITDIALOG on Qt; WM_SHOWWINDOW (once, the dialog is shown right after) and the controls' WM_COMMAND go to LC39_DlgProc
+static void LC39_DlgInit( QWidget* hWnd, void* context )
+{
+	LC39_DlgProc( hWnd, WM_SHOWWINDOW, TRUE, 0 );
+	oapiConnectDlgCommands( hWnd, [hWnd]( int id, int code, QWidget* hCtrl ) { LC39_DlgProc( hWnd, WM_COMMAND, MAKEWPARAM( id, 0 ), 0 ); } );
+}
+#endif
 
 LC39::LC39(OBJHANDLE hVessel, int flightmodel)
 	: BaseSSVPad(hVessel, flightmodel, LC39_WATERTANK_CAP, LC39_PRELOWATER_FLOWRATE, LC39_POSTLOWATER_FLOWRATE),
@@ -810,10 +875,10 @@ void LC39::CalculateSteamProduction( double simt, double simdt )
 	double fPowerR = CalculateThrustPower( this, R0, R1, R2, R3 );
 
 	double delay = 7.5E8;// factor controls delay
-	if(fPowerM > delay) fSSMESteamLevel = min( 1.0, (fPowerM - delay) / (1.79E10 - delay) );
+	if(fPowerM > delay) fSSMESteamLevel = std::min( 1.0, (fPowerM - delay) / (1.79E10 - delay) );// not upstream: windows.h min macro
 	else fSSMESteamLevel = 0.0;
 
-	if ((fPowerL + fPowerR) > 0.0) fSRBSteamLevel = min( 1.0, (fPowerL + fPowerR) / 5.92E10 );
+	if ((fPowerL + fPowerR) > 0.0) fSRBSteamLevel = std::min( 1.0, (fPowerL + fPowerR) / 5.92E10 );// not upstream: windows.h min macro
 	else fSRBSteamLevel = 0.0;
 	return;
 }
@@ -870,13 +935,13 @@ void LC39::MoveWestSRBSFD( AnimState::Action action )
 
 void LC39::AnimateFSSOWPStrut()
 {
-	double angle = PI05 * (min(FSS_OWP_State.pos, FSS_OWP_ROTATION_INTERVAL_END) / FSS_OWP_ROTATION_INTERVAL_END);
+	double angle = PI05 * (std::min<double>(FSS_OWP_State.pos, FSS_OWP_ROTATION_INTERVAL_END) / FSS_OWP_ROTATION_INTERVAL_END);// not upstream: windows.h min macro
 	//calculate horizontal distance between FSS strut attachment (to OWP bracket) and FSS bracket attachment (to FSS)
 	double YPos = FSS_OWP_BRACKET_LENGTH*cos(angle);
 	//calculate angle between struts and OWP bracket
 	double StrutAngle = acos((FSS_OWP_STRUT_OFFSET - YPos) / FSS_OWP_STRUT_LENGTH) + angle;
 	double pos = (FSS_OWP_STRUT_NULL_ANGLE - StrutAngle*DEG) / 180.0 + 0.5;
-	pos = min(1, max(0, pos)); //make sure pos value is within limits
+	pos = std::min<double>(1, std::max<double>(0, pos)); //make sure pos value is within limits// not upstream: windows.h min/max macros took mixed types
 
 #ifdef DEBUG_DISPLAY_OWP_STRUT_ANIMATION_VALUES
 		sprintf_s(oapiDebugString(), 256, "-Y-OWP: OWP-Pos: %5.1f%% | Angle: %5.1f° | Y-Pos: %5.2f m | StrutAngle: %5.1f° | pos: %5.1f%%",
@@ -1160,9 +1225,15 @@ int LC39::clbkConsumeBufferedKey(DWORD key, bool down, char *keystate)
 		if(KEYMOD_CONTROL(keystate)) {
 			switch(key) {
 				case OAPI_KEY_SPACE:
+#ifdef _WIN32
 					if(oapiOpenDialogEx(hPad_DLL, IDD_ANIMCTRL, LC39_DlgProc, DLG_CAPTIONCLOSE, this))
 						oapiWriteLog( "(SSV_LC39) [INFO] Dialog opened" );
 					else if(hPad_DLL) sprintf_s(oapiDebugString(), 256, "Error: %d", GetLastError());
+#else
+					if(oapiOpenDialogEx(hPad_DLL, IDD_ANIMCTRL, LC39_DlgInit, DLG_CAPTIONCLOSE, this))// not upstream: Qt dialog
+						oapiWriteLog( "(SSV_LC39) [INFO] Dialog opened" );
+					else if(hPad_DLL) sprintf_s(oapiDebugString(), 256, "Error: dialog not opened");
+#endif
 					return 1;
 				case OAPI_KEY_K:
 					if(RSS_State.Closing() || RSS_State.Closed()) RSS_State.action=AnimState::OPENING;
@@ -1537,7 +1608,11 @@ void LC39::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
+#ifdef _WIN32
 	FILE* hF = fopen( filename.c_str(), "r" );
+#else
+	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
+#endif
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_LC39) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -1554,9 +1629,9 @@ void LC39::LoadMissionFile( void )
 		return;
 	}
 
-	char* missionfilestr = new char[filesize];
+	char* missionfilestr = new char[filesize + 1];// not upstream: room for the terminating zero cJSON_Parse needs
 	rewind( hF );
-	fread( missionfilestr, sizeof(char), filesize, hF );
+	missionfilestr[fread( missionfilestr, sizeof(char), filesize, hF )] = 0;
 	fclose( hF );
 
 	cJSON* root = cJSON_Parse( missionfilestr );
@@ -1574,7 +1649,7 @@ void LC39::LoadMissionFile( void )
 			LoadMissionV1( root );
 			break;
 		default:
-			oapiWriteLogV( "(SSV_LC39) [ERROR] Unknown mission file version %s", version->valueint );
+			oapiWriteLogV( "(SSV_LC39) [ERROR] Unknown mission file version %d", version->valueint );// not upstream: the version is an int (%s read it as a pointer)
 			break;
 	}
 

@@ -36,6 +36,7 @@ Date         Developer
 2022/12/23   GLS
 2023/01/02   GLS
 2024/12/21   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "AerojetDAP.h"
 #include "../../../Atlantis.h"
@@ -513,7 +514,7 @@ void AerojetDAP::OnPreStep(double simt, double simdt, double mjd)
 	TANPHI = ReadCOMPOOL_SS( SCP_TANPHI );
 	COSTH = ReadCOMPOOL_SS( SCP_COSTH );
 	SINTH = ReadCOMPOOL_SS( SCP_SINTH );
-	TAS = max(112.0, ReadCOMPOOL_SS( SCP_V_T ));// HACK should be limited at AD SOP
+	TAS = std::max<double>(112.0, ReadCOMPOOL_SS( SCP_V_T ));// HACK should be limited at AD SOP// not upstream: windows.h max macro took mixed types
 	NY = ReadCOMPOOL_SS( SCP_NY );
 	RC = ReadCOMPOOL_SS( SCP_RC );
 	TG_END = ReadCOMPOOL_IS( SCP_TG_END );
@@ -1179,7 +1180,7 @@ void AerojetDAP::PitchChannel( double dt )
 	else
 	{
 		// NZ command
-		NZSS = -ReadCOMPOOL_SS( SCP_COSTH ) / max(0.5, ReadCOMPOOL_SS( SCP_COSPHI ));
+		NZSS = -ReadCOMPOOL_SS( SCP_COSTH ) / std::max<double>(0.5, ReadCOMPOOL_SS( SCP_COSPHI ));// not upstream: windows.h max macro took mixed types
 		NZERR = ReadCOMPOOL_SS( SCP_NZ ) - (1.0 + (VCO / TAS)) * (TG_END ? ReadCOMPOOL_SS( SCP_NZ_CMD ) : ReadCOMPOOL_SS( SCP_NZC )) + NZSS;
 
 		// NZ gain and filter

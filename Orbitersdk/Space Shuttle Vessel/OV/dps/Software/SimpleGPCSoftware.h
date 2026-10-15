@@ -44,6 +44,7 @@ Date         Developer
 2022/12/18   indy91
 2022/12/23   GLS
 2023/02/16   indy91
+2026/10/15   racerx2
 ********************************************/
 #ifndef _SIMPLEGPCSOFTWARE_H_
 #define _SIMPLEGPCSOFTWARE_H_
@@ -257,13 +258,13 @@ protected:
 		return;
 	}
 
-	inline void WriteCOMPOOL_VS( unsigned int addr, VECTOR3& val )
+	inline void WriteCOMPOOL_VS( unsigned int addr, const VECTOR3& val )// not upstream: const, so temporaries bind (MSVC allowed it)
 	{
 		pGPC->WriteCOMPOOL_VS( addr, val );
 		return;
 	}
 
-	inline void WriteCOMPOOL_VD(unsigned int addr, VECTOR3& val)
+	inline void WriteCOMPOOL_VD(unsigned int addr, const VECTOR3& val)// not upstream: as above
 	{
 		pGPC->WriteCOMPOOL_VD(addr, val);
 		return;

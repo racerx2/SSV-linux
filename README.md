@@ -10,6 +10,13 @@ Space Shuttle Vessel (SSV) is an addon for Orbiter Space Flight Simulator (https
 This release of SSV is for use in Orbiter 2024.
 
 
+# Linux (unofficial port)
+This fork (branch `linux`) builds SSV for the native Linux Orbiter (https://github.com/racerx2/orbiter-2027-linux) and its Vulkan client. It is not supported by the SSV team. Every Linux change in the code is marked `not upstream`; the Windows code stays under `#ifdef _WIN32`.
+
+Install: extract `SSV-1.16-linux-1.0-x64.zip` into the Orbiter folder, then run `python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"` from it once. See `linux/SSV-Linux.txt` (in the zip: `Doc/Space Shuttle Vessel/SSV-Linux.txt`).
+
+Build (CMake 3.19+, Ninja, GCC, Qt 6): `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder> -DORBITER_CMAKE_DIR=<Orbiter source>/cmake`, then `cmake --build out/build`. The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip.
+
 # Installation
 1. Install Orbiter 2024.
 

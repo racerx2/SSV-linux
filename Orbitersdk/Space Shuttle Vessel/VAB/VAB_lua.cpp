@@ -3,14 +3,15 @@ Date         Developer
 2020/06/20   GLS
 2021/08/24   GLS
 2022/08/05   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "VAB.h"
 #include <stdio.h>
 
 extern "C" {
-#include "lua\lua.h"
-#include "lua\lualib.h"
-#include "lua\lauxlib.h"
+#include "Lua/lua.h"// not upstream: SDK folder, '/' separator
+#include "Lua/lualib.h"
+#include "Lua/lauxlib.h"
 }
 
 // ==========================================================================

@@ -44,6 +44,7 @@ Date         Developer
 2022/10/29   GLS
 2024/12/30   GLS
 2025/03/20   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef __LC39_H
@@ -66,7 +67,11 @@ class XRSound;
 
 class LC39 : public BaseSSVPad, public LCCPadInterface, public MLPPadInterface
 {
+#ifdef _WIN32
 	friend BOOL CALLBACK LC39_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+#else
+	friend BOOL LC39_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);// not upstream: fed by LC39_DlgInit
+#endif
 public:
 	LC39(OBJHANDLE hVessel, int flightmodel);
 	virtual ~LC39();

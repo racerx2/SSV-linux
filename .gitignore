@@ -1895,3 +1895,7 @@ lib
 
 ## XRSound ##
 /XRSound/*
+
+## Linux build (not upstream) ##
+/out
+/CMakeUserPresets.json

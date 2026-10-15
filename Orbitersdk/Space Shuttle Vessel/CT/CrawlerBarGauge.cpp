@@ -7,6 +7,7 @@ Date         Developer
 2021/08/24   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "CrawlerBarGauge.h"
 #include <DrawAPI.h>
@@ -45,12 +46,12 @@ bool CrawlerBarGauge::OnVCRedrawEvent(int id, int _event, SURFHANDLE surf)
 		litRect.top = redrawBase.y;
 		litRect.bottom = redrawBase.y+usHeight;
 		if(input.GetVoltage() < 0.0) {
-			litRect.left = redrawBase.x + max(midPos + segmentCount*usBarWidth, 0);
+			litRect.left = redrawBase.x + std::max<int>(midPos + segmentCount*usBarWidth, 0);// not upstream: windows.h max macro (the class has min/max members)
 			litRect.right = redrawBase.x + midPos;
 		}
 		else {
 			litRect.left = redrawBase.x + midPos;
-			litRect.right = redrawBase.x + min(midPos + segmentCount*usBarWidth, usWidth);
+			litRect.right = redrawBase.x + std::min<int>(midPos + segmentCount*usBarWidth, usWidth);// not upstream: windows.h min macro
 		}
 	}
 	else {
@@ -63,12 +64,12 @@ bool CrawlerBarGauge::OnVCRedrawEvent(int id, int _event, SURFHANDLE surf)
 		litRect.right = redrawBase.x+usWidth;
 		if(input.GetVoltage() < 0.0) {
 			// TODO: make sure this works for -ve values (we don't need it yet)
-			litRect.bottom = redrawBase.y + max(midPos - segmentCount*usBarWidth, 0);
+			litRect.bottom = redrawBase.y + std::max<int>(midPos - segmentCount*usBarWidth, 0);// not upstream: windows.h max macro
 			litRect.top = redrawBase.y + midPos;
 		}
 		else {
 			litRect.bottom = redrawBase.y + midPos;
-			litRect.top = redrawBase.y + min(midPos - segmentCount*usBarWidth, usHeight);
+			litRect.top = redrawBase.y + std::min<int>(midPos - segmentCount*usBarWidth, usHeight);// not upstream: windows.h min macro
 		}
 	}
 	RECT gaugeRect;
@@ -77,6 +78,7 @@ bool CrawlerBarGauge::OnVCRedrawEvent(int id, int _event, SURFHANDLE surf)
 	gaugeRect.left = redrawBase.x;
 	gaugeRect.right = redrawBase.x+usWidth;
 	// draw gauge
+#ifdef _WIN32
 	HDC hDC = oapiGetDC(surf);
 	HBRUSH hUnlitBrush = CreateSolidBrush(RGB(70, 76, 88));
 	FillRect(hDC, &gaugeRect, hUnlitBrush);
@@ -115,6 +117,36 @@ bool CrawlerBarGauge::OnVCRedrawEvent(int id, int _event, SURFHANDLE surf)
 	DeleteObject(hUnlitBrush);
 	DeleteObject(hLitBrush);
 	DeleteObject(hLineBrush);
+#else
+	// not upstream: the same drawing with Sketchpad (no GDI on Linux)
+	oapi::Sketchpad* skp = oapiGetSketchpad(surf);
+	if (!skp) return false;
+	// FillRect: the right and bottom edges excluded, nothing for an empty rectangle; Rectangle without a pen fills to r-1, b-1
+	auto FillRect = [skp](const RECT& r, oapi::Brush* br) { if (r.right > r.left && r.bottom > r.top) { skp->SetBrush(br); skp->Rectangle(r.left, r.top, r.right + 1, r.bottom + 1); } };
+	oapi::Brush* hUnlitBrush = oapiCreateBrush(RGB(70, 76, 88));
+	oapi::Brush* hLitBrush = oapiCreateBrush(RGB(144, 77, 101));
+	oapi::Pen* hLinePen = oapiCreatePen(1, 1, RGB(0, 0, 0));// the DC's default black pen draws the lines
+	skp->SetPen(NULL);
+	FillRect(gaugeRect, hUnlitBrush);
+	FillRect(litRect, hLitBrush);
+	skp->SetBrush(NULL);
+	skp->SetPen(hLinePen);
+	int maxPos;
+	if(bVertical) maxPos = usHeight;
+	else maxPos = usWidth;
+	for(int pos=midPos;pos < maxPos;pos+=usBarWidth) {
+		if(bVertical) skp->Line(redrawBase.x, redrawBase.y+pos, redrawBase.x+usWidth, redrawBase.y+pos);
+		else skp->Line(redrawBase.x+pos, redrawBase.y, redrawBase.x+pos, redrawBase.y+usHeight);
+	}
+	for(int pos=midPos-usBarWidth;pos >= 0;pos-=usBarWidth) {
+		if(bVertical) skp->Line(redrawBase.x, redrawBase.y+pos, redrawBase.x+usWidth, redrawBase.y+pos);
+		else skp->Line(redrawBase.x+pos, redrawBase.y, redrawBase.x+pos, redrawBase.y+usHeight);
+	}
+	oapiReleaseSketchpad(skp);
+	oapiReleaseBrush(hUnlitBrush);
+	oapiReleaseBrush(hLitBrush);
+	oapiReleasePen(hLinePen);
+#endif
 
 	return true;
 }

@@ -1,7 +1,15 @@
+/******* SSV File Modification Notice *******
+Date         Developer
+2026/10/15   racerx2
+********************************************/
 #include "CTVM.h"
 #include "../Atlantis.h"
 #include "../VideoControlUnit.h"
 #include "../../SSVSound.h"
+#ifndef _WIN32
+constexpr int FW_MEDIUM = 500;// not upstream: wingdi.h font weights, as oapiCreateFontEx takes them
+constexpr int FW_BOLD = 700;
+#endif
 
 
 namespace vc
@@ -54,16 +62,16 @@ namespace vc
 	{
 		if (STS()->D3D9())
 		{
-			if (!(hSurf = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::exception( "oapiCreateSurfaceEx() failed" );
+			if (!(hSurf = oapiCreateSurfaceEx( IMAGE_SIZE, IMAGE_SIZE, OAPISURFACE_RENDER3D | OAPISURFACE_TEXTURE | OAPISURFACE_RENDERTARGET | OAPISURFACE_NOMIPMAPS ))) throw std::runtime_error( "oapiCreateSurfaceEx() failed" );// not upstream: std::exception has no text constructor outside MSVC
 
 			if (!skpThickLightGreenPen)
-				if (!(skpThickLightGreenPen = oapiCreatePen( 1, 3, CR_LIGHT_GREEN ))) throw std::exception( "oapiCreatePen() failed" );
+				if (!(skpThickLightGreenPen = oapiCreatePen( 1, 3, CR_LIGHT_GREEN ))) throw std::runtime_error( "oapiCreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
 			if (!skpThinLightGreenPen)
-				if (!(skpThinLightGreenPen = oapiCreatePen( 1, 1, CR_LIGHT_GREEN ))) throw std::exception( "oapiCreatePen() failed" );
+				if (!(skpThinLightGreenPen = oapiCreatePen( 1, 1, CR_LIGHT_GREEN ))) throw std::runtime_error( "oapiCreatePen() failed" );// not upstream: std::exception has no text constructor outside MSVC
 			if (!skpFontData)
-				if (!(skpFontData = oapiCreateFontEx( 34, "Sans", 14, FW_BOLD, FontStyle::FONT_NORMAL, 0.0f ))) throw std::exception( "oapiCreateFontEx() failed" );
+				if (!(skpFontData = oapiCreateFontEx( 34, "Sans", 14, FW_BOLD, FontStyle::FONT_NORMAL, 0.0f ))) throw std::runtime_error( "oapiCreateFontEx() failed" );// not upstream: std::exception has no text constructor outside MSVC
 			if (!skpFontMenu)
-				if (!(skpFontMenu = oapiCreateFontEx( 17, "Sans", 7, FW_BOLD, FontStyle::FONT_NORMAL, 0.0f ))) throw std::exception( "oapiCreateFontEx() failed" );}
+				if (!(skpFontMenu = oapiCreateFontEx( 17, "Sans", 7, FW_BOLD, FontStyle::FONT_NORMAL, 0.0f ))) throw std::runtime_error( "oapiCreateFontEx() failed" );}// not upstream: std::exception has no text constructor outside MSVC
 		else
 		{
 			hSurf = NULL;
@@ -334,7 +342,7 @@ namespace vc
 
 	void CTVM::OnSaveState( FILEHANDLE scn ) const
 	{
-		oapiWriteScenario_string( scn, "POWER", powerswitch ? "ON" : "OFF" );
+		oapiWriteScenario_string( scn, "POWER", const_cast<char*>(powerswitch ? "ON" : "OFF") );// not upstream: the SDK takes char*, the literals are const
 		oapiWriteScenario_int( scn, "L-DATA", menuoptions[0] );
 		oapiWriteScenario_int( scn, "C-DATA", menuoptions[1] );
 		oapiWriteScenario_int( scn, "XHAIR", menuoptions[2] );

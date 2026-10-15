@@ -55,6 +55,7 @@ Date         Developer
 2023/08/16   GLS
 2025/12/30   GLS
 2026/01/22   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "Mission.h"
 #include <OrbiterAPI.h>
@@ -221,7 +222,11 @@ namespace mission
 		filename = "Missions\\SSV\\" + strMission + ".json";
 		strFileName = strMission;
 
+#ifdef _WIN32
 		FILE* hF = fopen( filename.c_str(), "r" );
+#else
+		FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
+#endif
 		if (hF == NULL)
 		{
 			oapiWriteLogV( "(SSV_OV) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -238,9 +243,9 @@ namespace mission
 			return false;
 		}
 
-		char* missionfilestr = new char[filesize];
+		char* missionfilestr = new char[filesize + 1];// not upstream: room for the terminating zero cJSON_Parse needs
 		rewind( hF );
-		fread( missionfilestr, sizeof(char), filesize, hF );
+		missionfilestr[fread( missionfilestr, sizeof(char), filesize, hF )] = 0;
 		fclose( hF );
 
 		cJSON* root = cJSON_Parse( missionfilestr );
@@ -258,7 +263,7 @@ namespace mission
 				LoadMissionV1( root );
 				break;
 			default:
-				oapiWriteLogV( "(SSV_OV) [ERROR] Unknown mission file version %s", version->valueint );
+				oapiWriteLogV( "(SSV_OV) [ERROR] Unknown mission file version %d", version->valueint );// not upstream: the version is an int (%s read it as a pointer)
 				cJSON_Delete( root );
 				delete[] missionfilestr;
 				return false;

@@ -36,6 +36,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 /***************************************************************************
   This file is part of Project Apollo - NASSP
@@ -130,7 +131,11 @@ using namespace discsignals;
 
 typedef struct
 {
+#ifdef _WIN32
 	HINSTANCE hDll;
+#else
+	void* hDll;// not upstream: the dlopen handle
+#endif
 	SURFHANDLE digits_7seg;
 } GlobalHandles;
 

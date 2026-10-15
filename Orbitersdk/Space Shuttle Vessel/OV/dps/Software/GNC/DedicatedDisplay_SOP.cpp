@@ -21,6 +21,7 @@ Date         Developer
 2022/12/23   GLS
 2023/01/01   GLS
 2023/01/02   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "DedicatedDisplay_SOP.h"
 #include <MathSSV.h>
@@ -619,8 +620,8 @@ namespace dps
 		WriteCOMPOOL_AIS( SCP_HUD2_MSG2, 4, tmp, 12 );
 
 		// runway length
-		if (ReadCOMPOOL_IS( SCP_RWID ) == 1) tmp = min( 15000, ReadCOMPOOL_IS( SCP_PRI_LEN ) );
-		else tmp = min( 15000, ReadCOMPOOL_IS( SCP_SEC_LEN ) );
+		if (ReadCOMPOOL_IS( SCP_RWID ) == 1) tmp = std::min<int>( 15000, ReadCOMPOOL_IS( SCP_PRI_LEN ) );// not upstream: windows.h min macro took mixed types
+		else tmp = std::min<int>( 15000, ReadCOMPOOL_IS( SCP_SEC_LEN ) );// not upstream: windows.h min macro took mixed types
 		WriteCOMPOOL_AIS( SCP_HUD1_MSG2, 5, tmp, 12 );
 		WriteCOMPOOL_AIS( SCP_HUD2_MSG2, 5, tmp, 12 );
 

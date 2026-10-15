@@ -11,6 +11,7 @@ Date         Developer
 2022/03/24   GLS
 2022/03/26   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "DragChute.h"
 #include "../OV/ParameterValues.h"
@@ -77,7 +78,7 @@ void DragChute::clbkPreStep(double simt, double simdt, double mjd)
 	try
 	{
 		if(anim_collapse_state>0.0) {
-			anim_collapse_state=max(anim_collapse_state-simdt*CHUTE_DEFLATE_TIME, 0.0);
+			anim_collapse_state=std::max(anim_collapse_state-simdt*CHUTE_DEFLATE_TIME, 0.0);// not upstream: windows.h max macro
 			SetAnimation(anim_collapse, anim_collapse_state);
 		}
 	}
@@ -138,11 +139,19 @@ void DragChute::clbkSaveState(FILEHANDLE scn)
 	}
 }
 
+#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 }
 
+#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 }
 

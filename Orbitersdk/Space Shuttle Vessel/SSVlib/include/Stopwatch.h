@@ -29,17 +29,26 @@ Date         Developer
 2021/10/23   GLS
 2022/07/16   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #ifndef ___URWUMPES_AUX_CLASS_STOPWATCH_H___
 #define ___URWUMPES_AUX_CLASS_STOPWATCH_H___
 
+#ifdef _WIN32
 #include <windows.h>
+#else
+#include <chrono>
+#endif
 
 class Stopwatch
 {
+#ifdef _WIN32
    LARGE_INTEGER liFrequency;
    LARGE_INTEGER liCurrent;
    LARGE_INTEGER liLast;
+#else
+   std::chrono::steady_clock::time_point tLast;// not upstream: the performance counter on Linux
+#endif
 public:
 	Stopwatch();
 	~Stopwatch();

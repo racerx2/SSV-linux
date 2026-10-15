@@ -43,6 +43,7 @@ Date         Developer
 2022/09/29   GLS
 2023/02/12   GLS
 2023/02/19   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -439,7 +440,7 @@ void Subsystem<TVessel>::ShiftCG( const VECTOR3& shift )
 
 template <class TVessel>
 EmptySubsystem<TVessel>::EmptySubsystem(SubsystemDirector<TVessel>* _director)
-: Subsystem(_director, "[Empty]") {
+: Subsystem<TVessel>(_director, "[Empty]") {// not upstream: the dependent base needs its template argument
 }
 
 template <class TVessel>

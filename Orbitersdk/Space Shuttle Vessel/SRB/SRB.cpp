@@ -23,6 +23,7 @@ Date         Developer
 2022/01/09   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 // ==============================================================
 //                 ORBITER MODULE: Atlantis
@@ -197,13 +198,13 @@ void SRB::LoadTextures( void )
 	if (!strFwdAssemblyTextureName.empty())
 	{
 		if (hFwdAssemblyTexture == NULL) hFwdAssemblyTexture = oapiLoadTexture( strFwdAssemblyTextureName.c_str() );
-		if (hFwdAssemblyTexture == NULL) throw std::exception( "Could not load SRB Fwd Assembly texture" );
+		if (hFwdAssemblyTexture == NULL) throw std::runtime_error( "Could not load SRB Fwd Assembly texture" );// not upstream: std::exception has no text constructor outside MSVC
 	}
 
 	if (!strCaseTextureName.empty())
 	{
 		if (hCaseTexture == NULL) hCaseTexture = oapiLoadTexture( strCaseTextureName.c_str() );
-		if (hCaseTexture == NULL) throw std::exception( "Could not load SRB Case texture" );
+		if (hCaseTexture == NULL) throw std::runtime_error( "Could not load SRB Case texture" );// not upstream: std::exception has no text constructor outside MSVC
 	}
 	return;
 }
@@ -449,7 +450,7 @@ void SRB::GetSRB_State( double met, double &thrust_level, double &prop_level, do
 	double SRB_ThrSCL=(SRB_Thrust[i+1]-SRB_Thrust[i])/(SRB_Seq[i+1]-SRB_Seq[i]);
 	thrust_level = SRB_ThrSCL * (met-SRB_Seq[i]) + SRB_Thrust[i];
 	if (met>0.0) thrust_level += (0.01435 * oapiRand()) - (0.01435 * oapiRand());
-	thrust_level = max(0.0, thrust_level);
+	thrust_level = std::max(0.0, thrust_level);// not upstream: windows.h max macro
 
 	double SRB_PrpSCL=(SRB_Prop[i+1]-SRB_Prop[i])/(SRB_Seq[i+1]-SRB_Seq[i]);
 	prop_level = SRB_PrpSCL * (met-SRB_Seq[i]) + SRB_Prop[i];
@@ -465,7 +466,11 @@ void SRB::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
+#ifdef _WIN32
 	FILE* hF = fopen( filename.c_str(), "r" );
+#else
+	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
+#endif
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_SRB) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -482,9 +487,9 @@ void SRB::LoadMissionFile( void )
 		return;
 	}
 
-	char* missionfilestr = new char[filesize];
+	char* missionfilestr = new char[filesize + 1];// not upstream: room for the terminating zero cJSON_Parse needs
 	rewind( hF );
-	fread( missionfilestr, sizeof(char), filesize, hF );
+	missionfilestr[fread( missionfilestr, sizeof(char), filesize, hF )] = 0;
 	fclose( hF );
 
 	cJSON* root = cJSON_Parse( missionfilestr );
@@ -502,7 +507,7 @@ void SRB::LoadMissionFile( void )
 			LoadMissionV1( root );
 			break;
 		default:
-			oapiWriteLogV( "(SSV_SRB) [ERROR] Unknown mission file version %s", version->valueint );
+			oapiWriteLogV( "(SSV_SRB) [ERROR] Unknown mission file version %d", version->valueint );// not upstream: the version is an int (%s read it as a pointer)
 			break;
 	}
 

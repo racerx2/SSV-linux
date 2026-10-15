@@ -81,6 +81,7 @@ Date         Developer
 2023/03/26   GLS
 2023/04/12   GLS
 2023/06/25   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "PayloadBay.h"
 #include "Atlantis.h"
@@ -2368,7 +2369,7 @@ void PayloadBay::LoadKeelBridgeByPLID( unsigned short PLID )
 
 void PayloadBay::LoadLongeronPortBridge( unsigned short bay )
 {
-	if ((bay < 1) || (bay > 13)) throw std::exception( "LoadLongeronPortBridge::bay" );
+	if ((bay < 1) || (bay > 13)) throw std::runtime_error( "LoadLongeronPortBridge::bay" );// not upstream: std::exception has no text constructor outside MSVC
 
 	STS()->SetMeshVisibilityMode( STS()->AddMesh( MESHNAME_BRIDGEFITTING_LONGERON_PORT[bay - 1] ), MESHVIS_EXTERNAL | MESHVIS_VC | MESHVIS_EXTPASS );
 	return;
@@ -2376,7 +2377,7 @@ void PayloadBay::LoadLongeronPortBridge( unsigned short bay )
 
 void PayloadBay::LoadLongeronStbdBridge( unsigned short bay )
 {
-	if ((bay < 1) || (bay > 13)) throw std::exception( "LoadLongeronStbdBridge::bay" );
+	if ((bay < 1) || (bay > 13)) throw std::runtime_error( "LoadLongeronStbdBridge::bay" );// not upstream: std::exception has no text constructor outside MSVC
 
 	STS()->SetMeshVisibilityMode( STS()->AddMesh( MESHNAME_BRIDGEFITTING_LONGERON_STBD[bay - 1] ), MESHVIS_EXTERNAL | MESHVIS_VC | MESHVIS_EXTPASS );
 	return;
@@ -2384,7 +2385,7 @@ void PayloadBay::LoadLongeronStbdBridge( unsigned short bay )
 
 void PayloadBay::LoadKeelBridge( unsigned short bay )
 {
-	if ((bay < 1) || (bay > 12)) throw std::exception( "LoadKeelBridge::bay" );
+	if ((bay < 1) || (bay > 12)) throw std::runtime_error( "LoadKeelBridge::bay" );// not upstream: std::exception has no text constructor outside MSVC
 
 	if (bay < 12) hasKeelBridge[bay - 1] = true;
 

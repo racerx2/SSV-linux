@@ -18,6 +18,7 @@ Date         Developer
 2022/09/29   GLS
 2022/12/01   indy91
 2022/12/23   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "LandingSite.h"
 #include "../../../Atlantis.h"
@@ -25,6 +26,9 @@ Date         Developer
 #include <MathSSV.h>
 #include <sstream>
 #include <map>
+#ifndef _WIN32
+#include <ssv_textfile.h>// not upstream: text files as in Windows text mode
+#endif
 
 
 namespace dps
@@ -109,7 +113,11 @@ namespace dps
 		RunwayData rw1;
 		RunwayData rw2;
 
+#ifdef _WIN32
 		ifstream fs;
+#else
+		TextFileIn fs;// not upstream: resolved path, CRLF read as LF
+#endif
 		fs.open( "Config\\SSV_RunwayDB.csv" );
 		if (fs.is_open())
 		{
@@ -122,7 +130,7 @@ namespace dps
 			}
 			fs.close();
 		}
-		else throw std::exception( "SSV_RunwayDB.csv not found!" );
+		else throw std::runtime_error( "SSV_RunwayDB.csv not found!" );// not upstream: std::exception has no text constructor outside MSVC
 
 		// load defined runways to landing site list
 		// format: id,rwPri,rwSec
@@ -141,8 +149,8 @@ namespace dps
 			rw2 = rwDB[str2];
 
 			// check for missing entry
-			if (rw1.Name.empty()) throw std::exception( "Runway not found!" );
-			if (rw2.Name.empty()) throw std::exception( "Runway not found!" );
+			if (rw1.Name.empty()) throw std::runtime_error( "Runway not found!" );// not upstream: std::exception has no text constructor outside MSVC
+			if (rw2.Name.empty()) throw std::runtime_error( "Runway not found!" );// not upstream: std::exception has no text constructor outside MSVC
 
 			vLandingSites.push_back( LandingSiteData( rw1, rw2 ) );
 		}

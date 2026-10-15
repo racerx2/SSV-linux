@@ -8,6 +8,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/30   GLS
 2022/11/17   GLS
+2026/10/15   racerx2
 ********************************************/
 #include <Sensor.h>
 #include <MathSSV.h>
@@ -26,7 +27,7 @@ Sensor::Sensor( double MinValue, double MaxValue, double FSerror, double MinVolt
 
 	conversor = (MaxVoltage - MinVoltage) / (MaxValue - MinValue);
 
-	error = (MaxValue - MinValue) * FSerror * (((double)rand() / (RAND_MAX + 1)) - 0.5);
+	error = (MaxValue - MinValue) * FSerror * (((double)rand() / (RAND_MAX + 1.0)) - 0.5);// not upstream: RAND_MAX + 1 overflows int on Linux
 	return;
 }
 

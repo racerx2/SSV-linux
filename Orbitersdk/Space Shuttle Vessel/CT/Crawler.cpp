@@ -20,6 +20,7 @@ Date         Developer
 2023/02/19   GLS
 2024/12/30   GLS
 2026/02/25   GLS
+2026/10/15   racerx2
 ********************************************/
 /***************************************************************************
   This file is part of Project Apollo - NASSP
@@ -153,6 +154,9 @@ Date         Developer
 #include <cassert>
 #include "../SSVSound.h"
 #include "resource_Crawler.h"
+#ifndef _WIN32
+#include <OrbiterResource.h>// not upstream: bitmap resources as QImage
+#endif
 
 #include <MathSSV.h>
 #include "CrawlerLeftPanel.h"
@@ -174,15 +178,23 @@ const static char* MESHNAME_CRAWLER = "SSV\\CT\\mainbody_2004";
 const static char* MESHNAME_CRAWLER_1980 = "SSV\\CT\\mainbody_1980";
 
 
+#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hModule)
+#else
+DLLCLBK void InitModule(void* hModule)// not upstream: the module handle is the dlopen handle
+#endif
 {
 	try
 	{
 		//g_hDLL = hModule;
 		g_Resources.hDll = hModule;
+#ifdef _WIN32
 		HBITMAP hBmp = LoadBitmap(g_Resources.hDll, MAKEINTRESOURCE(IDB_7SEGDIGITS));
+#else
+		QImage* hBmp = oapiLoadResImage(g_Resources.hDll, IDB_7SEGDIGITS);// not upstream: the bitmap resource as a QImage
+#endif
 		g_Resources.digits_7seg = oapiCreateSurface(hBmp);
-		if (g_Resources.digits_7seg == NULL) throw std::exception( "Loading bitmap \"Crawler_digits.bmp\" failed." );
+		if (g_Resources.digits_7seg == NULL) throw std::runtime_error( "Loading bitmap \"Crawler_digits.bmp\" failed." );// not upstream: std::exception has no text constructor outside MSVC
 	}
 	catch (std::exception &e)
 	{
@@ -196,7 +208,11 @@ DLLCLBK void InitModule(HINSTANCE hModule)
 	}
 }
 
+#ifdef _WIN32
 DLLCLBK void ExitModule (HINSTANCE hModule)
+#else
+DLLCLBK void ExitModule (void* hModule)// not upstream: as above
+#endif
 {
 	try
 	{

@@ -57,6 +57,7 @@ Date         Developer
 2023/08/06   GLS
 2025/12/30   GLS
 2026/01/22   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -86,7 +87,7 @@ Date         Developer
 #ifndef _MISSION_H_
 #define _MISSION_H_
 
-#include <orbitersdk.h>
+#include <Orbitersdk.h>// not upstream: file name case
 #include <string>
 #include <map>
 #include <cJSON.h>
@@ -395,7 +396,7 @@ namespace mission
 
 		virtual const std::string& GetLandingSiteTable( void ) const;
 
-		const std::map<std::string,std::string>& Mission::GetILOADs( void ) const;
+		const std::map<std::string,std::string>& GetILOADs( void ) const;// not upstream: no class qualification inside the class
 		void ClearILOADs( void );
 
 		const struct MissionPayloads& GetPayloads( void ) const;

@@ -45,7 +45,9 @@ Date         Developer
 ********************************************/
 
 #include <stdio.h>
+#ifdef _WIN32
 #include <tchar.h>
+#endif
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -124,11 +126,16 @@ void ParseMesh( bool mat, bool tex )
 	std::string line;
 	char buffer[400];
 	groups.clear();
+#ifdef _WIN32
 	mshfile.open(input_file_namepath.c_str());
+#else
+	mshfile.open(std::string( input_file_namepath.begin(), input_file_namepath.end() ));// not upstream: no wide-path open on Linux (ASCII paths)
+#endif
 	while (mshfile)
 	{
 		mshfile.getline(buffer, 400);
 		line.assign(buffer);
+		if (!line.empty() && line.back() == '\r') line.pop_back();// not upstream: CRLF meshes read as in Windows text mode
 		if (line.rfind( "LABEL", 0 ) != std::string::npos)
 		{
 			sctGROUP lg;
@@ -158,6 +165,7 @@ void ParseMesh( bool mat, bool tex )
 			{
 				mshfile.getline( buffer, 400 );
 				line.assign( buffer );
+				if (!line.empty() && line.back() == '\r') line.pop_back();// not upstream: as above
 
 				sctMATERIAL tmp;
 				tmp.num = i;
@@ -172,6 +180,7 @@ void ParseMesh( bool mat, bool tex )
 			{
 				mshfile.getline( buffer, 400 );
 				line.assign( buffer );
+				if (!line.empty() && line.back() == '\r') line.pop_back();// not upstream: as above
 
 				sctTEXTURE tmp;
 				tmp.num = i;
@@ -192,7 +201,11 @@ void WriteHeaderFile( bool mat, bool tex )
 	existing_symbols_groups.clear();
 	existing_symbols_materials.clear();
 	existing_symbols_textures.clear();
+#ifdef _WIN32
 	hfile.open(output_file_namepath.c_str());
+#else
+	hfile.open(std::string( output_file_namepath.begin(), output_file_namepath.end() ));// not upstream: as for the mesh
+#endif
 	
 	// create include guard
 	std::string guard = std::string( input_file_name.begin(), input_file_name.end() );
@@ -374,8 +387,19 @@ void printhelp()
 
 }
 
+#ifdef _WIN32
 int _tmain(int argc, _TCHAR* argv[])
 {
+#else
+int main(int argc, char* argv_[])
+{
+	// not upstream: the arguments made wide, as the Unicode _tmain gets them
+	std::vector<std::wstring> wargs;
+	for (int i = 0; i < argc; i++) wargs.push_back( std::wstring( argv_[i], argv_[i] + strlen( argv_[i] ) ) );
+	std::vector<const wchar_t*> wargv;
+	for (const std::wstring& w : wargs) wargv.push_back( w.c_str() );
+	const wchar_t* const* argv = wargv.data();
+#endif
 	bool bValidInput = false;
 	bool doMAT = false;
 	bool doTEX = false;
@@ -446,7 +470,11 @@ int _tmain(int argc, _TCHAR* argv[])
 			//std::wcout << "input=" << argv[i] << std::endl;
 			input_file_namepath.assign(argv[i]);
 
+#ifdef _WIN32
 			size_t pos = input_file_namepath.find_last_of( '\\' );
+#else
+			size_t pos = input_file_namepath.find_last_of( L"\\/" );// not upstream: '/' separates too
+#endif
 			if (pos != std::string::npos) input_file_name = input_file_namepath.substr( pos + 1 );
 			else input_file_name = input_file_namepath;
 

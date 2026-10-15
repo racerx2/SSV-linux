@@ -34,6 +34,7 @@ Date         Developer
 2026/01/06   indy91
 2026/01/22   indy91
 2026/01/24   indy91
+2026/10/15   racerx2
 ********************************************/
 #include "AscentDAP.h"
 #include "../../../Atlantis.h"
@@ -1127,7 +1128,7 @@ bool AscentDAP::OnParseLine(const char* keyword, const char* value)
 
 void AscentDAP::OnSaveState(FILEHANDLE scn) const
 {
-	oapiWriteScenario_string( scn, "FCS", AutoFCS ? "AUTO" : "CSS" );
+	oapiWriteScenario_string( scn, "FCS", const_cast<char*>(AutoFCS ? "AUTO" : "CSS") );// not upstream: the SDK takes char*, the literals are const
 	return;
 }
 

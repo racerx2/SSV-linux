@@ -38,6 +38,7 @@ Date         Developer
 2022/04/26   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -100,6 +101,8 @@ namespace mps
 
 	class HeSysEng;
 	class MPS;
+	class SSMEController;// not upstream: friends used as types, declared for lookup
+	class PneumaticControlAssembly;
 
 	using namespace discsignals;
 

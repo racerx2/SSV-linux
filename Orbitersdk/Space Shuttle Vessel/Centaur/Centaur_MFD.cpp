@@ -11,6 +11,7 @@ Date         Developer
 2021/08/24   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "Centaur_MFD.h"
 #include "Centaur.h"
@@ -106,14 +107,14 @@ bool Centaur_MFD::Update( oapi::Sketchpad *skp )
 	}
 }
 
-int Centaur_MFD::MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam )
+OAPI_MSGTYPE Centaur_MFD::MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam )// not upstream: as in the header
 {
 	try
 	{
 		switch (msg)
 		{
 			case OAPI_MSG_MFD_OPENED:
-				return (int)(new Centaur_MFD( LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam ));
+				return (OAPI_MSGTYPE)(new Centaur_MFD( LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam ));// not upstream: the MFD pointer does not fit an int on 64-bit
 		}
 		return 0;
 	}
