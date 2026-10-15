@@ -42,6 +42,9 @@ namespace oms
 
 	constexpr unsigned short OMSRCS_VLV_CH_OPEN( unsigned int v ) { return static_cast<unsigned short>(v); }
 	constexpr unsigned short OMSRCS_VLV_CH_CLOSE( unsigned int v ) { return static_cast<unsigned short>(v + VLV_COUNT); }
+
+	// source of an aft RCS manifold group: its RCS tank, the OMS tanks (interconnect), none (dry manifold), or the other pod's RCS tank (crossfeed)
+	enum AFTFEED { AFTFEED_RCS, AFTFEED_OMS, AFTFEED_NONE, AFTFEED_XRCS };
 }
 
 

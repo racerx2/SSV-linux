@@ -24,7 +24,7 @@ Fly the Space Shuttle on Linux. No Wine, no virtual machine: this fork runs SSV 
 - **A cockpit that comes alive.** Power up the HUD and its glass glows green, bright enough to see from outside through the windshield. The display screens catch the light like real glass, and the cockpit textures are cleaned up.
 - **The pads as they were.** Orbiter Linux streams real-world 3D buildings and trees around you. SSV keeps the shuttle-era sites at LC-39A, LC-39B and SLC-6 clear, so today's towers never stand next to your stack.
 - **Solid ground.** With Orbiter Linux's Collision module the pads, VAB and LCC are real structures: the stack never shoves them aside, and the umbilicals let go cleanly at liftoff.
-- **Replay your flights.** Record with Orbiter's flight recorder (Ctrl+C) and SSV records the crew too: every switch, breaker, knob, MDU key, hand controller, pad and crawler command. Play it back and the cockpit works itself, with SSV's random variation held at nominal so the replay never trips a hold or a caution the original flight didn't have.
+- **Replay your flights.** Record with Orbiter's flight recorder (Ctrl+C) and SSV records the crew too: every switch, breaker, knob, MDU key, hand controller, pad and crawler command. Play it back and the cockpit works itself, with the recorded flight's random values, so the replay trips the same holds and cautions as the original flight.
 
 ## Screenshots
 | | |
@@ -45,7 +45,7 @@ Fly the Space Shuttle on Linux. No Wine, no virtual machine: this fork runs SSV 
 The details, the settings SSV likes and how to remove it are in [`linux/SSV-Linux.txt`](linux/SSV-Linux.txt) (in the zip: `Doc/Space Shuttle Vessel/SSV-Linux.txt`).
 
 ## Build it yourself
-CMake 3.19+, Ninja, GCC and Qt 6: `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder> -DORBITER_CMAKE_DIR=<Orbiter source>/cmake`, then `cmake --build out/build`. The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip.
+CMake 3.19+, Ninja, GCC and Qt 6: `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder>`, then `cmake --build out/build`. The Orbiter SDK libraries come from Orbiter's CMake package (`Orbitersdk/lib/cmake/Orbiter` in the Orbiter folder). The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip.
 
 ## About this port
 Space Shuttle Vessel is by the SSV team (GLS and indy91). This Linux port and its additions are by racerx2. It is unofficial and not supported by the SSV team, so please report problems with it to racerx2, not to them. Every Linux change in the code is marked `not upstream`, and the Windows code stays as it is under `#ifdef _WIN32`. Same licence as SSV: GNU GPL v2.

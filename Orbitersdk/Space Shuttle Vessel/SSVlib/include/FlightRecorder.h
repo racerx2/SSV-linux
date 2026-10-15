@@ -46,15 +46,37 @@ namespace flightrec
 	inline constexpr char EVENT[] = "SSV_EVENT";
 	inline constexpr char CW[] = "SSV_CW";
 	inline constexpr char MA[] = "SSV_MA";
+	inline constexpr char DRAWS[] = "SSV_DRAWS";// the kept draws at the marker (design ssv-flightrec rev 4)
+	inline constexpr char DRAW[] = "SSV_DRAW";// a kept draw made again (rev 4)
 
-	// format of the SSV events, written with SSV_NOMINAL and checked on playback
-	inline constexpr int FORMAT = 1;
+	// format of the SSV events, written with SSV_NOMINAL and checked on playback; 1 plays back with nominal kept draws (rev 4)
+	inline constexpr int FORMAT = 2;
 
 	// a draw in [0,1), or 0.5 while a vessel of this module plays back nominal
 	double Rand( void );
 
-	// a draw kept from earlier: u, or 0.5 while nominal
-	double Held( double u );
+	class Recorder;
+
+	// a kept draw (holds, C&W): a slot in this module's registry, the recording's value in a playback (rev 4)
+	class Draw
+	{
+		private:
+			double u;
+
+			friend class Recorder;
+
+		public:
+			explicit Draw( double u );
+			Draw( const Draw& d );// a new slot, same value
+			Draw& operator=( const Draw& d );// the value only
+			~Draw( void );
+
+			// the value, or 0.5 while a playback waits for the draws, has other draws, or is format 1
+			double Get( void ) const;
+
+			// a new oapiRand() value, recorded; in a playback the value stays and its event sets it
+			void Redraw( const Recorder& r );
+	};
 
 
 	// a name in double quotes, as in the scenario's panel blocks
@@ -80,6 +102,9 @@ namespace flightrec
 			int steps;// steps of this recording, up to 2
 			bool started;
 			bool locked;
+			bool playing;// counted in this module's playbacks (rev 4)
+
+			void Track( void );
 
 		public:
 			explicit Recorder( VESSEL* v );
@@ -94,6 +119,8 @@ namespace flightrec
 			bool OnPlaybackEvent( const char* type, const char* event );
 
 			bool Recording( void ) const;
+
+			bool PlayingBack( void ) const;// rev 4
 
 			// true in the step the marker is written: the step to record the initial state
 			bool JustStarted( void ) const { return started; }

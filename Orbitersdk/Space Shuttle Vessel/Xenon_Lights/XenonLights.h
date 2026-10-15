@@ -103,7 +103,7 @@ private:
 	bool locked;
 
 	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the power key and a nominal aim (design ssv-flightrec)
-	double heightDraw = 0.5;// not upstream: as above, the aim's draw, kept for flightrec::Held
+	flightrec::Draw heightDraw{ 0.5 };// not upstream: as above, the aim's draw (rev 4)
 	void SetPower( bool on );// not upstream: as above, the power key's action
 };
 

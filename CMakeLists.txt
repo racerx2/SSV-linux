@@ -24,12 +24,8 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
 set(CMAKE_INSTALL_RPATH "$ORIGIN/..")
 
 set(ORBITER_ROOT "" CACHE PATH "Orbiter folder (Modules/, Orbitersdk/, lua.so)")
-set(ORBITER_CMAKE_DIR "${ORBITER_ROOT}/cmake" CACHE PATH "folder with Orbiter's rcresources.cmake and rc2cpp.py")
 if(NOT EXISTS "${ORBITER_ROOT}/Orbitersdk/include/OrbiterAPI.h")
 	message(FATAL_ERROR "ORBITER_ROOT must be the Orbiter folder (with Orbitersdk/include)")
-endif()
-if(NOT EXISTS "${ORBITER_CMAKE_DIR}/rcresources.cmake")
-	message(FATAL_ERROR "ORBITER_CMAKE_DIR must hold rcresources.cmake and rc2cpp.py")
 endif()
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 	set(CMAKE_INSTALL_PREFIX "${ORBITER_ROOT}" CACHE PATH "" FORCE)
@@ -37,10 +33,17 @@ endif()
 
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Widgets)
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
-
-set(SDK_DIR ${ORBITER_ROOT}/Orbitersdk)
-set(ORBITER_SOURCE_SDK_INCLUDE_DIR ${SDK_DIR}/include) # rc2cpp include path
-include(${ORBITER_CMAKE_DIR}/rcresources.cmake)
+# Orbiter's CMake package: the SDK libraries, lua.so and orbiter_rc_resources(), only from ORBITER_ROOT
+if(POLICY CMP0144)
+	cmake_policy(SET CMP0144 NEW) # ORBITER_ROOT is also Orbiter's <PACKAGENAME>_ROOT: NO_DEFAULT_PATH ignores it
+endif()
+find_package(Orbiter CONFIG REQUIRED HINTS "${ORBITER_ROOT}/Orbitersdk/lib/cmake" NO_DEFAULT_PATH)
+file(REAL_PATH "${ORBITER_ROOT}" orbiter_root)
+file(REAL_PATH "${Orbiter_ROOT_DIR}" orbiter_found)
+if(NOT orbiter_root STREQUAL orbiter_found)
+	message(FATAL_ERROR "Orbiter_DIR is the package of ${Orbiter_ROOT_DIR}, not of ORBITER_ROOT: remove it from the cache")
+endif()
+set(SDK_INCLUDE "$<TARGET_PROPERTY:Orbiter::Orbitersdk,INTERFACE_INCLUDE_DIRECTORIES>")
 
 set(SSV_DIR "${CMAKE_CURRENT_SOURCE_DIR}/Orbitersdk/Space Shuttle Vessel")
 
@@ -87,8 +90,8 @@ foreach(cmd ${SSV_GEN_HALS2CPP})
 endforeach()
 add_custom_target(ssv_generated DEPENDS ${SSV_GENERATED})
 
-# libraries and vessel modules
-set(SSV_INCLUDES ${SDK_DIR}/include ${SDK_DIR}/XRSound "${SSV_DIR}/SSVlib/include" "${SSV_DIR}/cJSON/inc")
+# libraries and vessel modules; a module links the libraries of its vcxproj (SSV_<name>_LIBS)
+set(SSV_INCLUDES ${SDK_INCLUDE} "${SSV_DIR}/SSVlib/include" "${SSV_DIR}/cJSON/inc")
 foreach(p ${SSV_PROJECTS})
 	if(p STREQUAL "ssvmeshc" OR p STREQUAL "HALS2CPP")
 		continue()
@@ -102,10 +105,8 @@ foreach(p ${SSV_PROJECTS})
 		endforeach()
 		target_link_libraries(${p} PRIVATE
 			${SSV_${p}_REFS}
-			${SDK_DIR}/lib/libOrbitersdk.a
-			${SDK_DIR}/lib/libDlgCtrl.a
-			${SDK_DIR}/XRSound/libXRSound.a
-			Qt6::Widgets
+			${SSV_${p}_LIBS}
+			Qt6::Widgets # the SDK dialog headers
 		)
 		install(TARGETS ${p} LIBRARY DESTINATION Modules)
 	else()
@@ -116,8 +117,6 @@ foreach(p ${SSV_PROJECTS})
 	target_link_libraries(${p} PRIVATE ssv_crt)
 	add_dependencies(${p} ssv_generated)
 endforeach()
-# the VAB's Lua functions use Orbiter's Lua 5.1, as the stock DeltaGlider does
-target_link_libraries(SSV_VAB PRIVATE ${ORBITER_ROOT}/lua.so)
 
 # tests of the C library functions
 enable_testing()
@@ -127,7 +126,7 @@ add_test(NAME ssv_crt COMMAND ssv_crt_test)
 
 # tests of the flight recorder support (design ssv-flightrec), Orbiter's recorder calls stubbed in the test
 add_executable(ssv_flightrec_test linux/tests/flightrec_test.cpp "${SSV_DIR}/SSVlib/src/FlightRecorder.cpp" "${SSV_DIR}/OV/CrewControls.cpp")
-target_include_directories(ssv_flightrec_test PRIVATE ${SDK_DIR}/include "${SSV_DIR}/SSVlib/include" "${SSV_DIR}/OV")
+target_include_directories(ssv_flightrec_test PRIVATE ${SDK_INCLUDE} "${SSV_DIR}/SSVlib/include" "${SSV_DIR}/OV")
 target_compile_options(ssv_flightrec_test PRIVATE ${SSV_CRT_FLAGS})
 target_link_libraries(ssv_flightrec_test PRIVATE ssv_crt)
 add_test(NAME ssv_flightrec COMMAND ssv_flightrec_test)

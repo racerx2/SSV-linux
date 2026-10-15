@@ -62,6 +62,7 @@ Date         Developer
 
 
 #include "DiscOutPort.h"
+#include "FlightRecorder.h"// not upstream: kept draw (design ssv-flightrec rev 4)
 
 
 using discsignals::DiscOutPort;
@@ -85,7 +86,7 @@ class Sensor
 
 		double conversor;
 		double error;
-		double draw;// not upstream: the random part of the error, [0,1) (design ssv-flightrec)
+		flightrec::Draw draw;// not upstream: the random part of the error, [0,1) (design ssv-flightrec rev 4)
 
 		double MaxValue;
 		double MinValue;

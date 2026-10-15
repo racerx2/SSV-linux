@@ -56,10 +56,14 @@ namespace oms
 			// position: 0 closed, 1 open
 			double pos[2][VLV_COUNT];
 
-			bool fromOMS[2][2];
+			// source last given to Atlantis per pod and manifold group
+			AFTFEED feed[2][2];
 
 			bool IsOpen( unsigned int side, OMSRCS_VLV v ) const;
 			bool IsClosed( unsigned int side, OMSRCS_VLV v ) const;
+
+			// pod of an RCS tank feeding a manifold group through the crossfeed line, the group's own pod first; -1 if none
+			int CrossfeedTank( unsigned int side, unsigned int group ) const;
 
 		public:
 			explicit OMSRCSFeed( AtlantisSubsystemDirector* _director );
@@ -73,8 +77,11 @@ namespace oms
 			// true if a manifold group (0 1/2, 1 3/4/5) of a pod (0 left, 1 right) is fed from the OMS tanks
 			bool GroupFeedFromOMS( unsigned int side, unsigned int group ) const;
 
-			// true if a manifold group has no source: tank isolation closed and no OMS path through its crossfeed
+			// true if a manifold group has no source: tank isolation closed and no OMS or RCS tank on its crossfeed
 			bool GroupIsolated( unsigned int side, unsigned int group ) const;
+
+			// source of a manifold group from the valves: OMS, none (isolated), its RCS tank or the other pod's
+			AFTFEED GroupFeed( unsigned int side, unsigned int group ) const;
 	};
 }
 

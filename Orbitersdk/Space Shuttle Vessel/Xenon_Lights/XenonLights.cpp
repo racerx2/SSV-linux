@@ -181,7 +181,7 @@ void XenonLights::clbkPreStep(double simT, double simDT, double mjd)
 							MATRIX3 RotMatrix;
 							GetRotationMatrix(RotMatrix);
 							VECTOR3 pos = tmul(RotMatrix, -relPos);
-							pos.y = heightOffset + ((flightrec::Held( heightDraw ) - 0.5) * 50);// point within 25m vertically of vehicle center; not upstream: the aim's draw added here, nominal in a playback (design ssv-flightrec)
+							pos.y = heightOffset + ((heightDraw.Get() - 0.5) * 50);// point within 25m vertically of vehicle center; not upstream: the aim's draw added here, the recording's in a playback (design ssv-flightrec rev 4)
 							lightDir=pos/length(pos);
 						}
 					}
@@ -376,7 +376,7 @@ bool XenonLights::FindTarget()
 				else {
 					heightOffset = PAD_HEIGHT_OFFSET;
 				}
-				heightDraw = oapiRand();// not upstream: the aim's draw, kept for flightrec::Held (design ssv-flightrec)
+				heightDraw.Redraw( flightrecorder );// not upstream: the aim's draw, recorded (design ssv-flightrec rev 4)
 				return true;
 			}
 		}
@@ -389,7 +389,7 @@ bool XenonLights::clbkPlaybackEvent( double simt, double event_t, const char* ev
 	try
 	{
 		if (!event) event = "";
-		if (!_stricmp( event_type, flightrec::NOMINAL )) updateClock = 0.0;
+		if (!_stricmp( event_type, flightrec::NOMINAL ) || !_stricmp( event_type, flightrec::DRAWS ) || !_stricmp( event_type, flightrec::DRAW )) updateClock = 0.0;// not upstream: re-aim with the recorded draw (rev 4)
 		if (flightrecorder.OnPlaybackEvent( event_type, event )) return true;
 
 		if (!_stricmp( event_type, flightrec::CMD ))

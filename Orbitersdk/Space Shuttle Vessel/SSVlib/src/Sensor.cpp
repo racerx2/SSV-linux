@@ -12,12 +12,11 @@ Date         Developer
 ********************************************/
 #include <Sensor.h>
 #include <MathSSV.h>
-#include <FlightRecorder.h>// not upstream: nominal sensor error in a playback (design ssv-flightrec)
 #include <stdlib.h>
 #include <cassert>
 
 
-Sensor::Sensor( double MinValue, double MaxValue, double FSerror, double MinVoltage, double MaxVoltage )
+Sensor::Sensor( double MinValue, double MaxValue, double FSerror, double MinVoltage, double MaxVoltage ):draw( (double)rand() / (RAND_MAX + 1.0) )// not upstream: the error's draw, kept; RAND_MAX + 1 overflows int on Linux (design ssv-flightrec rev 4)
 {
 	assert( (MinVoltage < MaxVoltage) && "Sensor::Sensor.(MinVoltage < MaxVoltage)" );
 
@@ -28,8 +27,7 @@ Sensor::Sensor( double MinValue, double MaxValue, double FSerror, double MinVolt
 
 	conversor = (MaxVoltage - MinVoltage) / (MaxValue - MinValue);
 
-	error = (MaxValue - MinValue) * FSerror;// not upstream: the full-scale error, its draw below is applied in SetValue (design ssv-flightrec)
-	draw = (double)rand() / (RAND_MAX + 1.0);// not upstream: RAND_MAX + 1 overflows int on Linux
+	error = (MaxValue - MinValue) * FSerror;// not upstream: the full-scale error, its draw is applied in SetValue (design ssv-flightrec)
 	return;
 }
 
@@ -53,7 +51,7 @@ void Sensor::Disconnect( void )
 
 void Sensor::SetValue( double value )
 {
-	value += error * (flightrec::Held( draw ) - 0.5);// not upstream: no error while a recorded flight plays back nominal (design ssv-flightrec)
+	value += error * (draw.Get() - 0.5);// not upstream: the recording's error in a playback (design ssv-flightrec rev 4)
 
 	double v = (value - MinValue) * conversor;
 	v = range( MinVoltage, v, MaxVoltage );

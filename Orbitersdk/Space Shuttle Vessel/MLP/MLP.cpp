@@ -60,7 +60,7 @@ MLP::MLP(OBJHANDLE hVessel, int iFlightModel)
 
 	HBOIOn = false;
 	HBOILevel = 0.0;
-	HBOITime = 8.0 + (oapiRand() * 5.0);
+	HBOITime = 8.0 + (HBOIDraw.Get() * 5.0);// not upstream: the draw kept in HBOIDraw (design ssv-flightrec rev 4)
 }
 
 MLP::~MLP()
@@ -424,14 +424,15 @@ void MLP::HideSRBWaterBags( VISHANDLE vis )
 
 void MLP::FireSSMEH2BurnPICs( void )
 {
-	if (!HBOIOn) HBOITime = 8.0 + (flightrec::Rand() * 5.0);// not upstream: drawn when lit, nominal in a playback (design ssv-flightrec)
 	HBOIOn = true;
 	return;
 }
 
 bool MLP::clbkPlaybackEvent( double simt, double event_t, const char* event_type, const char* event )// not upstream: as declared
 {
-	return flightrecorder.OnPlaybackEvent( event_type, event );
+	if (!flightrecorder.OnPlaybackEvent( event_type, event )) return false;
+	if (!HBOIOn && (!_stricmp( event_type, flightrec::NOMINAL ) || !_stricmp( event_type, flightrec::DRAWS ))) HBOITime = 8.0 + (HBOIDraw.Get() * 5.0);// at the marker, before any firing: the recording's draw (rev 4)
+	return true;
 }
 
 void MLP::SetGMTLO( double GMTLO )

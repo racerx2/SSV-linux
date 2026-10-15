@@ -112,7 +112,7 @@ private:
 	void IssueCutoff( void );
 
 	flightrec::Recorder flightrecorder{ this };// not upstream: flight recorder, the MFD's commands (design ssv-flightrec)
-	double MPSHeSupplyDraw;// not upstream: as above, the draw of MPSHeSupplyPressure2, nominal in a playback
+	flightrec::Draw MPSHeSupplyDraw{ 0.5 };// not upstream: as above, the draw of MPSHeSupplyPressure2 (rev 4)
 	void CrewCommand( const std::string& cmd );// not upstream: as above, records and applies a command, nothing while locked
 	bool ApplyCrewCommand( const char* cmd );// not upstream: as above
 };

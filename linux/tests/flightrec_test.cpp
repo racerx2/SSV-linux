@@ -7,6 +7,7 @@
 #include "CrewControls.h"
 #include <cstdio>
 #include <cstring>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -49,7 +50,8 @@ static void Tokens ()
 
 static void Recorder ()
 {
-	VESSEL v (nullptr), w (nullptr);
+	VESSEL v (nullptr), w (nullptr), x (nullptr);
+	flightrec::Draw a (0.8);
 	{
 		flightrec::Recorder r (&v);
 		r.Step ();
@@ -61,37 +63,145 @@ static void Recorder ()
 		r.Step ();
 		CHECK (!r.JustStarted () && events.empty ());
 		r.Step ();
-		CHECK (r.JustStarted () && events.size () == 1 && events[0].first == "SSV_NOMINAL" && events[0].second == "1");
+		CHECK (r.JustStarted () && events.size () == 2 && events[0].first == "SSV_NOMINAL" && events[0].second == "2");
+		CHECK (events[1].first == "SSV_DRAWS" && events[1].second == "1 0 0.80000000000000004");
 		r.Step ();
-		CHECK (!r.JustStarted () && events.size () == 1);
+		CHECK (!r.JustStarted () && events.size () == 2);
 		r.Record (flightrec::CMD, "PLBCAM\n1 0 0 0");
-		CHECK (events.size () == 2 && events[1].first == "SSV_CMD" && events[1].second == "PLBCAM 1 0 0 0");
+		CHECK (events.size () == 3 && events[2].first == "SSV_CMD" && events[2].second == "PLBCAM 1 0 0 0");
 		recording = false;
 		r.Step ();
 		recording = true;
 		r.Step ();
 		r.Step ();
-		CHECK (r.JustStarted () && events.size () == 3 && events[2].first == "SSV_NOMINAL");
+		CHECK (r.JustStarted () && events.size () == 5 && events[3].first == "SSV_NOMINAL" && events[4].first == "SSV_DRAWS");
 		recording = false;
 		events.clear ();
 
-		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", "1") && !r.Locked () && (flightrec::Held (0.8) == 0.8));
-		CHECK (flightrec::Rand () == 0.25 && flightrec::Held (0.8) == 0.8);
+		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", "1") && !r.Locked () && (a.Get () == 0.8));
+		CHECK (flightrec::Rand () == 0.25 && a.Get () == 0.8);
 
 		playback = true;
-		flightrec::Recorder s (&w);
-		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", " 1") && r.Locked () && (flightrec::Held (0.8) == 0.5));
+		flightrec::Recorder s (&w), t (&x);
+		CHECK (a.Get () == 0.8);
+		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", " 1") && r.Locked () && (a.Get () == 0.5));
 		CHECK (r.OnPlaybackEvent ("SSV_NOMINAL", "1") && r.Locked ());
 		CHECK (s.OnPlaybackEvent ("ssv_nominal", "1") && s.Locked ());
-		CHECK (flightrec::Rand () == 0.5 && flightrec::Held (0.8) == 0.5);
+		CHECK (t.OnPlaybackEvent ("SSV_NOMINAL", "3") && !t.Locked ());
+		CHECK (flightrec::Rand () == 0.5 && a.Get () == 0.5);
+		CHECK (r.OnPlaybackEvent ("SSV_DRAWS", "1 0 0.25") && r.OnPlaybackEvent ("SSV_DRAW", "0 0.25") && a.Get () == 0.5);
 		CHECK (r.OnPlaybackEvent ("SSV_EVENT", "LIFTOFF") && r.OnPlaybackEvent ("SSV_CW", "x") && r.OnPlaybackEvent ("SSV_MA", "ON"));
 		CHECK (!r.OnPlaybackEvent ("SSV_VC", "\"A\" \"B\" [1]") && !r.OnPlaybackEvent ("SSV_CMD", "GEAR ARM"));
 
 		playback = false;
 		r.Step ();
-		CHECK (!r.Locked () && s.Locked () && (flightrec::Held (0.8) == 0.5));
+		CHECK (!r.Locked () && s.Locked () && (a.Get () == 0.5));
 	}
-	CHECK ((flightrec::Held (0.8) == 0.8) && flightrec::Rand () == 0.25);
+	CHECK ((a.Get () == 0.8) && flightrec::Rand () == 0.25);
+}
+
+// the Sensor_Press[X] = Sensor (0, 5000) pattern
+struct Holder
+{
+	flightrec::Draw d;
+	explicit Holder (double u = 0.5) : d (u) {}
+};
+
+static const std::pair<std::string, std::string> *Find (const char *type, size_t n = 0)
+{
+	for (const auto &e : events) if ((e.first == type) && (n-- == 0)) return &e;
+	return nullptr;
+}
+
+static int Values (const std::string &s)
+{
+	int n = -2;
+	for (const char *p = s.c_str (); *p; p++) n += ((*p != ' ') && ((p == s.c_str ()) || (p[-1] == ' ')));
+	return n;
+}
+
+static void Draws ()
+{
+	VESSEL v (nullptr);
+	recording = playback = false;
+	events.clear ();
+
+	flightrec::Draw d0 (0.125);
+	auto gone = std::make_unique<flightrec::Draw> (0.25);
+	flightrec::Draw d2 (0.375);
+	gone.reset ();
+	Holder h[2];
+	h[1] = Holder (0.625);
+	flightrec::Draw c (d2);
+	c = d0;
+	CHECK (d0.Get () == 0.125 && d2.Get () == 0.375 && h[1].d.Get () == 0.625 && c.Get () == 0.125);
+	{
+		flightrec::Recorder r (&v);
+		recording = true;
+		r.Step ();
+		r.Step ();
+		CHECK (events.size () == 2 && Find ("SSV_DRAWS") && Find ("SSV_DRAWS")->second == "5 0 0.125 0.375 0.5 0.625 0.125");
+		d2.Redraw (r);
+		CHECK (d2.Get () == 0.25 && events.size () == 3 && events[2].first == "SSV_DRAW" && events[2].second == "1 0.25");
+		recording = false;
+		d2.Redraw (r);
+		CHECK (d2.Get () == 0.25 && events.size () == 3);
+	}
+
+	std::vector<std::unique_ptr<flightrec::Draw>> more;
+	for (int i = 0; i < 20; i++) more.push_back (std::make_unique<flightrec::Draw> (0.75));
+	events.clear ();
+	{
+		flightrec::Recorder r (&v);
+		recording = true;
+		r.Step ();
+		r.Step ();
+		const auto *l0 = Find ("SSV_DRAWS", 0), *l1 = Find ("SSV_DRAWS", 1);
+		CHECK (events.size () == 3 && l0 && l1 && !Find ("SSV_DRAWS", 2));
+		CHECK (l0 && l0->second.compare (0, 5, "25 0 ") == 0 && Values (l0->second) == 16);
+		CHECK (l1 && l1->second.compare (0, 6, "25 16 ") == 0 && Values (l1->second) == 9);
+		recording = false;
+	}
+
+	std::string line0 = "25 0", line1 = "25 16";
+	for (int i = 0; i < 16; i++) line0 += " 0.875";
+	for (int i = 16; i < 25; i++) line1 += " 0.875";
+	events.clear ();
+	logs = 0;
+	{
+		flightrec::Recorder q (&v);
+		playback = true;
+		CHECK (d0.Get () == 0.125);
+		q.Step ();
+		CHECK (d0.Get () == 0.5 && more[19]->Get () == 0.5);
+		CHECK (q.OnPlaybackEvent ("SSV_DRAWS", line0.c_str ()) && d0.Get () == 0.5);
+		CHECK (q.OnPlaybackEvent ("SSV_NOMINAL", "2") && q.Locked () && d0.Get () == 0.5);
+		d2.Redraw (q);
+		CHECK (d2.Get () == 0.5 && events.empty ());
+		CHECK (q.OnPlaybackEvent ("SSV_DRAWS", line0.c_str ()) && d0.Get () == 0.5 && more[19]->Get () == 0.5);
+		CHECK (q.OnPlaybackEvent ("SSV_DRAWS", line1.c_str ()) && d0.Get () == 0.875 && d2.Get () == 0.875 && more[19]->Get () == 0.875);
+		d0.Redraw (q);
+		CHECK (q.OnPlaybackEvent ("SSV_DRAW", "0 0.0625") && d0.Get () == 0.0625);
+		d0.Redraw (q);
+		CHECK (d0.Get () == 0.0625 && events.empty () && flightrec::Rand () == 0.5);
+		CHECK (q.OnPlaybackEvent ("SSV_DRAW", "25 0.5") && q.OnPlaybackEvent ("SSV_DRAW", "x"));
+
+		playback = false;
+		q.Step ();
+		CHECK (!q.Locked () && d0.Get () == 0.0625 && d2.Get () == 0.875);
+		const int before = logs;
+
+		playback = true;
+		q.Step ();
+		CHECK (q.OnPlaybackEvent ("SSV_NOMINAL", "2") && q.Locked () && d2.Get () == 0.5);
+		CHECK (q.OnPlaybackEvent ("SSV_DRAWS", "24 0 0.25") && d2.Get () == 0.5 && logs == before + 2);
+		CHECK (q.OnPlaybackEvent ("SSV_DRAWS", line1.c_str ()) && q.OnPlaybackEvent ("SSV_DRAW", "1 0.25") && d2.Get () == 0.5 && logs == before + 2);
+		playback = false;
+		q.Step ();
+		CHECK (d0.Get () == 0.0625 && d2.Get () == 0.875);
+	}
+	CHECK (d0.Get () == 0.0625);
+	events.clear ();
 }
 
 static void Log ()
@@ -164,6 +274,7 @@ int main ()
 {
 	Tokens ();
 	Recorder ();
+	Draws ();
 	Log ();
 	Controls ();
 	printf ("%d checks, %d failed\n", checks, fails);

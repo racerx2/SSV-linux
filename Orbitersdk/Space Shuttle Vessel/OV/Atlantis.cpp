@@ -362,32 +362,7 @@ Date         Developer
 #include <gcCoreAPI.h>
 #ifndef _WIN32
 #include <OrbiterResource.h>// not upstream: bitmap resources as QImage
-#include <QFontDatabase>
-#include <QStringList>
-static const char* const SSV_FONTS[2] = { "Install\\Space Shuttle Vessel\\SSV_Font_A.otf", "Install\\Space Shuttle Vessel\\SSV_Font_B.otf" };// not upstream: the MDU fonts
-static int SSV_FontId[2] = { -1, -1 };// not upstream: as above
-static int SSV_FontUsers = 0;// not upstream: Atlantis instances; the fonts live while one exists, so no Qt call is left for ExitModule at process exit
-
-static void SSV_FontsAdd( void )// not upstream: SSV_Font_A/B for the MDUs, which Sketchpad makes as Qt fonts
-{
-	for (int i = 0; i < 2; i++)
-	{
-		SSV_FontId[i] = QFontDatabase::addApplicationFont( QString::fromStdString( oapiResolvePath( SSV_FONTS[i] ) ) );
-		if (SSV_FontId[i] < 0) oapiWriteLogV( "(SSV_OV) [ERROR] Could not load font %s", SSV_FONTS[i] );
-		else oapiWriteLogV( "(SSV_OV) [INFO] Font %s: %s", SSV_FONTS[i], QFontDatabase::applicationFontFamilies( SSV_FontId[i] ).join( ", " ).toUtf8().constData() );
-	}
-	return;
-}
-
-static void SSV_FontsRemove( void )// not upstream: as added
-{
-	for (int i = 0; i < 2; i++)
-	{
-		if (SSV_FontId[i] >= 0) QFontDatabase::removeApplicationFont( SSV_FontId[i] );
-		SSV_FontId[i] = -1;
-	}
-	return;
-}
+static const char* const SSV_FONTS[2] = { "Install\\Space Shuttle Vessel\\SSV_Font_A.otf", "Install\\Space Shuttle Vessel\\SSV_Font_B.otf" };// not upstream: the MDU fonts, installed in the system on Windows
 #endif
 #include <EngConst.h>
 #include <stdio.h>
@@ -525,6 +500,10 @@ DLLCLBK void InitModule( HINSTANCE hModule )
 
 		g_Param.deu_characters_faultSH = oapiCreateSurface( LOADBMP(IDB_DEUCHARACTERSFAULT) );
 		if (g_Param.deu_characters_faultSH == NULL) throw std::runtime_error( "Loading bitmap \"DEU_Raw_fault.bmp\" failed." );// not upstream: std::exception has no text constructor outside MSVC
+
+#ifndef _WIN32// not upstream: the MDU fonts as private fonts of the session
+		for (const char* font : SSV_FONTS) if (!oapiAddFontResource( font )) oapiWriteLogV( "(SSV_OV) [ERROR] Could not load font %s", font );
+#endif// not upstream: as above
 		return;
 	}
 	catch (std::exception &e)
@@ -577,6 +556,10 @@ DLLCLBK void ExitModule( HINSTANCE hModule )
 		{
 			oapiDestroySurface( g_Param.deu_characters_faultSH );
 		}
+
+#ifndef _WIN32// not upstream: as added in InitModule
+		for (const char* font : SSV_FONTS) oapiRemoveFontResource( font );
+#endif// not upstream: as above
 	}
 	catch (std::exception &e)
 	{
@@ -631,10 +614,6 @@ Atlantis::Atlantis( OBJHANDLE hVessel, int fmodel ):VESSEL4( hVessel, fmodel ),
 pActiveLatches( 5, NULL ), pXRSound(NULL), flightrecorder( this )// not upstream: flight recorder (design ssv-flightrec)
 {
 	int i;
-
-#ifndef _WIN32
-	if (SSV_FontUsers++ == 0) SSV_FontsAdd();// not upstream: the MDU fonts, before anything makes them
-#endif
 
 	// init D3D9
 	if (pD3D9 = gcGetCoreInterface()) oapiWriteLogV( "(SSV_OV) [INFO] Using D3D9" );
@@ -727,6 +706,7 @@ pActiveLatches( 5, NULL ), pXRSound(NULL), flightrecorder( this )// not upstream
 	ph_frcs = NULL;
 	ph_lrcs = NULL;
 	ph_rrcs = NULL;
+	ph_aftmanf_dry[0] = ph_aftmanf_dry[1] = NULL;// not upstream
 	ph_mps = NULL;
 	ph_srb = NULL;
 
@@ -764,7 +744,8 @@ pActiveLatches( 5, NULL ), pXRSound(NULL), flightrecorder( this )// not upstream
 	bRCSDefined = false;
 
 	for (i = 0; i < 24; i++) th_rcs_dump[i] = NULL;// not upstream
-	aftRCSFromOMS[0][0] = aftRCSFromOMS[0][1] = aftRCSFromOMS[1][0] = aftRCSFromOMS[1][1] = false;// not upstream
+	aftRCSSource[0][0] = aftRCSSource[0][1] = aftRCSSource[1][0] = aftRCSSource[1][1] = oms::AFTFEED_RCS;// not upstream
+	for (i = 0; i < 17 + 14; i++) aftJetPod[i] = -1;// not upstream
 
 	phLOXdump = NULL;
 	phLH2dump = NULL;
@@ -965,9 +946,6 @@ Atlantis::~Atlantis()
 	if (hLOMSTexture) oapiReleaseTexture( hLOMSTexture );
 	if (hROMSTexture) oapiReleaseTexture( hROMSTexture );
 	if (hAftBulkheadTexture) oapiReleaseTexture( hAftBulkheadTexture );
-#ifndef _WIN32
-	if (--SSV_FontUsers == 0) SSV_FontsRemove();// not upstream: the last Atlantis, after the panels and MDUs are gone
-#endif
 }
 
 void Atlantis::clbkSetClassCaps( FILEHANDLE cfg )
@@ -1224,6 +1202,10 @@ void Atlantis::clbkPostCreation( void )
 		SetupSound();
 
 		CreateLights();
+
+		// not upstream: dry aft RCS manifolds, after the scenario's propellant resources so their PRPLEVEL indices stay
+		if (!ph_aftmanf_dry[0]) ph_aftmanf_dry[0] = CreatePropellantResource( 1.0, 0.0 );// not upstream: as above
+		if (!ph_aftmanf_dry[1]) ph_aftmanf_dry[1] = CreatePropellantResource( 1.0, 0.0 );// not upstream: as above
 
 		psubsystems->RealizeAll();
 		pgForward->Realize();
@@ -3221,6 +3203,12 @@ void Atlantis::CreateAttControls_RCS(VECTOR3 center)
 	CreateRCSDumpJets( center );// not upstream
 
 	bRCSDefined = true;
+	for (int i = 0; i < 17 + 14; i++)// not upstream: the pod of each jet, from the tank it was created on
+	{
+		THRUSTER_HANDLE th = (i < 17) ? th_att_rcs[i] : th_att_lin[i - 17];
+		PROPELLANT_HANDLE ph = th ? GetThrusterResource( th ) : NULL;
+		aftJetPod[i] = (ph == ph_lrcs) ? static_cast<int>(LEFT) : ((ph == ph_rrcs) ? static_cast<int>(RIGHT) : -1);
+	}
 	ApplyAftRCSFeed();// not upstream
 }
 
@@ -4076,16 +4064,24 @@ void Atlantis::EnableThrusters(const int Thrusters[], int nThrusters)
 
 PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side ) const// not upstream: as declared
 {
-	bool oms = aftRCSFromOMS[side][0] || aftRCSFromOMS[side][1];
-	if (side == LEFT) return oms ? ph_loms : ph_lrcs;
-	else return oms ? ph_roms : ph_rrcs;
+	oms::AFTFEED feed = oms::AFTFEED_NONE;
+	for (oms::AFTFEED f : {oms::AFTFEED_XRCS, oms::AFTFEED_RCS, oms::AFTFEED_OMS})
+	{
+		if ((aftRCSSource[side][0] == f) || (aftRCSSource[side][1] == f)) feed = f;
+	}
+
+	if (feed == oms::AFTFEED_OMS) return (side == LEFT) ? ph_loms : ph_roms;
+	else if (feed == oms::AFTFEED_NONE) return ph_aftmanf_dry[side];
+	else if (feed == oms::AFTFEED_XRCS) return (side == LEFT) ? ph_rrcs : ph_lrcs;
+	else return (side == LEFT) ? ph_lrcs : ph_rrcs;
 }
 
 PROPELLANT_HANDLE Atlantis::AftRCSFeed( unsigned int side, unsigned int group ) const// not upstream: as declared
 {
-	bool oms = aftRCSFromOMS[side][group];
-	if (side == LEFT) return oms ? ph_loms : ph_lrcs;
-	else return oms ? ph_roms : ph_rrcs;
+	if (aftRCSSource[side][group] == oms::AFTFEED_OMS) return (side == LEFT) ? ph_loms : ph_roms;
+	else if (aftRCSSource[side][group] == oms::AFTFEED_NONE) return ph_aftmanf_dry[side];
+	else if (aftRCSSource[side][group] == oms::AFTFEED_XRCS) return (side == LEFT) ? ph_rrcs : ph_lrcs;
+	else return (side == LEFT) ? ph_lrcs : ph_rrcs;
 }
 
 double Atlantis::GetOMSPropellantMass( void ) const// not upstream: as declared
@@ -4093,10 +4089,10 @@ double Atlantis::GetOMSPropellantMass( void ) const// not upstream: as declared
 	return GetPropellantMass( ph_loms ) + GetPropellantMass( ph_roms );
 }
 
-void Atlantis::SetAftRCSFeedFromOMS( unsigned int side, unsigned int group, bool fromOMS )// not upstream: as declared
+void Atlantis::SetAftRCSFeed( unsigned int side, unsigned int group, oms::AFTFEED feed )// not upstream: as declared
 {
 	if ((side > 1) || (group > 1)) return;
-	aftRCSFromOMS[side][group] = fromOMS;
+	aftRCSSource[side][group] = feed;
 	ApplyAftRCSFeed();
 	return;
 }
@@ -4106,15 +4102,13 @@ void Atlantis::ApplyAftRCSFeed( void )// not upstream: as declared
 	if (!bRCSDefined) return;
 
 	// move every aft jet that has a source to the current source of its pod; a jet without a source was disabled by the DAP
-	auto move = [this]( THRUSTER_HANDLE th )
+	auto move = [this]( THRUSTER_HANDLE th, int pod )
 	{
-		if (th == NULL) return;
-		PROPELLANT_HANDLE ph = GetThrusterResource( th );
-		if ((ph == ph_lrcs) || (ph == ph_loms)) SetThrusterResource( th, AftRCSFeed( LEFT ) );
-		else if ((ph == ph_rrcs) || (ph == ph_roms)) SetThrusterResource( th, AftRCSFeed( RIGHT ) );
+		if ((th == NULL) || (pod < 0) || (GetThrusterResource( th ) == NULL)) return;
+		SetThrusterResource( th, AftRCSFeed( static_cast<unsigned int>(pod) ) );
 	};
-	for (int i = 0; i < 17; i++) move( th_att_rcs[i] );
-	for (int i = 0; i < 14; i++) move( th_att_lin[i] );
+	for (int i = 0; i < 17; i++) move( th_att_rcs[i], aftJetPod[i] );
+	for (int i = 0; i < 14; i++) move( th_att_lin[i], aftJetPod[17 + i] );
 	for (int i = 0; i < 24; i++)
 	{
 		if (th_rcs_dump[i] != NULL) SetThrusterResource( th_rcs_dump[i], AftRCSFeed( DUMP_JET_SIDE[i], DUMP_JET_MANF[i] ) );
