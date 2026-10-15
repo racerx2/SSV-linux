@@ -7,7 +7,7 @@ Space Shuttle Vessel (SSV) is an addon for Orbiter Space Flight Simulator (https
 ![Upper stage being deployed in orbit](./Doc/Space%20Shuttle%20Vessel/Images/orbit.png)
 ![Landing viewed from the HUD](./Doc/Space%20Shuttle%20Vessel/Images/landing.png)
 
-This release of SSV is for use in Orbiter 2024.
+This release of SSV is for use in [Orbiter 2027 Linux](https://github.com/racerx2/orbiter-2027-linux).
 
 
 # Space Shuttle Vessel, native on Linux
@@ -50,7 +50,7 @@ CMake 3.19+, Ninja, GCC and Qt 6: `cmake -S . -B out/build -G Ninja -DORBITER_RO
 Space Shuttle Vessel is by the SSV team (GLS and indy91). This Linux port and its additions are by racerx2. It is unofficial and not supported by the SSV team, so please report problems with it to racerx2, not to them. Every Linux change in the code is marked `not upstream`, and the Windows code stays as it is under `#ifdef _WIN32`. Same licence as SSV: GNU GPL v2.
 
 
-# Installation
+# Installation on Windows (the original SSV release, Orbiter 2024)
 1. Install Orbiter 2024.
 
 2. Install the required addons:
