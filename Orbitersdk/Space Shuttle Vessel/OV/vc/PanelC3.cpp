@@ -40,6 +40,7 @@ Date         Developer
 2022/09/29   GLS
 2022/10/04   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "PanelC3.h"
 #include "StandardSwitch.h"
@@ -704,7 +705,7 @@ namespace vc
 
 				// change texture
 				if (hOV102Texture == NULL) hOV102Texture = oapiLoadTexture( "SSV\\OV\\panelC3_OV102.dds" );
-				if (hOV102Texture == NULL) throw std::exception( "Could not load texture in panel C3" );
+				if (hOV102Texture == NULL) throw std::runtime_error( "Could not load texture in panel C3" );// not upstream: std::exception has no text constructor outside MSVC
 				else oapiSetTexture( hDevMesh, TEX_SSV_OV_PANELC3_C3_VC, hOV102Texture );
 			}
 		}

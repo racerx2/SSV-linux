@@ -10,6 +10,7 @@ Date         Developer
 2021/08/24   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "LCC_MFD.h"
 #include "LCC.h"
@@ -320,14 +321,14 @@ bool LCC_MFD::ConsumeButton( int bt, int event )
 	}
 }
 
-int LCC_MFD::MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam )
+OAPI_MSGTYPE LCC_MFD::MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam )// not upstream: as in the header
 {
 	try
 	{
 		switch (msg)
 		{
 			case OAPI_MSG_MFD_OPENED:
-				return (int)(new LCC_MFD( LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam ));
+				return (OAPI_MSGTYPE)(new LCC_MFD( LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam ));// not upstream: the MFD pointer does not fit an int on 64-bit
 		}
 		return 0;
 	}

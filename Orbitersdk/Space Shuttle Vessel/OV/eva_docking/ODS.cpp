@@ -35,6 +35,7 @@ Date         Developer
 2024/02/11   GLS
 2024/03/13   jarmonik
 2024/07/05   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "ODS.h"
 #include "../Atlantis.h"
@@ -817,7 +818,7 @@ namespace eva_docking
 
 			if (fSettleTimer > 0.0)
 			{				
-				fSettleTimer = max(0, fSettleTimer -= simdt);	// scale to 1.0 - 0.0 for lerp
+				fSettleTimer = std::max<double>(0, fSettleTimer -= simdt);	// scale to 1.0 - 0.0 for lerp// not upstream: windows.h max macro took mixed types
 				double fS = fSettleTimer / 5.0;
 						
 				VECTOR3 dir = sdock_dir * fS + DOCKING_PORT_DIR * (1.0 - fS); //lerp

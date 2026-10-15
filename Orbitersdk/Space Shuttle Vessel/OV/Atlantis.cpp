@@ -184,6 +184,7 @@ Date         Developer
 2024/12/30   GLS
 2025/01/23   GLS
 2025/05/19   GLS
+2026/10/15   racerx2
 ********************************************/
 // ==============================================================
 //                 ORBITER MODULE: Atlantis
@@ -358,6 +359,35 @@ Date         Developer
 #include <UtilsSSV.h>
 #include <cassert>
 #include <gcCoreAPI.h>
+#ifndef _WIN32
+#include <OrbiterResource.h>// not upstream: bitmap resources as QImage
+#include <QFontDatabase>
+#include <QStringList>
+static const char* SSV_FONTS[2] = { "Install\\Space Shuttle Vessel\\SSV_Font_A.otf", "Install\\Space Shuttle Vessel\\SSV_Font_B.otf" };// not upstream: the MDU fonts
+static int SSV_FontId[2] = { -1, -1 };
+static int SSV_FontUsers = 0;// not upstream: Atlantis instances; the fonts live while one exists, so no Qt call is left for ExitModule at process exit
+
+static void SSV_FontsAdd( void )// not upstream: SSV_Font_A/B for the MDUs, which Sketchpad makes as Qt fonts
+{
+	for (int i = 0; i < 2; i++)
+	{
+		SSV_FontId[i] = QFontDatabase::addApplicationFont( QString::fromStdString( oapiResolvePath( SSV_FONTS[i] ) ) );
+		if (SSV_FontId[i] < 0) oapiWriteLogV( "(SSV_OV) [ERROR] Could not load font %s", SSV_FONTS[i] );
+		else oapiWriteLogV( "(SSV_OV) [INFO] Font %s: %s", SSV_FONTS[i], QFontDatabase::applicationFontFamilies( SSV_FontId[i] ).join( ", " ).toUtf8().constData() );
+	}
+	return;
+}
+
+static void SSV_FontsRemove( void )// not upstream: as added
+{
+	for (int i = 0; i < 2; i++)
+	{
+		if (SSV_FontId[i] >= 0) QFontDatabase::removeApplicationFont( SSV_FontId[i] );
+		SSV_FontId[i] = -1;
+	}
+	return;
+}
+#endif
 #include <EngConst.h>
 #include <stdio.h>
 #include <fstream>
@@ -365,7 +395,11 @@ Date         Developer
 //#include <Stopwatch.h>
 
 
+#ifdef _WIN32
 #define LOADBMP(id) (LoadBitmap (g_Param.hDLL, MAKEINTRESOURCE (id)))
+#else
+#define LOADBMP(id) (oapiLoadResImage (g_Param.hDLL, id))// not upstream: the bitmap resource as a QImage
+#endif
 
 // ==============================================================
 // Global (class-wide) parameters
@@ -440,7 +474,11 @@ inline void ssuAssert(bool expression, const char* context)
 }
 
 
+#ifdef _WIN32
 DLLCLBK void InitModule( HINSTANCE hModule )
+#else
+DLLCLBK void InitModule( void* hModule )// not upstream: the module handle is the dlopen handle
+#endif
 {
 	try
 	{
@@ -451,6 +489,7 @@ DLLCLBK void InitModule( HINSTANCE hModule )
 		LoadAerodynamicData();
 
 		oapiWriteLog( "(SSV_OV) [INFO] Loading bitmaps..." );
+#ifdef _WIN32
 		g_Param.deu_characters = LOADBMP(IDB_DEUCHARACTERS);
 		HDC Temp1DC = CreateDC( "DISPLAY", NULL, NULL, NULL );
 		g_Param.DeuCharBitmapDC = CreateCompatibleDC( Temp1DC );
@@ -474,15 +513,16 @@ DLLCLBK void InitModule( HINSTANCE hModule )
 		SetStretchBltMode( g_Param.DeuCharOvrBrgtBitmapDC, HALFTONE );
 		StretchBlt( g_Param.DeuCharFaultBitmapDC, 0, 0, 284, 256, g_Param.DeuCharFaultBitmapDC, 0, 0, 512, 512, SRCCOPY );
 		DeleteDC( Temp1DC );
+#endif// left out: the GDI DEU bitmaps (Windows only)
 
 		g_Param.deu_charactersSH = oapiCreateSurface( LOADBMP(IDB_DEUCHARACTERS) );
-		if (g_Param.deu_charactersSH == NULL) throw std::exception( "Loading bitmap \"DEU_Raw.bmp\" failed." );
+		if (g_Param.deu_charactersSH == NULL) throw std::runtime_error( "Loading bitmap \"DEU_Raw.bmp\" failed." );// not upstream: std::exception has no text constructor outside MSVC
 
 		g_Param.deu_characters_overbrightSH = oapiCreateSurface( LOADBMP(IDB_DEUCHARACTERSOVERBRIGHT) );
-		if (g_Param.deu_characters_overbrightSH == NULL) throw std::exception( "Loading bitmap \"DEU_Raw_overbright.bmp\" failed." );
+		if (g_Param.deu_characters_overbrightSH == NULL) throw std::runtime_error( "Loading bitmap \"DEU_Raw_overbright.bmp\" failed." );// not upstream: std::exception has no text constructor outside MSVC
 
 		g_Param.deu_characters_faultSH = oapiCreateSurface( LOADBMP(IDB_DEUCHARACTERSFAULT) );
-		if (g_Param.deu_characters_faultSH == NULL) throw std::exception( "Loading bitmap \"DEU_Raw_fault.bmp\" failed." );
+		if (g_Param.deu_characters_faultSH == NULL) throw std::runtime_error( "Loading bitmap \"DEU_Raw_fault.bmp\" failed." );// not upstream: std::exception has no text constructor outside MSVC
 		return;
 	}
 	catch (std::exception &e)
@@ -497,10 +537,15 @@ DLLCLBK void InitModule( HINSTANCE hModule )
 	}
 }
 
+#ifdef _WIN32
 DLLCLBK void ExitModule( HINSTANCE hModule )
+#else
+DLLCLBK void ExitModule( void* hModule )// not upstream: as above
+#endif
 {
 	try
 	{
+#ifdef _WIN32
 		DeleteDC( g_Param.DeuCharBitmapDC );
 		if (g_Param.deu_characters)
 		{
@@ -518,6 +563,7 @@ DLLCLBK void ExitModule( HINSTANCE hModule )
 		{
 			DeleteObject( g_Param.deu_characters_fault );
 		}
+#endif// left out: as in InitModule
 
 		if (g_Param.deu_charactersSH)
 		{
@@ -587,6 +633,10 @@ Atlantis::Atlantis( OBJHANDLE hVessel, int fmodel ):VESSEL4( hVessel, fmodel ),
 pActiveLatches( 5, NULL ), pXRSound(NULL)
 {
 	int i;
+
+#ifndef _WIN32
+	if (SSV_FontUsers++ == 0) SSV_FontsAdd();// not upstream: the MDU fonts, before anything makes them
+#endif
 
 	// init D3D9
 	if (pD3D9 = gcGetCoreInterface()) oapiWriteLogV( "(SSV_OV) [INFO] Using D3D9" );
@@ -913,6 +963,9 @@ Atlantis::~Atlantis()
 	if (hLOMSTexture) oapiReleaseTexture( hLOMSTexture );
 	if (hROMSTexture) oapiReleaseTexture( hROMSTexture );
 	if (hAftBulkheadTexture) oapiReleaseTexture( hAftBulkheadTexture );
+#ifndef _WIN32
+	if (--SSV_FontUsers == 0) SSV_FontsRemove();// not upstream: the last Atlantis, after the panels and MDUs are gone
+#endif
 }
 
 void Atlantis::clbkSetClassCaps( FILEHANDLE cfg )
@@ -4537,7 +4590,7 @@ short Atlantis::GetETPropellant() const
 {
 	ET* et = GetTankInterface();
 
-	if (et != NULL) return min((short)et->GetPropellantLevel(), 99);
+	if (et != NULL) return std::min<int>((short)et->GetPropellantLevel(), 99);// not upstream: windows.h min macro took mixed types
 	else return -1;
 }
 
@@ -5021,7 +5074,7 @@ void Atlantis::UpdateOrbiterTexture( const std::string& strTextureName )
 {
 	if ((!hDevOrbiterMesh) || (!hDevOrbiterVCExternalMesh) || (!hDevVerticalTailMesh)) return;// no mesh handle
 	if (hOVTexture == NULL) hOVTexture = oapiLoadTexture( strTextureName.c_str() );
-	if (hOVTexture == NULL) throw std::exception( "Could not load Orbiter texture" );
+	if (hOVTexture == NULL) throw std::runtime_error( "Could not load Orbiter texture" );// not upstream: std::exception has no text constructor outside MSVC
 	else
 	{
 		oapiSetTexture( hDevOrbiterMesh, TEX_SSV_OV_OV104_5THMOD, hOVTexture );
@@ -5035,7 +5088,7 @@ void Atlantis::UpdateLOMSPodTexture( const std::string& strTextureName )
 {
 	if (!hDevOrbiterMesh) return;// no mesh handle
 	if (hLOMSTexture == NULL) hLOMSTexture = oapiLoadTexture( strTextureName.c_str() );
-	if (hLOMSTexture == NULL) throw std::exception( "Could not load LOMSPod texture" );
+	if (hLOMSTexture == NULL) throw std::runtime_error( "Could not load LOMSPod texture" );// not upstream: std::exception has no text constructor outside MSVC
 	else oapiSetTexture( hDevOrbiterMesh, TEX_SSV_OV_OMSPOD_7THMOD, hLOMSTexture );
 	return;
 }
@@ -5044,7 +5097,7 @@ void Atlantis::UpdateROMSPodTexture( const std::string& strTextureName )
 {
 	if (!hDevOrbiterMesh) return;// no mesh handle
 	if (hROMSTexture == NULL) hROMSTexture = oapiLoadTexture( strTextureName.c_str() );
-	if (hROMSTexture == NULL) throw std::exception( "Could not load ROMSPod texture" );
+	if (hROMSTexture == NULL) throw std::runtime_error( "Could not load ROMSPod texture" );// not upstream: std::exception has no text constructor outside MSVC
 	else oapiSetTexture( hDevOrbiterMesh, TEX_SSV_OV_OMSPOD_7THMODA, hROMSTexture );
 	return;
 }
@@ -5056,14 +5109,14 @@ void Atlantis::UpdateAftBulkheadTexture( const std::string& ov )
 	{
 		// starboard flag
 		if (hAftBulkheadTexture == NULL) hAftBulkheadTexture = oapiLoadTexture( TEXTURENAME_AFTBULKHEAD_FLAGSTARBOARD );
-		if (hAftBulkheadTexture == NULL) throw std::exception( "Could not load TEXTURENAME_AFTBULKHEAD_FLAGSTARBOARD texture" );
+		if (hAftBulkheadTexture == NULL) throw std::runtime_error( "Could not load TEXTURENAME_AFTBULKHEAD_FLAGSTARBOARD texture" );// not upstream: std::exception has no text constructor outside MSVC
 		else oapiSetTexture( hDevOrbiterMesh, TEX_SSV_OV_PLB_AFTBULKHEAD_FLAGPORT, hAftBulkheadTexture );
 	}
 	else if (ov == "Challenger")
 	{
 		// no flag
 		if (hAftBulkheadTexture == NULL) hAftBulkheadTexture = oapiLoadTexture( TEXTURENAME_AFTBULKHEAD_FLAGNONE );
-		if (hAftBulkheadTexture == NULL) throw std::exception( "Could not load TEXTURENAME_AFTBULKHEAD_FLAGNONE texture" );
+		if (hAftBulkheadTexture == NULL) throw std::runtime_error( "Could not load TEXTURENAME_AFTBULKHEAD_FLAGNONE texture" );// not upstream: std::exception has no text constructor outside MSVC
 		else oapiSetTexture( hDevOrbiterMesh, TEX_SSV_OV_PLB_AFTBULKHEAD_FLAGPORT, hAftBulkheadTexture );
 	}
 	return;

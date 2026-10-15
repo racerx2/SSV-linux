@@ -35,6 +35,7 @@ Date         Developer
 2021/08/24   GLS
 2021/12/26   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 
 #ifndef __CRT_H
@@ -60,7 +61,7 @@ public:
 	bool ConsumeKeyBuffered (DWORD key) override;
 	bool ConsumeButton (int bt, int event) override;
 	bool Update( oapi::Sketchpad* skp ) override;
-	static int MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam);
+	static OAPI_MSGTYPE MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam);// not upstream: the SDK type, pointer-sized on 64-bit
 
 	vc::MDU* mdu;
 

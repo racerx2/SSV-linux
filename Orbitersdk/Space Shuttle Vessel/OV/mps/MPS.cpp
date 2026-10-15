@@ -13,6 +13,7 @@ Date         Developer
 2022/06/11   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "MPS.h"
 #include <Orbitersdk.h>
@@ -593,9 +594,9 @@ namespace mps
 
 			// use "normalized" manifold press to control vent thrust
 			double LOXventlevel = LOXManifPress / 80;
-			LOXventlevel = min( LOXventlevel * LOXventlevel, 1 );
+			LOXventlevel = std::min<double>( LOXventlevel * LOXventlevel, 1 );// not upstream: windows.h min macro took mixed types
 			double LH2ventlevel = LH2ManifPress / 35;
-			LH2ventlevel = min( pow( LH2ventlevel, 5 ), 1 );
+			LH2ventlevel = std::min<double>( pow( LH2ventlevel, 5 ), 1 );// not upstream: windows.h min macro took mixed types
 
 			// so it doesn't take forever to empty
 			if (LOXventlevel < 0.05) LOXventlevel = 0.05;

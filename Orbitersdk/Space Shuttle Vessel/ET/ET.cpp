@@ -27,6 +27,7 @@ Date         Developer
 2022/11/16   GLS
 2022/11/17   GLS
 2025/12/22   GLS
+2026/10/15   racerx2
 ********************************************/
 // ==============================================================
 //                 ORBITER MODULE: Atlantis
@@ -126,7 +127,7 @@ void ET::SetTexture( SURFHANDLE tex )
 {
 	if (!hDevTankMesh) return;// no mesh handle
 
-	if (tex == NULL) throw std::exception( "Could not load ET texture" );
+	if (tex == NULL) throw std::runtime_error( "Could not load ET texture" );// not upstream: std::exception has no text constructor outside MSVC
 
 	if (!oapiSetTexture( hDevTankMesh, 1, tex ))
 		oapiWriteLog( "(SSV_ET) [ERROR] Could not update texture" );
@@ -136,7 +137,7 @@ void ET::SetTexture( SURFHANDLE tex )
 void ET::LoadTextures( void )
 {
 	if (hTexture == NULL) hTexture = oapiLoadTexture( strTextureName.c_str() );
-	if (hTexture == NULL) throw std::exception( "Could not load ET texture" );
+	if (hTexture == NULL) throw std::runtime_error( "Could not load ET texture" );// not upstream: std::exception has no text constructor outside MSVC
 
 	std::string strScorchedTextureName = strTextureName;
 	strScorchedTextureName.insert( strScorchedTextureName.length() - 4, SCORCHED_TEXTURE_SUFFIX );
@@ -361,8 +362,8 @@ void ET::clbkPostStep (double simt, double simdt, double mjd)
 			else
 			{
 				// keep open
-				SetThrusterLevel( thGOXventNE, min( (LOXullagepress / PSI2PA) - 45, 1 ) );
-				SetThrusterLevel( thGOXventSW, min( (LOXullagepress / PSI2PA) - 45, 1 ) );
+				SetThrusterLevel( thGOXventNE, min( (LOXullagepress / PSI2PA) - 45, 1.0 ) );// not upstream: std::min needs one type (windows.h min macro took double and int)
+				SetThrusterLevel( thGOXventSW, min( (LOXullagepress / PSI2PA) - 45, 1.0 ) );// not upstream: std::min needs one type (windows.h min macro took double and int)
 				// decrease mass
 				GOXmass -= 6000 * simdt;
 			}
@@ -374,8 +375,8 @@ void ET::clbkPostStep (double simt, double simdt, double mjd)
 			{
 				GO2VentReliefValveOpen = true;
 				// open
-				SetThrusterLevel( thGOXventNE, min( (LOXullagepress / PSI2PA) - 45, 1 ) );
-				SetThrusterLevel( thGOXventSW, min( (LOXullagepress / PSI2PA) - 45, 1 ) );
+				SetThrusterLevel( thGOXventNE, min( (LOXullagepress / PSI2PA) - 45, 1.0 ) );// not upstream: std::min needs one type (windows.h min macro took double and int)
+				SetThrusterLevel( thGOXventSW, min( (LOXullagepress / PSI2PA) - 45, 1.0 ) );// not upstream: std::min needs one type (windows.h min macro took double and int)
 				// decrease mass
 				GOXmass -= 6000 * simdt;
 			}
@@ -400,7 +401,7 @@ void ET::clbkPostStep (double simt, double simdt, double mjd)
 			else
 			{
 				// keep open
-				SetThrusterLevel( thGH2vent, min( (LH2ullagepress / PSI2PA) - 48, 1 ) );
+				SetThrusterLevel( thGH2vent, min( (LH2ullagepress / PSI2PA) - 48, 1.0 ) );// not upstream: as above
 				// decrease mass
 				GH2mass -= 2000 * simdt;
 			}
@@ -412,7 +413,7 @@ void ET::clbkPostStep (double simt, double simdt, double mjd)
 			{
 				GH2VentReliefValveOpen = true;
 				// open
-				SetThrusterLevel( thGH2vent, min( (LH2ullagepress / PSI2PA) - 48.7, 1 ) );
+				SetThrusterLevel( thGH2vent, min( (LH2ullagepress / PSI2PA) - 48.7, 1.0 ) );// not upstream: as above
 				// decrease mass
 				GH2mass -= 2000 * simdt;
 			}
@@ -734,7 +735,11 @@ void ET::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
+#ifdef _WIN32
 	FILE* hF = fopen( filename.c_str(), "r" );
+#else
+	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
+#endif
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_ET) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -751,9 +756,9 @@ void ET::LoadMissionFile( void )
 		return;
 	}
 
-	char* missionfilestr = new char[filesize];
+	char* missionfilestr = new char[filesize + 1];// not upstream: room for the terminating zero cJSON_Parse needs
 	rewind( hF );
-	fread( missionfilestr, sizeof(char), filesize, hF );
+	missionfilestr[fread( missionfilestr, sizeof(char), filesize, hF )] = 0;
 	fclose( hF );
 
 	cJSON* root = cJSON_Parse( missionfilestr );
@@ -771,7 +776,7 @@ void ET::LoadMissionFile( void )
 			LoadMissionV1( root );
 			break;
 		default:
-			oapiWriteLogV( "(SSV_ET) [ERROR] Unknown mission file version %s", version->valueint );
+			oapiWriteLogV( "(SSV_ET) [ERROR] Unknown mission file version %d", version->valueint );// not upstream: the version is an int (%s read it as a pointer)
 			break;
 	}
 

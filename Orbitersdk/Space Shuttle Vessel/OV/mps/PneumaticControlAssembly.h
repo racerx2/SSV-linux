@@ -32,6 +32,7 @@ Date         Developer
 2021/10/23   GLS
 2021/12/30   GLS
 2022/08/05   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -72,6 +73,7 @@ class PressureActuatedValve;
 namespace mps
 {
 	class HeSysEng;
+	class SSME;// not upstream: a friend used as a type, declared for lookup
 
 	using namespace discsignals;
 

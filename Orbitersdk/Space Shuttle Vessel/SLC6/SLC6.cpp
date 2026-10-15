@@ -31,6 +31,7 @@ Date         Developer
 2022/09/29   GLS
 2024/12/30   GLS
 2025/05/10   GLS
+2026/10/15   racerx2
 ********************************************/
 #define ORBITER_MODULE
 
@@ -46,11 +47,22 @@ Date         Developer
 #include "../T0UmbilicalReference.h"
 #include "../PadLCCInterface.h"
 #include <DlgCtrl.h>
+#ifndef _WIN32
+#include <OrbiterResource.h>// not upstream: the Qt dialog functions
+#include <QWidget>
+constexpr UINT WM_COMMAND = 0x0111;// not upstream: winuser.h values of the messages the dialog procedure takes
+constexpr UINT WM_SHOWWINDOW = 0x0018;
+static void SLC6_DlgInit( QWidget* hWnd, void* context );// not upstream: below the dialog procedure
+#endif
 #include "../SSVSound.h"
 #include <UtilsSSV.h>
 
 
+#ifdef _WIN32
 HINSTANCE hModule;
+#else
+void* hModule;// not upstream: the dlopen handle
+#endif
 
 
 static const char* MESHNAME_PADSURFACE = "SSV\\SLC6\\terrain";
@@ -573,9 +585,15 @@ int SLC6::clbkConsumeBufferedKey(DWORD key, bool down, char * keystate)
 			switch(key)
 			{
 				case OAPI_KEY_SPACE:
+#ifdef _WIN32
 					if (oapiOpenDialogEx(hModule, IDD_DLG_ANIMCTRL, SLC6_DlgProc, DLG_CAPTIONCLOSE, this))
 						oapiWriteLog( "(SSV_SCL6) [INFO] Dialog opened" );
 					else if(hModule) sprintf_s(oapiDebugString(), 256, "Error: %d", GetLastError());
+#else
+					if (oapiOpenDialogEx(hModule, IDD_DLG_ANIMCTRL, SLC6_DlgInit, DLG_CAPTIONCLOSE, this))// not upstream: Qt dialog
+						oapiWriteLog( "(SSV_SCL6) [INFO] Dialog opened" );
+					else if(hModule) sprintf_s(oapiDebugString(), 256, "Error: dialog not opened");
+#endif
 					return 1;
 				case OAPI_KEY_C:
 					if(PCR_State.Closed()) ExtendPCR();
@@ -1101,7 +1119,11 @@ void SLC6::DefineAnimations()
 }
 
 //global functions
+#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 	try
 	{
@@ -1120,7 +1142,11 @@ DLLCLBK void InitModule(HINSTANCE hDLL)
 	}
 }
 
+#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 	try
 	{
@@ -1174,7 +1200,11 @@ DLLCLBK void ovcExit(VESSEL* vessel)
 	}
 }
 
+#ifdef _WIN32
 BOOL CALLBACK SLC6_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+#else
+BOOL SLC6_DlgProc(QWidget* hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)// not upstream: as on Windows, messages from SLC6_DlgInit
+#endif
 {
 	try
 	{
@@ -1280,7 +1310,11 @@ BOOL CALLBACK SLC6_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			}
 		}
 		//if message has not been handled in this function, perform default action
+#ifdef _WIN32
 		return oapiDefDialogProc(hWnd, uMsg, wParam, lParam);
+#else
+		return FALSE;// not upstream: the Qt dialog does the default actions itself
+#endif
 	}
 	catch (std::exception &e)
 	{
@@ -1293,6 +1327,14 @@ BOOL CALLBACK SLC6_DlgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		abort();
 	}
 }
+
+#ifndef _WIN32
+// not upstream: WM_INITDIALOG on Qt; WM_SHOWWINDOW and the controls' WM_COMMAND go to SLC6_DlgProc
+static void SLC6_DlgInit( QWidget* hWnd, void* context )
+{
+	oapiConnectDlgCommands( hWnd, [hWnd]( int id, int code, QWidget* hCtrl ) { SLC6_DlgProc( hWnd, WM_COMMAND, MAKEWPARAM( id, 0 ), 0 ); } );
+}
+#endif
 
 void SLC6::RetractOrbiterAccessArm( void )
 {

@@ -12,6 +12,7 @@ Date         Developer
 2022/08/05   GLS
 2022/08/08   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "CRT.h"
 #include "Atlantis.h"
@@ -149,7 +150,7 @@ bool CRT::ConsumeButton (int bt, int event)
 }
 
 // MFD message parser
-int CRT::MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam)
+OAPI_MSGTYPE CRT::MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam)// not upstream: as in the header
 {
 	try
 	{
@@ -157,7 +158,7 @@ int CRT::MsgProc (UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam)
 		case OAPI_MSG_MFD_OPENED:
 			// Our new MFD mode has been selected, so we create the MFD and
 			// return a pointer to it.
-			return (int)(new CRT (LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam, mfd));
+			return (OAPI_MSGTYPE)(new CRT (LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam, mfd));// not upstream: the MFD pointer does not fit an int on 64-bit
 		}
 		return 0;
 	}

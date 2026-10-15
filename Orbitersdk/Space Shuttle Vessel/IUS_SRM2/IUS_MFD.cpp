@@ -12,6 +12,7 @@ Date         Developer
 2022/03/23   GLS
 2022/03/24   GLS
 2022/08/05   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "IUS_MFD.h"
 #include "IUS_SRM2.h"
@@ -100,14 +101,14 @@ bool IUS_MFD::Update( oapi::Sketchpad *skp )
 	}
 }
 
-int IUS_MFD::MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam )
+OAPI_MSGTYPE IUS_MFD::MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam )// not upstream: as in the header
 {
 	try
 	{
 		switch (msg)
 		{
 			case OAPI_MSG_MFD_OPENED:
-				return (int)(new IUS_MFD( LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam ));
+				return (OAPI_MSGTYPE)(new IUS_MFD( LOWORD(wparam), HIWORD(wparam), (VESSEL*)lparam ));// not upstream: the MFD pointer does not fit an int on 64-bit
 		}
 		return 0;
 	}

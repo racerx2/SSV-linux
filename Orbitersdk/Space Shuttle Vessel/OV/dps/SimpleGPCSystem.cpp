@@ -54,6 +54,7 @@ Date         Developer
 2022/12/23   GLS
 2023/01/01   GLS
 2023/01/07   GLS
+2026/10/15   racerx2
 ********************************************/
 #include <cassert>
 #include "SimpleGPCSystem.h"
@@ -1912,7 +1913,7 @@ void SimpleGPCSystem::WriteCOMPOOL_MS( unsigned int addr, unsigned int m, unsign
 	return;
 }
 
-void SimpleGPCSystem::WriteCOMPOOL_VS( unsigned int addr, VECTOR3& val )
+void SimpleGPCSystem::WriteCOMPOOL_VS( unsigned int addr, const VECTOR3& val )// not upstream: const, so temporaries bind (MSVC allowed it)
 {
 	float tmp = 0.0f;
 
@@ -1928,7 +1929,7 @@ void SimpleGPCSystem::WriteCOMPOOL_VS( unsigned int addr, VECTOR3& val )
 	return;
 }
 
-void SimpleGPCSystem::WriteCOMPOOL_VD(unsigned int addr, VECTOR3& val)
+void SimpleGPCSystem::WriteCOMPOOL_VD(unsigned int addr, const VECTOR3& val)// not upstream: as above
 {
 	if (addr < (SIMPLECOMPOOL_SIZE - 11))
 	{

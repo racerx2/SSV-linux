@@ -15,6 +15,7 @@ Date         Developer
 2022/11/09   GLS
 2022/12/17   GLS
 2023/08/28   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "MDU.h"
 #include "../dps/IDP.h"
@@ -23,6 +24,7 @@ Date         Developer
 
 namespace vc
 {
+#ifdef _WIN32
 	void MDU::OMSMPS( HDC hDC )
 	{
 		unsigned short usNum;
@@ -571,6 +573,7 @@ namespace vc
 		Rectangle( hDC, 430, Round( 466.3895 - (1.4531 * usNum) ), 446, 401 );
 		return;
 	}
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 	void MDU::OMSMPS( oapi::Sketchpad* skp )
 	{
@@ -1089,6 +1092,7 @@ namespace vc
 		return;
 	}
 
+#ifdef _WIN32
 	void MDU::APUHYD( HDC hDC )
 	{
 		int nPos;
@@ -1394,6 +1398,7 @@ namespace vc
 		}
 		return;
 	}
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 	void MDU::APUHYD( oapi::Sketchpad* skp )
 	{
@@ -1666,6 +1671,7 @@ namespace vc
 		return;
 	}
 
+#ifdef _WIN32
 	void MDU::SPI( HDC hDC )// 304, 305, 602, 603, 801, 901
 	{
 		POINT tri[3];
@@ -2174,6 +2180,7 @@ namespace vc
 		Polygon( hDC, tri, 3 );
 		return;
 	}
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 	void MDU::SPI( oapi::Sketchpad* skp )
 	{

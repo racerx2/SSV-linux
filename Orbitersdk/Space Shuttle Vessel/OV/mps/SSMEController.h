@@ -30,6 +30,7 @@ Date         Developer
 2021/07/03   GLS
 2021/08/24   GLS
 2022/08/05   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -69,6 +70,11 @@ namespace mps
 	class InputElectronics;
 	class SSME;
 	class EIU;
+	class OutputElectronics;// not upstream: the friends below, declared for lookup
+	class ComputerInterfaceElectronics;
+	class DigitalComputerUnit;
+	class VehicleInterfaceElectronics;
+	class PowerSupplyElectronics;
 
 	using namespace discsignals;
 

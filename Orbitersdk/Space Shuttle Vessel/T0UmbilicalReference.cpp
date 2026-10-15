@@ -8,12 +8,13 @@ Date         Developer
 2021/08/24   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "T0UmbilicalReference.h"
 #include "T0UmbilicalMLPInterface.h"
-#include "OV\Atlantis.h"
-#include "MLP\MLP.h"
-#include "SLC6\SLC6.h"
+#include "OV/Atlantis.h"// not upstream: '/' separator
+#include "MLP/MLP.h"
+#include "SLC6/SLC6.h"
 
 
 T0UmbilicalReference::T0UmbilicalReference( Atlantis* sts )

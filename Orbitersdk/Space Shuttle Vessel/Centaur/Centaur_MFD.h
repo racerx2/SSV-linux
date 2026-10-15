@@ -30,6 +30,7 @@ Date         Developer
 2021/08/24   GLS
 2021/12/25   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -76,7 +77,7 @@ class Centaur_MFD:public MFD2
 		~Centaur_MFD( void );
 
 		bool Update( oapi::Sketchpad *skp ) override;
-		static int MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam );
+		static OAPI_MSGTYPE MsgProc( UINT msg, UINT mfd, WPARAM wparam, LPARAM lparam );// not upstream: the SDK type, pointer-sized on 64-bit
 };
 
 #endif// __SCMFD_H

@@ -24,6 +24,7 @@ Date         Developer
 2022/11/12   GLS
 2022/11/13   GLS
 2022/11/14   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "Latch.h"
 #include "ActiveLatchGroup.h"
@@ -361,5 +362,5 @@ void LatchSystem::SetDoubleAttachment( bool attached )
 void LatchSystem::ThrowExceptionWithName( const std::string& text ) const
 {
 	std::string extxt = "[" + GetIdentifier() + "] " + text;
-	throw std::exception( extxt.c_str() );
+	throw std::runtime_error( extxt.c_str() );// not upstream: std::exception has no text constructor outside MSVC
 }

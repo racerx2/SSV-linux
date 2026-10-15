@@ -18,6 +18,7 @@ Date         Developer
 2023/01/05   indy91
 2023/01/10   GLS
 2026/04/30   indy91
+2026/10/15   racerx2
 ********************************************/
 #include "StateVectorSoftware.h"
 #include "../../../Atlantis.h"
@@ -265,21 +266,21 @@ bool StateVectorSoftware::OnPaint(vc::MDU * pMDU) const
 		char cbuf[255];
 
 		//TBD: Anything that is blank with rendezvous navigation off
-		sprintf_s(cbuf, 255, "%8.3f", min(9999.999, RNG_CUR_DISP));
+		sprintf_s(cbuf, 255, "%8.3f", std::min<double>(9999.999, RNG_CUR_DISP));// not upstream: windows.h min macro took mixed types
 		pMDU->mvprint(7, 6, cbuf);
 
-		sprintf_s(cbuf, 255, "%7.2f", min(9999.99, fabs(RD_CUR)));
+		sprintf_s(cbuf, 255, "%7.2f", std::min<double>(9999.99, fabs(RD_CUR)));// not upstream: windows.h min macro took mixed types
 		pMDU->mvprint(8, 7, cbuf);
 		pMDU->NumberSign(7, 7, RD_CUR);
 
-		sprintf_s(cbuf, 255, "%6.2f", min(999.99, THETA_CUR));
+		sprintf_s(cbuf, 255, "%6.2f", std::min<double>(999.99, THETA_CUR));// not upstream: windows.h min macro took mixed types
 		pMDU->mvprint(9, 8, cbuf);
 
-		sprintf_s(cbuf, 255, "%5.2f", min(99.99, fabs(Y_CUR_DISP)));
+		sprintf_s(cbuf, 255, "%5.2f", std::min<double>(99.99, fabs(Y_CUR_DISP)));// not upstream: windows.h min macro took mixed types
 		pMDU->mvprint(10, 9, cbuf);
 		pMDU->NumberSign(9, 9, Y_CUR_DISP);
 
-		sprintf_s(cbuf, 255, "%5.1f", min(999.9, fabs(YD_CUR)));
+		sprintf_s(cbuf, 255, "%5.1f", std::min<double>(999.9, fabs(YD_CUR)));// not upstream: windows.h min macro took mixed types
 		pMDU->mvprint(10, 10, cbuf);
 		pMDU->NumberSign(9, 10, YD_CUR);
 
@@ -979,7 +980,7 @@ void StateVectorSoftware::ENTRY_PRECISE_PREDICTOR(VECTOR3 R_INIT, VECTOR3 V_INIT
 	int NUMBER_STEPS;
 
 	//Establish the fixed integration STEP_SIZE by dividing the time interval into the smallest number(NUMBER_STEPS) of subintervals consistent with DT_MAX
-	NUMBER_STEPS = (int)(max(round(abs(T_FINAL - T_INIT) / DT_MAX), 1));
+	NUMBER_STEPS = (int)(std::max<double>(round(abs(T_FINAL - T_INIT) / DT_MAX), 1));// not upstream: windows.h max macro took mixed types
 	STEP_SIZE = (T_FINAL - T_INIT) / NUMBER_STEPS;
 	T = T_INIT;
 

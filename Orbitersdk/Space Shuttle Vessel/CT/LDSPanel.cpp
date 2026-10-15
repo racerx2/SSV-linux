@@ -10,6 +10,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2023/02/19   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "LDSPanel.h"
 #include <MathSSV.h>
@@ -57,7 +58,7 @@ namespace vc
 			hv = oapiGetVesselByIndex(i);
 			pv = oapiGetVesselInterface(hv);
 
-			name = pv->GetClassNameA();
+			name = pv->GetClassName();// not upstream: the method's own name (windows.h macro made it GetClassNameA)
 			if ((name.find( "SSV_LC39" ) != std::string::npos) || name == "SSV_VAB")
 			{
 				for(DWORD j=0; j<pv->AttachmentCount(false); j++)
@@ -144,7 +145,7 @@ namespace vc
 		{
 			hv = oapiGetVesselByIndex(i);
 			pv = oapiGetVesselInterface(hv);
-			name = pv->GetClassNameA();
+			name = pv->GetClassName();// not upstream: the method's own name (windows.h macro made it GetClassNameA)
 			//oapiWriteLog("PRZED WEJSCIEM W IFA");
 			if(target == "LC39A" || target == "LC39B")
 			{

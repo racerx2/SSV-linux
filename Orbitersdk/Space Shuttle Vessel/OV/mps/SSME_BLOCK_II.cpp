@@ -16,6 +16,7 @@ Date         Developer
 2022/04/26   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "SSME_BLOCK_II.h"
 #include "../Atlantis.h"
@@ -663,7 +664,7 @@ namespace mps
 		Sensor_Speed[SSME_BLOCK_II_HPFTP_SS_A].SetValue( 0 );
 		Sensor_Speed[SSME_BLOCK_II_HPFTP_SS_B].SetValue( 0 );
 
-		STS()->SetMPSDumpLevel( ID - 1, ptrMOV->GetPos() *  pMPS->GetLOXPVPos( ID ) * min( (pMPS->GetLOXManifPress() / 80) * (pMPS->GetLOXManifPress() / 80), 1 ) );
+		STS()->SetMPSDumpLevel( ID - 1, ptrMOV->GetPos() *  pMPS->GetLOXPVPos( ID ) * std::min<double>( (pMPS->GetLOXManifPress() / 80) * (pMPS->GetLOXManifPress() / 80), 1 ) );// not upstream: windows.h min macro took mixed types
 		return;
 	}
 }

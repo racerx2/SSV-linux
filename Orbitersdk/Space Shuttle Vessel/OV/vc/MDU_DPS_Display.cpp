@@ -8,6 +8,7 @@ Date         Developer
 2021/08/24   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "MDU.h"
 #include "../Atlantis.h"
@@ -39,6 +40,7 @@ namespace vc
 		y = 2 + 32 * row;
 	}
 
+#ifdef _WIN32
 	void MDU::DPS( HDC hDC )
 	{
 		UpdateTextBuffer();
@@ -155,6 +157,7 @@ namespace vc
 		}
 		return;
 	}
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 	void MDU::DPS( oapi::Sketchpad* skp )
 	{

@@ -47,6 +47,7 @@ Date         Developer
 2022/12/01   indy91
 2022/12/18   indy91
 2022/12/23   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -221,8 +222,8 @@ public:
 	void WriteCOMPOOL_MS( unsigned int addr, MATRIX3& val );
 	void WriteCOMPOOL_MD(unsigned int addr, MATRIX3& val);
 	void WriteCOMPOOL_MS( unsigned int addr, unsigned int m, unsigned int n, float val, unsigned int msize = 3, unsigned int nsize = 3 );
-	void WriteCOMPOOL_VS( unsigned int addr, VECTOR3& val );
-	void WriteCOMPOOL_VD(unsigned int addr, VECTOR3& val);
+	void WriteCOMPOOL_VS( unsigned int addr, const VECTOR3& val );// not upstream: const, so temporaries bind (MSVC allowed it)
+	void WriteCOMPOOL_VD(unsigned int addr, const VECTOR3& val);// not upstream: as above
 	void WriteCOMPOOL_VS( unsigned int addr, unsigned int n, float val, unsigned int nsize = 3 );
 	void WriteCOMPOOL_C( unsigned int addr, const char* val, unsigned int size );
 	void WriteCOMPOOL_AIS( unsigned int addr, unsigned int idx, unsigned short val, unsigned int size );

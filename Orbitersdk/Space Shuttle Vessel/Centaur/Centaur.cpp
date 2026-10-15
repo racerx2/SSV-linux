@@ -27,6 +27,7 @@ Date         Developer
 2021/12/30   GLS
 2022/04/26   GLS
 2022/08/05   GLS
+2026/10/15   racerx2
 ********************************************/
 #define ORBITER_MODULE
 
@@ -877,7 +878,11 @@ void Centaur::LoadMissionFile( void )
 	std::string filename;
 	filename = "Missions\\SSV\\" + strMission + ".json";
 
+#ifdef _WIN32
 	FILE* hF = fopen( filename.c_str(), "r" );
+#else
+	FILE* hF = fopen( oapiResolvePath( filename.c_str() ).c_str(), "r" );// not upstream: '\' path, any letter case
+#endif
 	if (hF == NULL)
 	{
 		oapiWriteLogV( "(SSV_Centaur) [ERROR] Can't open mission file %s", strMission.c_str() );
@@ -894,9 +899,9 @@ void Centaur::LoadMissionFile( void )
 		return;
 	}
 
-	char* missionfilestr = new char[filesize];
+	char* missionfilestr = new char[filesize + 1];// not upstream: room for the terminating zero cJSON_Parse needs
 	rewind( hF );
-	fread( missionfilestr, sizeof(char), filesize, hF );
+	missionfilestr[fread( missionfilestr, sizeof(char), filesize, hF )] = 0;
 	fclose( hF );
 
 	cJSON* root = cJSON_Parse( missionfilestr );
@@ -914,7 +919,7 @@ void Centaur::LoadMissionFile( void )
 			LoadMissionV1( root );
 			break;
 		default:
-			oapiWriteLogV( "(SSV_Centaur) [ERROR] Unknown mission file version %s", version->valueint );
+			oapiWriteLogV( "(SSV_Centaur) [ERROR] Unknown mission file version %d", version->valueint );// not upstream: the version is an int (%s read it as a pointer)
 			break;
 	}
 

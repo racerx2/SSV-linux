@@ -8,6 +8,7 @@ Date         Developer
 2021/08/24   GLS
 2022/08/05   GLS
 2022/09/29   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "MDU.h"
 #include "../Atlantis.h"
@@ -16,6 +17,7 @@ Date         Developer
 
 namespace vc
 {
+#ifdef _WIN32
 	void MDU::SystemStatusDisplay_CSTMenu( HDC hDC )
 	{
 		char cbuf[8];
@@ -1074,6 +1076,7 @@ namespace vc
 		TextOut( hDC, 286, 276, "IDP4", 4 );
 		return;
 	}
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 	void MDU::SystemStatusDisplay_CSTMenu( oapi::Sketchpad* skp )
 	{
@@ -2032,6 +2035,7 @@ namespace vc
 		return;
 	}
 
+#ifdef _WIN32
 	void MDU::SystemStatusDisplay_IDPInteractiveCST( HDC hDC )
 	{
 		char cbuf[16];
@@ -3063,6 +3067,7 @@ namespace vc
 		TextOut( hDC, 366, 428, cbuf, strlen( cbuf ) );
 		return;
 	}
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 	void MDU::SystemStatusDisplay_IDPInteractiveCST( oapi::Sketchpad* skp )
 	{

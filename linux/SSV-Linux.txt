@@ -1,0 +1,54 @@
+Space Shuttle Vessel 1.16 for Linux (x64), port 1.0
+====================================================
+
+An unofficial Linux build of Space Shuttle Vessel (SSV) for the native Linux Orbiter
+(github.com/racerx2/orbiter-2027-linux) with its Vulkan graphics client.
+The SSV team does not support this build: report problems with it to racerx2, not to them.
+
+Space Shuttle Vessel is by the SSV team (GLS and indy91, github.com/GLS-SSV/SSV), based on
+Space Shuttle Ultra. See the manual (CREDITS) for everyone whose work it contains: PEG MFD,
+Attitude MFD, Usonian's VandenbergAFB-2006, Fred18's GeneralVehicle, Project Apollo - NASSP,
+and the cJSON library by Dave Gamble and contributors.
+Linux port: racerx2, 2026.
+
+Licence: GNU GPL version 2 or later (SSV-LICENSE.txt). The source of this build, with every
+Linux change marked "not upstream", is the "linux" branch of github.com/racerx2/SSV-linux.
+
+
+Installation
+------------
+1. Close Orbiter.
+2. Extract the zip into your Orbiter folder. It adds files only; it never replaces a file of yours.
+3. From the Orbiter folder run once:
+       python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"
+   It adds to Config/Earth.cfg the SSV bases (DIR Earth\SSV CONTEXT SSV) and the 12 KSC
+   ground cameras, adds SSV\VAFB\DeltaBlue to Config/Base.cfg, and copies the SSV terrain tiles
+   (runway and pad flattening, Vandenberg imagery) into Textures/Earth. It keeps a .ssv-backup copy of each
+   .cfg it changes. A tile it replaces is kept in Install/Space Shuttle Vessel/Earth-backup, and if
+   the tile stream had written it, the stream leaves the new one alone from then on.
+   Running it again changes nothing. It also reports settings SSV needs (see below).
+4. Start Orbiter and pick a scenario under "Space Shuttle Vessel".
+
+Differences from the Windows release
+- The fonts SSV_Font_A and SSV_Font_B need no installing: SSV loads them from
+  Install/Space Shuttle Vessel when it starts.
+- Config/Earth.cfg and Config/Base.cfg are not overwritten (step 3 adds SSV's lines to yours).
+- The Antelope Valley texture pack is not needed: the tile stream provides the imagery.
+- The Mission Editor (Windows only, .NET) is not included. The missions in Missions/SSV work as they are.
+- The displays are drawn with Sketchpad, as with the D3D9 client on Windows.
+- With Orbiter's Collision module: the launch pads, the VAB and the LCC are fixed structures
+  (FixedStructure = TRUE in their Config/Vessels files), so the stack never moves them and the
+  streamed 3D buildings and trees stay off them. The pad and MLP umbilicals that let go of the
+  vehicle at liftoff do not collide (the .col files next to their meshes in Meshes/SSV).
+
+Settings
+- Launchpad > Visual effects > Local light sources: on (the SSV lights need them).
+- MFD texture size 512 (the default).
+- Recommended: Launchpad > Video > Advanced > "Disable near clip plane compatibility mode".
+
+Removing
+- Delete the folders and files the zip added, put back Config/Earth.cfg and Config/Base.cfg from
+  their .ssv-backup copies, and the tiles from Install/Space Shuttle Vessel/Earth-backup.
+
+DISCLAIMER (from the SSV team, which applies to this build too): not responsible for any crashes or
+other problems caused by this addon. Use at your own risk.

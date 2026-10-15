@@ -43,6 +43,7 @@ Date         Developer
 2022/08/05   GLS
 2022/09/29   GLS
 2022/12/18   indy91
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -191,6 +192,7 @@ namespace vc
 		bool counting;
 
 		// MEDS pens and brushes
+#ifdef _WIN32
 		static HBRUSH gdiBlackBrush;
 		static HBRUSH gdiDarkGrayBrush;
 		static HBRUSH gdiLightGrayBrush;
@@ -201,6 +203,7 @@ namespace vc
 		static HBRUSH gdiMagentaBrush;
 		static HBRUSH gdiLightGreenBrush;
 		static HBRUSH gdiBlueBrush;
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 		static oapi::Brush* skpBlackBrush;
 		static oapi::Brush* skpDarkGrayBrush;
@@ -214,6 +217,7 @@ namespace vc
 		static oapi::Brush* skpBlueBrush;
 		static oapi::Brush* _skpBlackBrush;// "true" black, just for bitblt operations
 
+#ifdef _WIN32
 		static HPEN gdiBlackPen;
 		static HPEN gdiDarkGrayPen;
 		static HPEN gdiLightGrayPen;
@@ -226,6 +230,7 @@ namespace vc
 		static HPEN gdiLightGreenPen;
 		static HPEN gdiDarkGreenPen;
 		static HPEN gdiLightGreenThickPen;
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 		static oapi::Pen* skpBlackPen;
 		static oapi::Pen* skpDarkGrayPen;
@@ -242,21 +247,25 @@ namespace vc
 		static oapi::Pen* _skpBlackPen;// "true" black, just for bitblt operations
 
 		// DPS pens
+#ifdef _WIN32
 		static HPEN gdiOverbrightPen;
 		static HPEN gdiNormalPen;
 		static HPEN gdiDashedNormalPen;
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 		static oapi::Pen* skpOverbrightPen;
 		static oapi::Pen* skpNormalPen;
 		static oapi::Pen* skpDashedNormalPen;
 
 		// fonts
+#ifdef _WIN32
 		static HFONT gdiSSVAFont_h20w17;
 		static HFONT gdiSSVAFont_h10w10bold;
 		static HFONT gdiSSVAFont_h11w9;
 		static HFONT gdiSSVBFont_h18w9;
 		static HFONT gdiSSVBFont_h12w7;
 		static HFONT gdiSSVBFont_h16w9;
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 		static oapi::Font* skpSSVAFont_h20w17;
 		static oapi::Font* skpSSVAFont_h10w10bold;
@@ -265,11 +274,14 @@ namespace vc
 		static oapi::Font* skpSSVBFont_h12w7;
 		static oapi::Font* skpSSVBFont_h16w9;
 
+#ifdef _WIN32
 		void CreateGDIObjects();
 		void DestroyGDIObjects();
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void CreateSketchpadObjects();
 		void DestroySketchpadObjects();
 
+#ifdef _WIN32
 		static HDC hDC_Tape_MACHV;
 		static HDC hDC_Tape_KEAS;
 		static HDC hDC_Tape_Alpha;
@@ -289,6 +301,7 @@ namespace vc
 		HBITMAP hBM_ADI_ORBIT_tmp;
 		static HBITMAP hBM_ADIMASK_tmp;
 		static HBITMAP hBM_ADIMASK_ORBIT_tmp;
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 		int save_ADI;
 		int save_ADI_ORBIT;
@@ -301,128 +314,238 @@ namespace vc
 
 		MESHHANDLE hADIball;
 
+#ifdef _WIN32
 		void CreateTapes_GDI( void );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void CreateTapes_Sketchpad( void );
+#ifdef _WIN32
 		void DrawAlphaTapeBG_GDI( void );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void DrawAlphaTapeBG_Sketchpad( void );
+#ifdef _WIN32
 		void DrawAlphaTapeFG_GDI( int min, int max );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void DrawAlphaTapeFG_Sketchpad( int min, int max );
+#ifdef _WIN32
 		void DrawAlphaTapeLim_GDI( double min, double max );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void DrawAlphaTapeLim_Sketchpad( double min, double max );
 		void DestroyTapes( void );
+#ifdef _WIN32
 		void CreateADI( void );
 		void DestroyADI( void );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 
 		/**
 		 * Paints the DPS display.
 		 */
+#ifdef _WIN32
 		void DPS( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void DPS( oapi::Sketchpad* skp );
 
 		/**
 		 * MEDS Display functions
 		 */
+#ifdef _WIN32
 		void SystemStatusDisplay_CSTMenu( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void SystemStatusDisplay_CSTMenu( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void SystemStatusDisplay_IDPInteractiveCST( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void SystemStatusDisplay_IDPInteractiveCST( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void ORBITPFD( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ORBITPFD( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void OMSMPS( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void OMSMPS( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void APUHYD( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void APUHYD( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void SPI( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void SPI( oapi::Sketchpad* skp );
 
+#ifdef _WIN32
 		void Tape_Alpha( HDC hDC, double vel );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void Tape_Alpha( oapi::Sketchpad* skp, double vel );
+#ifdef _WIN32
 		void Tape_KEAS_MVR( HDC hDC, double vel );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void Tape_KEAS_MVR( oapi::Sketchpad* skp, double vel );
+#ifdef _WIN32
 		void Tape_MV_KEAS( HDC hDC, char label, double vel );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void Tape_MV_KEAS( oapi::Sketchpad* skp, char label, double vel );
+#ifdef _WIN32
 		void Tape_H_Hdot( HDC hDC, double Altitude_ft, double Hdot );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void Tape_H_Hdot( oapi::Sketchpad* skp, double Altitude_ft, double Hdot );
+#ifdef _WIN32
 		void Tapes_Invalid( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void Tapes_Invalid( oapi::Sketchpad* skp );
 
+#ifdef _WIN32
 		void ADI_STATIC( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_STATIC( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void ADI_STATIC_ORBIT( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_STATIC_ORBIT( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void ADI( HDC hDC, double pitch, double roll, double yaw );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI( oapi::Sketchpad* skp, double pitch, double roll, double yaw );
+#ifdef _WIN32
 		void ADI_ORBIT( HDC hDC, double pitch, double roll, double yaw );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_ORBIT( oapi::Sketchpad* skp, double pitch, double roll, double yaw );
+#ifdef _WIN32
 		void ADI_RATE_A( HDC hDC, double pitch, double roll, double yaw, int adirate );// 10/5/1
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_RATE_A( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adirate );// 10/5/1
+#ifdef _WIN32
 		void ADI_RATE_B( HDC hDC, double pitch, double roll, double yaw, int adirate, double Altitude_ft );// 5/(5/etc)/5
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_RATE_B( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adirate, double Altitude_ft );// 5/(5/etc)/5
+#ifdef _WIN32
 		void ADI_RATE_ORBIT( HDC hDC, double pitch, double roll, double yaw, int adirate );// 10/5/1
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_RATE_ORBIT( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adirate );// 10/5/1
+#ifdef _WIN32
 		void ADI_ERROR_A( HDC hDC, double pitch, double roll, double yaw, int adierr );// 10/5/1
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_ERROR_A( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr );// 10/5/1
+#ifdef _WIN32
 		void ADI_ERROR_B( HDC hDC, double pitch, double roll, double yaw, int adierr );// 25/25/10 5/2/1 2.5/2.5/2.5
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_ERROR_B( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr );// 25/25/10 5/2/1 2.5/2.5/2.5
+#ifdef _WIN32
 		void ADI_ERROR_C( HDC hDC, double pitch, double roll, double yaw, int adierr );// 25/25/10 1.25/1.25/0.5 2.5/2.5/2.5
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_ERROR_C( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr );// 25/25/10 1.25/1.25/0.5 2.5/2.5/2.5
+#ifdef _WIN32
 		void ADI_ERROR_D( HDC hDC, double pitch, double roll, double yaw, int adierr );// 20/5/1 10/5/1 2.5/2.5/2.5
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_ERROR_D( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr );// 20/5/1 10/5/1 2.5/2.5/2.5
+#ifdef _WIN32
 		void ADI_ERROR_ORBIT( HDC hDC, double pitch, double roll, double yaw, int adierr );// 10/5/1
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void ADI_ERROR_ORBIT( oapi::Sketchpad* skp, double pitch, double roll, double yaw, int adierr );// 10/5/1
 
+#ifdef _WIN32
 		void HSI_A( HDC hDC, double course, double roll, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_A( oapi::Sketchpad* skp, double course, double roll, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing );
+#ifdef _WIN32
 		void HSI_E( HDC hDC, double course, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_E( oapi::Sketchpad* skp, double course, bool bearingon, double bearing, bool CDIflag, bool CDIbar, double CDIscale, double CDIdeviation, char primarytype, double primarybearing, char secondarytype, double secondarybearing );
+#ifdef _WIN32
 		void HSI_CourseArrow( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_CourseArrow( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void HSI_CDI( HDC hDC, bool flag, bool bar, double scale, double deviation );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_CDI( oapi::Sketchpad* skp, bool flag, bool bar, double scale, double deviation );
+#ifdef _WIN32
 		void HSI_Bearing( HDC hDC, char primarytype, double primarybearing, char secondarytype, double secondarybearing );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_Bearing( oapi::Sketchpad* skp, char primarytype, double primarybearing, char secondarytype, double secondarybearing );
+#ifdef _WIN32
 		void HSI_Bearing_E( HDC hDC, double bearing, bool pri );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_Bearing_E( oapi::Sketchpad* skp, double bearing, bool pri );
+#ifdef _WIN32
 		void HSI_Bearing_I( HDC hDC, double bearing );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_Bearing_I( oapi::Sketchpad* skp, double bearing );
+#ifdef _WIN32
 		void HSI_Bearing_RH( HDC hDC, double bearing, char chr );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_Bearing_RH( oapi::Sketchpad* skp, double bearing, char chr );
+#ifdef _WIN32
 		void HSI_Bearing_C( HDC hDC, double bearing );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void HSI_Bearing_C( oapi::Sketchpad* skp, double bearing );
 
+#ifdef _WIN32
 		void AEPFD_Header_AscentDAP( HDC hDC, int MM, int adiatt );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_Header_AscentDAP( oapi::Sketchpad* skp, int MM, int adiatt );
+#ifdef _WIN32
 		void AEPFD_Header_TransDAP( HDC hDC, int MM, int adiatt );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_Header_TransDAP( oapi::Sketchpad* skp, int MM, int adiatt );
+#ifdef _WIN32
 		void AEPFD_Header_AerojetDAP( HDC hDC, int MM, double vel );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_Header_AerojetDAP( oapi::Sketchpad* skp, int MM, double vel );
+#ifdef _WIN32
 		void AEPFD_BETA( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_BETA( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_GMETER_STATIC( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_GMETER_STATIC( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_GMETER_ACCEL( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_GMETER_ACCEL( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_GMETER_NZ( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_GMETER_NZ( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_HACCEL( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_HACCEL( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_RANGERW( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_RANGERW( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_RANGEHACC( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_RANGEHACC( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_dAZ_HTA( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_dAZ_HTA( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_dXTRK( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_dXTRK( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_XTRK( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_XTRK( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_dINC( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_dINC( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_TGTINC( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_TGTINC( oapi::Sketchpad* skp );
+#ifdef _WIN32
 		void AEPFD_GSI( HDC hDC, bool flag, double scale, double deviation );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void AEPFD_GSI( oapi::Sketchpad* skp, bool flag, double scale, double deviation );
 
 		inline bool GetFlash( void ) const
@@ -455,7 +578,9 @@ namespace vc
 		virtual void RegisterMFDContext(int id);
 		virtual void PrintToBuffer( const char* string, unsigned short length, unsigned short col, unsigned short row, char attributes );
 
+#ifdef _WIN32
 		void DrawMenuButton( HDC hDC, int x );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		void DrawMenuButton( oapi::Sketchpad* skp, int x );
 
 		void TogglePort( void );
@@ -503,7 +628,9 @@ namespace vc
 		/**
 		 * Paint the edge menu area on this HDC.
 		 */
+#ifdef _WIN32
 		virtual void PaintEdgeMenu( HDC hDC );
+#endif// left out: Win32 GDI drawing; on Linux the MDUs draw with Sketchpad only
 		/**
 		 * Paint the edge menu area on this Sketchpad.
 		 */

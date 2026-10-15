@@ -107,6 +107,7 @@ Date         Developer
 2023/02/19   GLS
 2023/07/09   GLS
 2024/12/30   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -158,6 +159,7 @@ Date         Developer
 
 
 typedef struct {
+#ifdef _WIN32
 	HINSTANCE hDLL;
 	HBITMAP deu_characters;
 	HBITMAP deu_characters_overbright;
@@ -165,6 +167,9 @@ typedef struct {
 	HDC DeuCharBitmapDC;
 	HDC DeuCharOvrBrgtBitmapDC;
 	HDC DeuCharFaultBitmapDC;
+#else
+	void* hDLL;// not upstream: the dlopen handle; the GDI bitmaps are left out (the MDUs draw with Sketchpad)
+#endif
 	SURFHANDLE deu_charactersSH;
 	SURFHANDLE deu_characters_overbrightSH;
 	SURFHANDLE deu_characters_faultSH;

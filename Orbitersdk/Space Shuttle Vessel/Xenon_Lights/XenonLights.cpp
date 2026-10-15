@@ -17,6 +17,7 @@ Date         Developer
 2022/08/05   GLS
 2022/08/07   GLS
 2025/11/16   GLS
+2026/10/15   racerx2
 ********************************************/
 #define ORBITER_MODULE
 
@@ -427,11 +428,19 @@ void XenonLights::SetLightState(bool on)
 }
 
 //global functions
+#ifdef _WIN32
 DLLCLBK void InitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void InitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 }
 
+#ifdef _WIN32
 DLLCLBK void ExitModule(HINSTANCE hDLL)
+#else
+DLLCLBK void ExitModule(void* hDLL)// not upstream: the module handle is the dlopen handle
+#endif
 {
 }
 

@@ -27,6 +27,7 @@ Date         Developer
 2022/12/23   GLS
 2022/12/28   GLS
 2022/12/31   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "OrbitDAP.h"
 #include "../../IDP.h"
@@ -2744,7 +2745,7 @@ VECTOR3 OrbitDAP::GetAttitudeErrors( void ) const
 bool OrbitDAP::GetTimeToAttitude( double& time ) const
 {
 	if (ManeuverStatus != MNVR_IN_PROGRESS) return false;
-	time = max( mnvrCompletionMET - STS()->GetMET(), 0 );
+	time = std::max<double>( mnvrCompletionMET - STS()->GetMET(), 0 );// not upstream: windows.h max macro took mixed types
 	return true;
 }
 

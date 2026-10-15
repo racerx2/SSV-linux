@@ -1,3 +1,7 @@
+/******* SSV File Modification Notice *******
+Date         Developer
+2026/10/15   racerx2
+********************************************/
 #include "SystemsServicesAnnunciation.h"
 #include "../../../Atlantis.h"
 
@@ -242,7 +246,7 @@ namespace dps
 		oapiWriteLogV( "(SSV_OV) [INFO] CW msg: %s", msg );
 
 		// shift existing msgs
-		for (unsigned int i = min(j, 14); i != 0; i--)
+		for (unsigned int i = std::min<int>(j, 14); i != 0; i--)// not upstream: windows.h min macro took mixed types
 		{
 			memset( cbuf, 0, 64 );
 			ReadCOMPOOL_AC( SCP_FAULT_DISPBUF, i, cbuf, 15, 43 );

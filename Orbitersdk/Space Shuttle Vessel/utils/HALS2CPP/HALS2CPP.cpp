@@ -31,6 +31,7 @@
 #include <vector>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>// not upstream: std::find (MSVC brings it in through other headers)
 
 
 using namespace std;
@@ -79,7 +80,11 @@ int main( int argc, char* argv[] )
 	size_t p = name.find_last_of( '.' );
 	if (p != string::npos) name = name.substr( 0, p );
 
+#ifdef _WIN32
 	p = name.find_last_of( '\\' );
+#else
+	p = name.find_last_of( "\\/" );// not upstream: '/' separates too
+#endif
 	if (p != string::npos) name = name.substr( p + 1, name.length() - p );
 
 	for (auto & x: name) x = (char)toupper( x );
@@ -94,6 +99,7 @@ int main( int argc, char* argv[] )
 
 		while (getline( in, iline ))
 		{
+			if (!iline.empty() && iline.back() == '\r') iline.pop_back();// not upstream: CRLF read as in Windows text mode
 			//// comments ////
 			if (iline[0] == 'C')
 			{
