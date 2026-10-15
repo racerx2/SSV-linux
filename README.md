@@ -10,25 +10,43 @@ Space Shuttle Vessel (SSV) is an addon for Orbiter Space Flight Simulator (https
 This release of SSV is for use in Orbiter 2024.
 
 
-# Linux (unofficial port)
-This fork (branch `linux`) builds SSV for the native Linux Orbiter (https://github.com/racerx2/orbiter-2027-linux) and its Vulkan client. It is not supported by the SSV team. Every Linux change in the code is marked `not upstream`; the Windows code stays under `#ifdef _WIN32`.
+# Space Shuttle Vessel, native on Linux
+Fly the Space Shuttle on Linux. No Wine, no virtual machine: this fork runs SSV natively in [Orbiter Linux](https://github.com/racerx2/orbiter-2027-linux) with its Vulkan graphics, and it adds features you won't find in the Windows release.
 
-Install: extract `SSV-1.16-linux-1.0-x64.zip` into the Orbiter folder, then run `python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"` from it once. See `linux/SSV-Linux.txt` (in the zip: `Doc/Space Shuttle Vessel/SSV-Linux.txt`).
+![Liftoff from LC-39B](linux/screenshots/launch-39b.jpg)
 
-Build (CMake 3.19+, Ninja, GCC, Qt 6): `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder> -DORBITER_CMAKE_DIR=<Orbiter source>/cmake`, then `cmake --build out/build`. The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip.
+## Why fly it here
+- **The whole shuttle, natively.** The orbiter, ET and SRBs, the pads, MLP, crawler, VAB and LCC, the full virtual cockpit with every display and the HUD, from the countdown to wheel stop.
+- **Real aborts.** Engine out on the way up? Turn the ABORT MODE knob, press ABORT, and the flight software takes it from there, as it did on the real shuttle: Abort to Orbit and Abort Once Around targeting, the OMS and RCS propellant dumps, the OMS/RCS interconnect and the abort displays. Lose the center engine nearly six minutes in and still make orbit. (TAL and RTLS are next.)
+- **Launches that look the part.** Billowing SRB smoke on the pad, plumes that fan out in the thin upper air, SRB separation in a cloud of exhaust, and a satin sheen on the SRB paint.
+- **Fiery entries.** The belly and nose cap glow through the plasma as you come home.
+- **A cockpit that comes alive.** Power up the HUD and its glass glows green, bright enough to see from outside through the windshield. The display screens catch the light like real glass, and the cockpit textures are cleaned up.
+- **The pads as they were.** Orbiter Linux streams real-world 3D buildings and trees around you. SSV keeps the shuttle-era sites at LC-39A, LC-39B and SLC-6 clear, so today's towers never stand next to your stack.
+- **Solid ground.** With Orbiter Linux's Collision module the pads, VAB and LCC are real structures: the stack never shoves them aside, and the umbilicals let go cleanly at liftoff.
 
 ## Screenshots
-In the Orbiter Linux Vulkan client: plumes, entry heating, the OPS 1 aborts this port adds, the HUD.
-
 | | |
 |---|---|
-| ![STS-26R liftoff from LC-39B, SRB and SSME plumes](linux/screenshots/launch-39b.jpg)<br>STS-26R liftoff from LC-39B, SRB and SSME plumes | ![Clearing the tower](linux/screenshots/launch-plumes.jpg)<br>Clearing the tower |
-| ![T+35 s: satin paint on the SRBs](linux/screenshots/srb-paint.jpg)<br>T+35 s: satin paint on the SRBs | ![T+110 s, plumes spreading in thin air](linux/screenshots/ascent.jpg)<br>T+110 s, plumes spreading in thin air |
-| ![SRB separation](linux/screenshots/srb-separation.jpg)<br>SRB separation | ![OPS 1 abort to orbit: ATO TRAJ 2, MM 103 ATO](linux/screenshots/ops-ato-traj.jpg)<br>OPS 1 abort to orbit: ATO TRAJ 2, MM 103 ATO |
-| ![ATO 1 MNVR EXEC, the abort OMS-1 target loaded](linux/screenshots/ops-ato-oms1.jpg)<br>ATO 1 MNVR EXEC, the abort OMS-1 target loaded | ![Abort once around: AOA MNVR TRANS, OPS 301 flashing](linux/screenshots/ops-aoa-ops301.jpg)<br>Abort once around: AOA MNVR TRANS, OPS 301 flashing |
-| ![Entry heating, STS-107 entry interface](linux/screenshots/reentry-heating.jpg)<br>Entry heating, STS-107 entry interface | ![The nose cap and belly at peak heating](linux/screenshots/reentry-nose.jpg)<br>The nose cap and belly at peak heating |
-| ![Entry over land in daylight](linux/screenshots/reentry-day.jpg)<br>Entry over land in daylight | ![KSC 15 approach, HUD on (MM 305)](linux/screenshots/hud-approach.jpg)<br>KSC 15 approach, HUD on (MM 305) |
-| ![The HUD combiners glow through the windshield while HUD POWER is on](linux/screenshots/hud-glass-glow.jpg)<br>The HUD combiners glow through the windshield while HUD POWER is on |  |
+| ![Clearing the tower](linux/screenshots/launch-plumes.jpg)<br>Clearing the tower | ![Satin paint on the SRBs, T+35 s](linux/screenshots/srb-paint.jpg)<br>Satin paint on the SRBs, T+35 s |
+| ![T+110 s, plumes spreading in thin air](linux/screenshots/ascent.jpg)<br>T+110 s, plumes spreading in thin air | ![SRB separation](linux/screenshots/srb-separation.jpg)<br>SRB separation |
+| ![Abort to Orbit: ATO TRAJ 2 in MM 103](linux/screenshots/ops-ato-traj.jpg)<br>Abort to Orbit: ATO TRAJ 2 in MM 103 | ![ATO OMS-1 targets loaded on their own](linux/screenshots/ops-ato-oms1.jpg)<br>ATO OMS-1 targets loaded on their own |
+| ![Abort Once Around: OPS 301 flashing](linux/screenshots/ops-aoa-ops301.jpg)<br>Abort Once Around: OPS 301 flashing | ![Entry heating](linux/screenshots/reentry-heating.jpg)<br>Entry heating |
+| ![Nose cap and belly at peak heating](linux/screenshots/reentry-nose.jpg)<br>Nose cap and belly at peak heating | ![Plasma over land in daylight](linux/screenshots/reentry-day.jpg)<br>Plasma over land in daylight |
+| ![Final approach to KSC runway 15 on the HUD](linux/screenshots/hud-approach.jpg)<br>Final approach to KSC runway 15 on the HUD | ![The HUD glass glowing through the windshield](linux/screenshots/hud-glass-glow.jpg)<br>The HUD glass glowing through the windshield |
+
+## Get flying
+1. Install [Orbiter Linux](https://github.com/racerx2/orbiter-2027-linux).
+2. Extract `SSV-1.16-linux-1.0-x64.zip` into your Orbiter folder.
+3. From that folder, run once: `python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"`. It adds SSV's bases and pad scenery to Orbiter's configuration, and running it again is harmless.
+4. Start Orbiter and pick a scenario under **Space Shuttle Vessel**.
+
+The details, the settings SSV likes and how to remove it are in [`linux/SSV-Linux.txt`](linux/SSV-Linux.txt) (in the zip: `Doc/Space Shuttle Vessel/SSV-Linux.txt`).
+
+## Build it yourself
+CMake 3.19+, Ninja, GCC and Qt 6: `cmake -S . -B out/build -G Ninja -DORBITER_ROOT=<Orbiter folder> -DORBITER_CMAKE_DIR=<Orbiter source>/cmake`, then `cmake --build out/build`. The sources and the mesh and COMPOOL header generators come from the Visual Studio projects (`linux/vcxproj.py`). `linux/mkpkg.py out/build <manual.pdf|-> out` makes the zip.
+
+## About this port
+Space Shuttle Vessel is by the SSV team (GLS and indy91). This Linux port and its additions are by racerx2. It is unofficial and not supported by the SSV team, so please report problems with it to racerx2, not to them. Every Linux change in the code is marked `not upstream`, and the Windows code stays as it is under `#ifdef _WIN32`. Same licence as SSV: GNU GPL v2.
 
 
 # Installation
