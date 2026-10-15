@@ -18,7 +18,8 @@ Fly the Space Shuttle on Linux. No Wine, no virtual machine: this fork runs SSV 
 ## Why fly it here
 - **The whole shuttle, natively.** The orbiter, ET and SRBs, the pads, MLP, crawler, VAB and LCC, the full virtual cockpit with every display and the HUD, from the countdown to wheel stop.
 - **Real aborts.** Engine out on the way up? Turn the ABORT MODE knob, press ABORT, and the flight software takes it from there, as it did on the real shuttle: Abort to Orbit and Abort Once Around targeting, the OMS and RCS propellant dumps, the OMS/RCS interconnect and the abort displays. Lose the center engine nearly six minutes in and still make orbit. (TAL and RTLS are next.)
-- **Launches that look the part.** Billowing SRB smoke on the pad, plumes that fan out in the thin upper air, SRB separation in a cloud of exhaust, and a satin sheen on the SRB paint.
+- **Launches that look the part.** Billowing SRB smoke on the pad, plumes that fan out in the thin upper air, and SRB separation in a cloud of exhaust.
+- **Physically based materials.** The SRBs are drawn with Orbiter Linux's PBR material system: metal-roughness paint under a glossy clear coat, lit by the scene's own environment reflections, so the satin finish catches the sun and the sky the way painted steel does. It is all set in `Config/GC/SSV_SRB.cfg` on top of SSV's own textures, no new art, and any add-on can do the same with the client's `PBR_*` material keys.
 - **Fiery entries.** The belly and nose cap glow through the plasma as you come home.
 - **A cockpit that comes alive.** Power up the HUD and its glass glows green, bright enough to see from outside through the windshield. The display screens catch the light like real glass, and the cockpit textures are cleaned up.
 - **The pads as they were.** Orbiter Linux streams real-world 3D buildings and trees around you. SSV keeps the shuttle-era sites at LC-39A, LC-39B and SLC-6 clear, so today's towers never stand next to your stack.
