@@ -1,0 +1,3 @@
+COLLIDER-V1
+; not upstream (Linux port): umbilicals that let go of the vehicle at liftoff do not collide with it
+EXCLUDE LABEL LH2_TSM_UMBILICALS LOX_TSM_UMBILICALS
