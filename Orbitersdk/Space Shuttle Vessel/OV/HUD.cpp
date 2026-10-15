@@ -19,6 +19,7 @@ Date         Developer
 2022/08/27   GLS
 2022/09/29   GLS
 2022/12/18   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "HUD.h"
 #include "Atlantis.h"
@@ -658,16 +659,20 @@ void HUD::OnPostStep( double simt, double simdt, double mjd )
 
 void HUD::SetBrightness( void )
 {
-	if (HUDBrightNight.IsSet())// night: [10:50]
-	{
-		oapiSetHUDIntensity( (HUDBright.GetVoltage() / (5.0 / 0.4)) + 0.1 );
-	}
-	else if (HUDBrightDay.IsSet())// day: [50:100]
-	{
-		oapiSetHUDIntensity( (HUDBright.GetVoltage() / (5.0 / 0.5)) + 0.5 );
-	}
-	else oapiSetHUDIntensity( 0.55 );// auto: 55
+	oapiSetHUDIntensity( Intensity() );// not upstream: the switch logic moved to Intensity
 	return;
+}
+
+double HUD::Intensity( void ) const
+{
+	if (HUDBrightNight.IsSet()) return (HUDBright.GetVoltage() / (5.0 / 0.4)) + 0.1;// night: [10:50]
+	else if (HUDBrightDay.IsSet()) return (HUDBright.GetVoltage() / (5.0 / 0.5)) + 0.5;// day: [50:100]
+	return 0.55;// auto: 55
+}
+
+double HUD::Glow( void ) const
+{
+	return HUDPower.IsSet() ? Intensity() : 0.0;
 }
 
 bool HUD::Draw( const HUDPAINTSPEC* hps, oapi::Sketchpad* skp )

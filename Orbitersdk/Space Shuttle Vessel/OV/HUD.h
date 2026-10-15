@@ -36,6 +36,7 @@ Date         Developer
 2022/08/27   GLS
 2022/09/29   GLS
 2022/12/18   GLS
+2026/10/15   racerx2
 ********************************************/
 /****************************************************************************
   This file is part of Space Shuttle Ultra
@@ -321,6 +322,9 @@ class HUD : public AtlantisSubsystem, public SimpleBTU
 		void OnPostStep( double simt, double simdt, double mjd ) override;
 
 		bool Draw( const HUDPAINTSPEC* hps, oapi::Sketchpad* skp );
+
+		double Intensity( void ) const;// not upstream: the intensity the brightness switches set [0.1, 1]
+		double Glow( void ) const;// not upstream: the combiner's glow, the intensity while powered, else 0 (design ssv-pbr)
 };
 
 #endif// __HUD
