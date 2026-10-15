@@ -402,6 +402,7 @@ private:
 	unsigned short K_CO_MAX;
 	double VREF_ADJUST;
 	double TREF_ADJUST;
+	// not upstream: OMSASS and NOMTM moved to AbortControlSequence
 	double MASS_LOW_LEVEL;
 	double ALIM_1;
 	double ALIM_2;

@@ -13,8 +13,8 @@ Date         Developer
 #include "T0UmbilicalReference.h"
 #include "T0UmbilicalMLPInterface.h"
 #include "OV/Atlantis.h"// not upstream: '/' separator
-#include "MLP/MLP.h"
-#include "SLC6/SLC6.h"
+#include "MLP/MLP.h"// not upstream: as above
+#include "SLC6/SLC6.h"// not upstream: as above
 
 
 T0UmbilicalReference::T0UmbilicalReference( Atlantis* sts )

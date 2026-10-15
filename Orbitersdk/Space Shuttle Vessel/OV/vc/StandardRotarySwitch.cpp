@@ -53,7 +53,7 @@ namespace vc
 	}
 
 
-	void RotaryDemuxSwitch::OnPreStep( double simt, double simdt, double mjd )
+	void RotaryDemuxSwitch::OnPreStep( double simt, double simdt, double mjd )// not upstream: as declared
 	{
 		if (!bInputConnected || (usCurrentPosition >= usNumPositions)) return;
 

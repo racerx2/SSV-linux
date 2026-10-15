@@ -79,7 +79,7 @@ namespace vc
 	class PushButtonIndicatorSingleLight;
 	class StandardDoubleLight;
 	class RotarySwitchPotentiometer;
-	class RotaryDemuxSwitch;
+	class RotaryDemuxSwitch;// not upstream: the ABORT MODE switch
 
 
 	class PanelF6: public AtlantisPanel

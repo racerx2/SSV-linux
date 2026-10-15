@@ -37,6 +37,7 @@ Date         Developer
 2023/02/16   indy91
 2023/02/25   indy91
 2023/04/16   GLS
+2026/10/15   racerx2
 ********************************************/
 #include "OMSBurnSoftware.h"
 #include "OrbitDAP.h"
@@ -1404,10 +1405,10 @@ void OMSBurnSoftware::OPS1_INIT(int mm)
 		THETA_LSS = 0.0;// not upstream
 	}
 
-	OPS1_DISP_INIT(mm);
+	OPS1_DISP_INIT(mm);// not upstream: the display part, also run for new AOA/ATO targets
 }
 
-void OMSBurnSoftware::OPS1_DISP_INIT(int mm)
+void OMSBurnSoftware::OPS1_DISP_INIT(int mm)// not upstream: as declared
 {
 	//DISP_INIT_TSK
 	PEG_MODE_4 = true;
@@ -1434,7 +1435,7 @@ void OMSBurnSoftware::OPS1_DISP_INIT(int mm)
 		MNVR_TITLE_IND += 2;
 		I = 3;
 	}
-	else if (ReadCOMPOOL_IS(SCP_S_ATO) != 0)
+	else if (ReadCOMPOOL_IS(SCP_S_ATO) != 0)// not upstream: as above
 	{
 		MNVR_TITLE_IND += 1;
 		I = 3;

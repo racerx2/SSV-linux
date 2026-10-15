@@ -1678,7 +1678,7 @@ void LC39::LoadMissionFile( void )
 
 	char* missionfilestr = new char[filesize + 1];// not upstream: room for the terminating zero cJSON_Parse needs
 	rewind( hF );
-	missionfilestr[fread( missionfilestr, sizeof(char), filesize, hF )] = 0;
+	missionfilestr[fread( missionfilestr, sizeof(char), filesize, hF )] = 0;// not upstream: as above
 	fclose( hF );
 
 	cJSON* root = cJSON_Parse( missionfilestr );

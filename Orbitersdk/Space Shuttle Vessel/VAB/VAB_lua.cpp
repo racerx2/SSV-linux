@@ -10,8 +10,8 @@ Date         Developer
 
 extern "C" {
 #include "Lua/lua.h"// not upstream: SDK folder, '/' separator
-#include "Lua/lualib.h"
-#include "Lua/lauxlib.h"
+#include "Lua/lualib.h"// not upstream: as above
+#include "Lua/lauxlib.h"// not upstream: as above
 }
 
 // ==========================================================================

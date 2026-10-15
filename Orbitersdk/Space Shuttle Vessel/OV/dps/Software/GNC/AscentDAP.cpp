@@ -153,7 +153,7 @@ namespace dps
 		DT_LIMIT = DTMAX;
 	}
 
-	void AscentGuidance::SetTargets(double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50)
+	void AscentGuidance::SetTargets(double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50)// not upstream: as declared
 	{
 		RDMAG = r_D * MPS2FPS;
 		VDMAG = v_D * MPS2FPS;
@@ -875,6 +875,7 @@ AscentDAP::AscentDAP(SimpleGPCSystem* _gpc)
 	THROT[3] = 104;
 	TREF_ADJUST = 17.87;
 	VREF_ADJUST = 368.0;
+	// not upstream: OMSASS and NOMTM moved to AbortControlSequence
 	MASS_LOW_LEVEL = 11500.0;
 	ALIM_1 = 96.200405;
 	ALIM_2 = 96.522146;
@@ -889,7 +890,7 @@ AscentDAP::~AscentDAP()
 
 void AscentDAP::Realize()
 {
-	DiscreteBundle* pBundle = BundleManager()->CreateBundle( "THRUSTER_CMD", 16 );
+	DiscreteBundle* pBundle = BundleManager()->CreateBundle( "THRUSTER_CMD", 16 );// not upstream: the OMS commands moved to AbortControlSequence
 	SERC.Connect( pBundle, 6 );
 
 	pSSME_SOP = dynamic_cast<SSME_SOP*> (FindSoftware( "SSME_SOP" ));
@@ -922,6 +923,7 @@ void AscentDAP::ReadILOADs( const std::map<std::string,std::string>& ILOADs )
 	GetValILOAD( "THROT", ILOADs, 4, THROT );
 	GetValILOAD( "VREF_ADJUST", ILOADs, VREF_ADJUST );
 	GetValILOAD( "TREF_ADJUST", ILOADs, TREF_ADJUST );
+	// not upstream: OMSASS and NOMTM read by AbortControlSequence
 	GetValILOAD( "MASS_LOW_LEVEL", ILOADs, MASS_LOW_LEVEL );
 	GetValILOAD( "ALIM_1", ILOADs, ALIM_1 );
 	GetValILOAD( "ALIM_2", ILOADs, ALIM_2 );
@@ -1010,6 +1012,8 @@ void AscentDAP::OnPreStep( double simt, double simdt, double mjd )
 			else
 			{
 				degReqdRates = _V( 0.0, 0.0, 0.0 );// hold attitude post-MECO
+
+				// not upstream: AbortControlSequence stops the OMS dump
 
 				if (pSSME_Operations->GetZeroThrustFlag() == true)
 				{
@@ -1250,13 +1254,13 @@ void AscentDAP::InitializeAutopilot()
 	// Initialize ascent guidance
 	guid.Init(PRED_GMT_LO, TgtRad, VDMAG, TgtFPA, IY_M50);
 	RD_TGT = TgtRad;// not upstream
-	VD_TGT = VDMAG;
-	GAMD_TGT = TgtFPA;
+	VD_TGT = VDMAG;// not upstream: as above
+	GAMD_TGT = TgtFPA;// not upstream: as above
 
 	// sprintf_s(oapiDebugString(), 128, "PRED_GMT_LO %lf TgtInc %lf EF_PLANE_SW %d IYD %lf %lf %lf IY_M50 %lf %lf %lf", PRED_GMT_LO, TgtInc*DEG, EF_PLANE_SW, IYD.x, IYD.y, IYD.z, IY_M50.x, IY_M50.y, IY_M50.z);
 }
 
-void AscentDAP::NominalMECOTargets( void )
+void AscentDAP::NominalMECOTargets( void )// not upstream: as declared
 {
 	mission::Mission* pMission = STS()->GetMissionData();
 	if ((pMission == NULL) || (STS()->GetSurfaceRef() == NULL)) return;
@@ -1266,7 +1270,7 @@ void AscentDAP::NominalMECOTargets( void )
 	return;
 }
 
-void AscentDAP::SetMECOTargets( double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50 )
+void AscentDAP::SetMECOTargets( double r_D, double v_D, double gamma_D, const VECTOR3* IY_M50 )// not upstream: as declared
 {
 	RD_TGT = r_D;
 	VD_TGT = v_D;
@@ -1276,7 +1280,7 @@ void AscentDAP::SetMECOTargets( double r_D, double v_D, double gamma_D, const VE
 	return;
 }
 
-void AscentDAP::GetMECOTargets( double& r_D, double& v_D, double& gamma_D ) const
+void AscentDAP::GetMECOTargets( double& r_D, double& v_D, double& gamma_D ) const// not upstream: as declared
 {
 	r_D = RD_TGT;
 	v_D = VD_TGT;
@@ -1431,7 +1435,7 @@ void AscentDAP::GimbalSSMEs( double simdt, const VECTOR3& degReqdRates, const VE
 	if (enaSERC == true)
 	{
 		if ((ReadCOMPOOL_IS( SCP_RCS_12_ALL_JET_INH ) != 0) || (ReadCOMPOOL_IS( SCP_RCS_345_ALL_JET_INH ) != 0)) SERC.ResetLine();// not upstream: aft jets inhibited during an OMS/RCS interconnect
-		else if (abs( degRateError.data[ROLL] ) < 0.1) SERC.ResetLine();
+		else if (abs( degRateError.data[ROLL] ) < 0.1) SERC.ResetLine();// not upstream: as above
 		else SERC.SetLine( static_cast<float>(-range( -1, 0.5 * degRateError.data[ROLL], 1 )) );
 	}
 }
