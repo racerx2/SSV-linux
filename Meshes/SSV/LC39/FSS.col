@@ -1,0 +1,3 @@
+COLLIDER-V1
+; not upstream (Linux port): umbilicals that let go of the vehicle at liftoff do not collide with it
+EXCLUDE LABEL GUCP GH2_vent_hard_line GH2_fwd_vent_flex_line GH2_aft_vent_hard_line GH2_aft_vent_flex_hose RBUS_carrier_plate RBUS_umbilical_beam
