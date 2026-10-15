@@ -402,6 +402,8 @@ class Atlantis: public VESSEL4
 		MESHHANDLE hSSMEMesh[3];
 		DEVMESHHANDLE hDevOrbiterMesh;
 		DEVMESHHANDLE hDevOrbiterVCExternalMesh;
+		double hudGlow[2];// not upstream: the combiner glow last set on VC_external, -1 not yet (design ssv-pbr)
+		void UpdateHUDGlow( void );// not upstream
 		DEVMESHHANDLE hDevVerticalTailMesh;
 
 		SURFHANDLE hOVTexture;

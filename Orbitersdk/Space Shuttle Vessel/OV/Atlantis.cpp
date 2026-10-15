@@ -796,6 +796,7 @@ pActiveLatches( 5, NULL ), pXRSound(NULL)
 	hDevOrbiterMesh = NULL;
 	hDevOrbiterVCExternalMesh = NULL;
 	hDevVerticalTailMesh = NULL;
+	hudGlow[0] = hudGlow[1] = -1.0;// not upstream
 	hSSMEMesh[0] = NULL;
 	hSSMEMesh[1] = NULL;
 	hSSMEMesh[2] = NULL;
@@ -1821,6 +1822,8 @@ void Atlantis::clbkPostStep( double simt, double simdt, double mjd )
 		//double time = st.Stop();
 		//sprintf_s(oapiDebugString(), 256, "PostStep time: %f Subsystem time: %f", time, subTime);
 
+		UpdateHUDGlow();// not upstream
+
 		if (!___PostStep_flag)
 		{
 			oapiWriteLog("(SSV_OV) [INFO] (Atlantis::clbkPostStep) Leaving.");
@@ -1867,6 +1870,24 @@ bool Atlantis::clbkPlaybackEvent( double simt, double event_t, const char* event
 	  return false;
 }
 
+// not upstream: the HUD combiners glow green while their HUD is powered, so the HUD shows through the windshield from outside (design ssv-pbr)
+void Atlantis::UpdateHUDGlow( void )
+{
+	if (!hDevOrbiterVCExternalMesh) return;
+	static constexpr DWORD mat[2] = {MAT_HUD_GLASS_CDR_VCEXT, MAT_HUD_GLASS_PLT_VCEXT};
+	for (int i = 0; i < 2; i++)
+	{
+		double g = pHUD[i]->Glow();
+		if (fabs( g - hudGlow[i] ) < 0.01) continue;
+		hudGlow[i] = g;
+		const oapi::FVECTOR4 light( static_cast<float>(std::min<double>( 0.02 + (0.20 * g), 1.0 )), static_cast<float>(std::min<double>( 0.04 + (1.40 * g), 1.0 )), static_cast<float>(std::min<double>( 0.03 + (0.45 * g), 1.0 )), 1.0f );// HUD off: Config/GC/SSV_OV.cfg's EMISSIVE
+		const oapi::FVECTOR4 diffuse( 0.60f, 0.80f, 0.65f, static_cast<float>(0.15 + (0.75 * g)) );// off: its DIFFUSE; the blend scales the glow by this alpha
+		oapiSetMaterialEx( hDevOrbiterVCExternalMesh, mat[i], MatProp::Light, &light );
+		oapiSetMaterialEx( hDevOrbiterVCExternalMesh, mat[i], MatProp::Diffuse, &diffuse );
+	}
+	return;
+}
+
 void Atlantis::clbkVisualCreated( VISHANDLE vis, int refcount )
 {
 	try
@@ -1879,6 +1900,7 @@ void Atlantis::clbkVisualCreated( VISHANDLE vis, int refcount )
 		hDevOrbiterMesh = GetDevMesh( vis, mesh_orbiter );
 		hDevOrbiterVCExternalMesh = GetDevMesh( vis, mesh_vcexternal );
 		hDevVerticalTailMesh = GetDevMesh( vis, mesh_verticaltail );
+		hudGlow[0] = hudGlow[1] = -1.0;// not upstream: the new visual gets the combiner glow
 		oapiWriteLog("(SSV_OV) [INFO] GETTING DEVMESH");
 
 		// update attachments to position them correctly in first time step
