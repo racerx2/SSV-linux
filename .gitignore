@@ -1898,4 +1898,6 @@ lib
 
 ## Linux build (not upstream) ##
 /out
+!/Config/Earth.d
+!/Config/Base.d
 /CMakeUserPresets.json

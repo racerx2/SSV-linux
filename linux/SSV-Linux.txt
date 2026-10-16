@@ -15,24 +15,20 @@ Licence: GNU GPL version 2 or later (SSV-LICENSE.txt). The source of this build,
 Linux change marked "not upstream", is the "linux" branch of github.com/racerx2/SSV-linux.
 
 
-Installation
+Installation (needs Orbiter 2027 RC5 or newer for Linux)
 ------------
 1. Close Orbiter.
-2. Extract the zip into your Orbiter folder. It adds files only; it never replaces a file of yours.
-3. From the Orbiter folder run once:
-       python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"
-   It adds to Config/Earth.cfg the SSV bases (DIR Earth\SSV CONTEXT SSV) and the 12 KSC
-   ground cameras, adds SSV\VAFB\DeltaBlue to Config/Base.cfg, and copies the SSV terrain tiles
-   (runway and pad flattening, Vandenberg imagery) into Textures/Earth. It keeps a .ssv-backup copy of each
-   .cfg it changes. A tile it replaces is kept in Install/Space Shuttle Vessel/Earth-backup, and if
-   the tile stream had written it, the stream leaves the new one alone from then on.
-   Running it again changes nothing. It also reports settings SSV needs (see below).
-4. Start Orbiter and pick a scenario under "Space Shuttle Vessel".
+2. Extract the zip into your Orbiter folder. That is all: there is nothing to run.
+   If asked, let it replace files: the only ones it can replace are terrain tiles Orbiter's tile
+   stream made around SSV's runways and pads, and the stream leaves SSV's tiles alone from then on.
+3. Start Orbiter and pick a scenario under "Space Shuttle Vessel".
 
 Differences from the Windows release
 - The fonts SSV_Font_A and SSV_Font_B need no installing: SSV loads them from
   Install/Space Shuttle Vessel when it starts.
-- Config/Earth.cfg and Config/Base.cfg are not overwritten (step 3 adds SSV's lines to yours).
+- Config/Earth.cfg and Config/Base.cfg are not overwritten. SSV's lines come in drop-in files that
+  Orbiter reads with them: Config/Earth.d/SSV.cfg (the SSV bases, DIR Earth\SSV CONTEXT SSV, ahead of
+  the stock ones, and the 12 KSC ground cameras) and Config/Base.d/SSV.cfg (SSV\VAFB\DeltaBlue).
 - The Antelope Valley texture pack is not needed: the tile stream provides the imagery.
 - The Mission Editor (Windows only, .NET) is not included. The missions in Missions/SSV work as they are.
 - The displays are drawn with Sketchpad, as with the D3D9 client on Windows.
@@ -65,8 +61,9 @@ Settings
 - Recommended: Launchpad > Video > Advanced > "Disable near clip plane compatibility mode".
 
 Removing
-- Delete the folders and files the zip added, put back Config/Earth.cfg and Config/Base.cfg from
-  their .ssv-backup copies, and the tiles from Install/Space Shuttle Vessel/Earth-backup.
+- Delete the folders and files the zip added (Config/Earth.d/SSV.cfg and Config/Base.d/SSV.cfg among
+  them). SSV's terrain tiles in Textures/Earth can stay or go: where one is gone, the stream makes
+  its own again.
 
 DISCLAIMER (from the SSV team, which applies to this build too): not responsible for any crashes or
 other problems caused by this addon. Use at your own risk.

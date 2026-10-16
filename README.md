@@ -37,10 +37,9 @@ Fly the Space Shuttle on Linux. No Wine, no virtual machine: this fork runs SSV 
 | ![Final approach to KSC runway 15 on the HUD](linux/screenshots/hud-approach.jpg)<br>Final approach to KSC runway 15 on the HUD | ![The HUD glass glowing through the windshield](linux/screenshots/hud-glass-glow.jpg)<br>The HUD glass glowing through the windshield |
 
 ## Get flying
-1. Install [Orbiter Linux](https://github.com/racerx2/orbiter-2027-linux) (2027 RC4 or newer).
+1. Install [Orbiter Linux](https://github.com/racerx2/orbiter-2027-linux) (2027 RC5 or newer).
 2. Download the zip from this repository's [releases](https://github.com/racerx2/SSV-linux/releases) and extract it into your Orbiter folder. It runs on every distribution Orbiter Linux runs on.
-3. From that folder, run once: `python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"`. It adds SSV's bases and pad scenery to Orbiter's configuration, and running it again is harmless.
-4. Start Orbiter and pick a scenario under **Space Shuttle Vessel**.
+3. Start Orbiter and pick a scenario under **Space Shuttle Vessel**. There is nothing to run: SSV's bases and cameras come in drop-in files (`Config/Earth.d`, `Config/Base.d`) that Orbiter reads with its own.
 
 The details, the settings SSV likes and how to remove it are in [`linux/SSV-Linux.txt`](linux/SSV-Linux.txt) (in the zip: `Doc/Space Shuttle Vessel/SSV-Linux.txt`).
 

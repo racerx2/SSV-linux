@@ -63,15 +63,12 @@ check() { # $1 zip: over the newest Orbiter package, unpacked with a temp HOME
 	local clash; clash=$(python3 -c "import os,sys,zipfile; print('\n'.join(n for n in zipfile.ZipFile(sys.argv[1]).namelist() if not n.endswith('/') and os.path.exists(n)))" "$OUT/$1")
 	[ -z "$clash" ] || die "the zip replaces files of Orbiter: $(echo "$clash" | head -3)"
 	python3 -c "import sys,zipfile; zipfile.ZipFile(sys.argv[1]).extractall('.')" "$OUT/$1"
-	chmod +x Modules/SSV_*.so "Install/Space Shuttle Vessel/ssv_linux_setup.py"
+	chmod +x Modules/SSV_*.so
 	local g; g=$(objdump -T Modules/SSV_*.so | sed -n 's/.*GLIBC_\([0-9][0-9.]*\).*/\1/p' | sort -V | tail -1)
 	[ "$(printf '%s\n2.34\n' "$g" | sort -V | tail -1)" = "2.34" ] || die "the modules need glibc $g (the package: 2.34)"
 	g=$(objdump -T Modules/SSV_*.so | sed -n 's/.*GLIBCXX_\([0-9][0-9.]*\).*/\1/p' | sort -V | tail -1)
 	[ "$(printf '%s\n3.4.29\n' "$g" | sort -V | tail -1)" = "3.4.29" ] || die "the modules need GLIBCXX $g (the package: 3.4.29)"
 	export HOME=$T/home XDG_DATA_HOME=$T/home/.local/share XDG_CONFIG_HOME=$T/home/.config XDG_CACHE_HOME=$T/home/.cache
-	python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py" > "$T/setup1.out" 2>&1 || die "setup: $T/setup1.out"
-	python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py" > "$T/setup2.out" 2>&1 || die "setup, second run: $T/setup2.out"
-	[ "$(grep -c '^changed\|added\|moved\|installed' "$T/setup2.out" || true)" = 0 ] || die "the setup's second run changed something: $T/setup2.out"
 	local ICD=/usr/share/vulkan/icd.d/lvp_icd.json # SSV needs a graphics client (its surfaces): Vulkan on the CPU in a virtual X server, nothing on the desktop
 	[ -f "$ICD" ] || die "no lavapipe ($ICD, mesa-vulkan-drivers) for the client check"
 	printf 'StartPaused = FALSE\nFullscreen = FALSE\nWindowWidth = 1280\nWindowHeight = 720\nDeviceIndex = 0\nACTIVE_MODULES\nVulkanClient\nEND_MODULES\n' > Orbiter.cfg
@@ -81,9 +78,11 @@ check() { # $1 zip: over the newest Orbiter package, unpacked with a temp HOME
 	local n m; n=$(unzip -Z1 "$OUT/$1" | grep -c '^Modules/SSV_.*\.so$' || true); m=$(grep -c 'Module SSV_[A-Za-z0-9_]*\.so' Orbiter.log || true)
 	[ "$m" -ge 5 ] || die "the Launch test loaded $m SSV modules: $T/client.log"
 	[ "$(grep -c '(SSV[A-Za-z0-9_]*) \[\(ERROR\|FATAL ERROR\)\]' Orbiter.log || true)" = 0 ] || die "SSV errors in the Launch test: $T/client.log"
+	local z; z=$(sed -n 's/.*TileStream: base Cape Canaveral: \([0-9][0-9]*\) clear zones.*/\1/p' Orbiter.log | head -1) # only SSV's Canaveral.cfg has them
+	[ "${z:-0}" -ge 2 ] || die "SSV's Cape Canaveral did not load from Config/Earth.d (no clear zones): $T/client.log"
 	export HOME=$H0; unset XDG_DATA_HOME XDG_CONFIG_HOME XDG_CACHE_HOME
 	cd "$SRC"
-	say "checks pass over $O: sha256, no Orbiter file replaced, glibc 2.34, setup twice, Launch test with the Vulkan client ($m SSV module loads, $n modules in the zip)"
+	say "checks pass over $O: sha256, no Orbiter file replaced, glibc 2.34, nothing to run, Launch test with the Vulkan client ($m SSV module loads, $n modules in the zip, SSV's bases with $z clear zones)"
 }
 
 package() { # $1 rcN

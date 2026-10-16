@@ -26,9 +26,7 @@ def modules(build):
 def place(p, manual):
 	# path in the zip, or None: the Orbiter folder's layout, as the Windows release
 	if p in ('Config/Earth.cfg', 'Config/Base.cfg'):
-		return None  # the setup script adds SSV's lines to ours
-	if p.startswith('Textures/Earth/'):
-		return INSTALL + 'Earth/' + p[len('Textures/Earth/'):]  # installed by the setup script, never over a file of ours
+		return None  # SSV's lines come in Config/Earth.d/SSV.cfg and Config/Base.d/SSV.cfg, read with Orbiter's own
 	if p.startswith(('Config/', 'Meshes/', 'Textures/', 'Sound/', 'Scenarios/', 'Missions/', INSTALL)):
 		return p
 	if p.startswith(DOC):
@@ -66,7 +64,6 @@ def main():
 	for p in missing:
 		print('missing, skipped:', p)
 	dirty = dirty or untracked
-	files[INSTALL + 'ssv_linux_setup.py'] = os.path.join(REPO, 'linux', 'ssv_linux_setup.py')
 	files[DOC + 'SSV-Linux.txt'] = os.path.join(REPO, 'linux', 'SSV-Linux.txt')
 	if manual:
 		files[DOC + 'Space Shuttle Vessel Manual.pdf'] = manual

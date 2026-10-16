@@ -7,9 +7,8 @@ Built against Orbiter 2027 @ORB@ for Linux (x86-64), in the same AlmaLinux 9 env
 
 ## Install
 1. Install [Orbiter 2027 for Linux](https://github.com/racerx2/orbiter-2027-linux/releases) (@ORB@ or newer).
-2. Extract `@NAME@` into your Orbiter folder.
-3. From that folder, run once: `python3 "Install/Space Shuttle Vessel/ssv_linux_setup.py"`.
-4. Start Orbiter and pick a scenario under **Space Shuttle Vessel**.
+2. Extract `@NAME@` into your Orbiter folder. Nothing to run.
+3. Start Orbiter and pick a scenario under **Space Shuttle Vessel**.
 
 Details, the settings SSV likes and how to remove it: `Doc/Space Shuttle Vessel/SSV-Linux.txt`.
 
