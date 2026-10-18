@@ -385,8 +385,9 @@ void MLP::DefineSRBWaterBagSteam( void )
 
 void MLP::DefineAnimations()
 {
-	T0Umbilical_State.Set(AnimState::CLOSED, 0.0);
-	anim_t0umb=CreateAnimation(0.0);
+	// The T-0 umbilicals remain connected throughout the countdown and retract only when their PICs fire.
+	T0Umbilical_State.Set(AnimState::OPEN, 1.0);
+	anim_t0umb=CreateAnimation(1.0);
 
 	// T0 umbilical animation detais
 	// 1.181sec total time

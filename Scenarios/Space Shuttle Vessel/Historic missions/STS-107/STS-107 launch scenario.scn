@@ -1,6 +1,19 @@
 BEGIN_DESC
-The last flight of Columbia.
+STS-107 - The last flight of Columbia.
 Insertion orbit: 150x150NM
+
+MANUAL APU STARTUP - PANEL R2 (approximately T-5:00)
+1. HYD MAIN PUMP PRESS 1, 2, 3 - LOW (required for startup).
+2. APU CNTLR PWR 1, 2, 3 - ON.
+3. APU FUEL TK VLV 1, 2, 3 - OPEN.
+4. Verify BOILER PWR 1, 2, 3 - ON; BOILER N2 SUPPLY 1, 2, 3 - ON;
+   BOILER CNTLR/HTR 1, 2, 3 - A or B. Confirm READY TO START.
+5. APU OPERATE 1, 2, 3 - START/RUN. Wait for the APUs to run.
+6. HYD MAIN PUMP PRESS 1, 2, 3 - NORM.
+7. Verify HYD 1, 2, 3 pressure: 2850-3400 psi before T-4:15.
+
+If HYD-02 causes a T-4:00 hold, correct pressure and Resume on
+the LCC MFD. Startup remains manual; no pressure bypass.
 END_DESC
 
 BEGIN_ENVIRONMENT
