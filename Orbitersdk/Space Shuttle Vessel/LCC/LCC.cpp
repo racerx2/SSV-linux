@@ -429,13 +429,16 @@ void LCC::Checks( void )
 	// HACK using T-4m15s as start of check
 	if (((CountdownTime >= -255.0) && (CountdownTime <= -235.0)) || ((CountdownTime >= -183.0) && (CountdownTime <= -10.0)))
 	{
-		if (((pPad->GetHydSysPress( 1 ) < 2850.0) || (pPad->GetHydSysPress( 1 ) > 3400.0)) ||
-			((pPad->GetHydSysPress( 2 ) < 2850.0) || (pPad->GetHydSysPress( 2 ) > 3400.0)) ||
-			((pPad->GetHydSysPress( 3 ) < 2850.0) || (pPad->GetHydSysPress( 3 ) > 3400.0)))
+		const double hydPress1 = pPad->GetHydSysPress( 1 );
+		const double hydPress2 = pPad->GetHydSysPress( 2 );
+		const double hydPress3 = pPad->GetHydSysPress( 3 );
+		if (((hydPress1 < 2850.0) || (hydPress1 > 3400.0)) ||
+			((hydPress2 < 2850.0) || (hydPress2 > 3400.0)) ||
+			((hydPress3 < 2850.0) || (hydPress3 > 3400.0)))
 		{
 			if (!requestautohold)
 			{
-				oapiWriteLogV( "(SSV_LCC) [INFO] HYD-02 violation @ T%+.3f", CountdownTime );
+				oapiWriteLogV( "(SSV_LCC) [WARN] HYD-02 violation @ T%+.3f: SYS1=%.1f psi, SYS2=%.1f psi, SYS3=%.1f psi (required 2850-3400 psi)", CountdownTime, hydPress1, hydPress2, hydPress3 );
 				requestautohold = true;
 			}
 		}
